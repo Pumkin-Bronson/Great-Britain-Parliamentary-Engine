@@ -75,6 +75,14 @@
       const [turn8Rev, setTurn8Rev] = React.useState(12500);
       const [growthRate, setGrowthRate] = React.useState(null);
 
+      // Cabinet State
+      const [cabinetForm, setCabinetForm] = React.useState({
+        pmNotes: 'Prime Minister directive: Preserve Tory majority and monitor civil agitation.',
+        keyDirectives: '1. Secure Treasury appropriations.\n2. Maintain public tranquility via local garrisons.\n3. Oversee diplomatic posture with the Quadruple Alliance.',
+        cabinetAgenda: 'Discussions regarding the repeal of wartime duties and local civil order response.',
+        cabinetMinutes: 'Ministers aligned on maintaining current garrison posture across industrial centers.'
+      });
+
       // Consolidated Funds Ledger Form State
       const [cfForm, setCfForm] = React.useState({
         domTax: 0, bristol: 0, chatham: 0, liverpool: 0, waterford: 0,
@@ -100,7 +108,7 @@
         ]
       });
 
-      // Completely Redone Foreign Office State
+      // Foreign Office State
       const [foreignOfficeForm, setForeignOfficeForm] = React.useState({
         reportingOfficer: 'Viscount Castlereagh',
         treatyName: '',
@@ -274,7 +282,7 @@
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm
+          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -301,6 +309,7 @@
             if (parsed.cfForm) setCfForm(parsed.cfForm);
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
+            if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -714,7 +723,86 @@
               </button>
             </div>
 
-            {/* FOREIGN OFFICE TAB - COMPLETELY REDONE WITH SEQUENTIAL ROMAN NUMERALS */}
+            {/* CABINET TAB - 2 DISTINCT PANELS */}
+            {activeTab === 'Cabinet' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* PANEL 1: NO. 10 DOWNING STREET */}
+                <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
+                  <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-[#E5C158]">🏛️ No. 10 Downing Street</h2>
+                      <p className="text-xs text-slate-400">First Lord of the Treasury & Executive Office</p>
+                    </div>
+                    <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-2.5 py-1 rounded font-mono font-bold">
+                      {selectedYear}
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
+                      <textarea
+                        rows={5}
+                        value={cabinetForm.pmNotes}
+                        onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
+                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                        placeholder="Enter executive priorities and party political notes..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
+                      <textarea
+                        rows={5}
+                        value={cabinetForm.keyDirectives}
+                        onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
+                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                        placeholder="Enter strategic goals for the current session..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* PANEL 2: CABINET MEETING */}
+                <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
+                  <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-[#E5C158]">📜 Cabinet Meeting</h2>
+                      <p className="text-xs text-slate-400">His Majesty's Confidential Servants & Ministerial Deliberations</p>
+                    </div>
+                    <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded font-mono font-bold">
+                      Turn {currentTurn}
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
+                      <textarea
+                        rows={5}
+                        value={cabinetForm.cabinetAgenda}
+                        onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
+                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                        placeholder="Detail items for Cabinet discussion..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
+                      <textarea
+                        rows={5}
+                        value={cabinetForm.cabinetMinutes}
+                        onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
+                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                        placeholder="Record Cabinet decisions and ministerial consensus..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FOREIGN OFFICE TAB */}
             {activeTab === 'Foreign Office' && (
               <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                 <div className="text-center space-y-1">
@@ -1911,7 +1999,7 @@
               </div>
             )}
 
-            {activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Foreign Office' && activeTab !== 'Parliamentary Timetable' && (
+            {activeTab !== 'Cabinet' && activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Foreign Office' && activeTab !== 'Parliamentary Timetable' && (
               <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center">
                 <h2 className="text-lg font-bold text-[#E5C158] mb-2">{activeTab} Department</h2>
                 <p className="text-xs text-slate-400">Department administrative controls under active development.</p>
