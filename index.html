@@ -82,6 +82,7 @@
         buildings: { london: 3, wales: 1, scotland: 1, ireland: 0 },
         govType: { london: 2, wales: 2, scotland: 2, ireland: 2 },
         culture: { london: 5, wales: 2, scotland: 3, ireland: 1 },
+        religiousUnrest: { london: 1, wales: 2, scotland: 2, ireland: 5 },
         foreignAgents: [
           { nation: 'Kingdom of France', name: 'Jean-Luc Moreau', status: 'Under Surveillance', location: 'London (Soho)' }
         ]
@@ -160,13 +161,20 @@
         if (score >= 10) return { label: 'Exceptional', color: 'text-emerald-400' };
         if (score >= 7) return { label: 'Stable', color: 'text-blue-400' };
         if (score >= 0) return { label: 'Elevated Risk', color: 'text-amber-400' };
-        return { label: 'Risk', color: 'text-rose-500 font-bold' };
+        return { label: 'Critical Risk', color: 'text-rose-500 font-bold' };
       };
 
       const getClamourLabel = (score) => {
-        if (score >= 10) return { label: 'High', color: 'text-rose-400 font-bold' };
-        if (score >= 6) return { label: 'Medium', color: 'text-amber-400' };
-        if (score >= 1) return { label: 'Low', color: 'text-blue-400' };
+        if (score >= 10) return { label: 'High Threat', color: 'text-rose-400 font-bold' };
+        if (score >= 6) return { label: 'Medium Threat', color: 'text-amber-400' };
+        if (score >= 1) return { label: 'Low Threat', color: 'text-blue-400' };
+        return { label: 'None', color: 'text-emerald-400' };
+      };
+
+      const getReligiousUnrestLabel = (score) => {
+        if (score >= 5) return { label: 'High Unrest', color: 'text-rose-400 font-bold' };
+        if (score >= 3) return { label: 'Medium Unrest', color: 'text-amber-400' };
+        if (score >= 1) return { label: 'Low Unrest', color: 'text-blue-400' };
         return { label: 'None', color: 'text-emerald-400' };
       };
 
@@ -178,7 +186,7 @@
         4
       ).toFixed(1);
 
-      // Section VI: Domestic Summary Logic
+      // Domestic Summary Logic
       const sumRegion = (obj) => obj.london + obj.wales + obj.scotland + obj.ireland;
       const totalPositiveEffects = 
         sumRegion(homeOfficeForm.garrisons) + 
@@ -187,7 +195,7 @@
         sumRegion(homeOfficeForm.govType) + 
         sumRegion(homeOfficeForm.culture);
 
-      const totalNegativeEffects = sumRegion(homeOfficeForm.clamour);
+      const totalNegativeEffects = sumRegion(homeOfficeForm.clamour) + sumRegion(homeOfficeForm.religiousUnrest);
       const netDomesticBalance = totalPositiveEffects - totalNegativeEffects;
 
       let domesticJudgement = "";
@@ -200,7 +208,7 @@
         domesticJudgement = "Domestic conditions remain generally orderly, though mild social unrest persists in localized industrial districts. Regular policing and garrison strength are currently sufficient.";
         domesticJudgementColor = "text-amber-300";
       } else {
-        domesticJudgement = "WARNING: Widespread social disorder detected. Radical reform agitation exceeds local peacekeeping capacity. Imminent risk of sedition and civil violence if garrisons or concessions are not deployed.";
+        domesticJudgement = "CRITICAL WARNING: Widespread social disorder detected. Radical reform agitation exceeds local peacekeeping capacity. Imminent risk of sedition and civil violence if garrisons or concessions are not deployed.";
         domesticJudgementColor = "text-rose-400 font-bold";
       }
 
@@ -697,11 +705,8 @@
                         I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br />
                         ----------------------------------------------------------------------------------------
                       </div>
-                      <div className="text-slate-400 font-sans text-[11px] space-y-0.5">
-                        <div><strong className="text-white">Public Order Measures:</strong> Exceptional (10+) | Stable (7–9) | Elevated Risk (0–6) | Risk (-1 or below)</div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => {
                           const val = homeOfficeForm.publicOrder[region];
                           const status = getPublicOrderStatusLabel(val);
@@ -710,8 +715,8 @@
                           return (
                             <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
                               <div>
-                                <span className="font-bold text-white text-xs">{regionName}</span>
-                                <div className={`text-[11px] ${status.color}`}>&gt; {status.label}</div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${status.color}`}>&gt; Status: {status.label}</div>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-xs text-slate-400 font-mono">Rating:</span>
@@ -728,7 +733,7 @@
                       </div>
 
                       <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-xs font-bold font-sans">
-                        <span className="text-[#E5C158]">• National Stability Index :</span>
+                        <span className="text-[#E5C158]">• NATIONAL STABILITY INDEX :</span>
                         <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
                           {avgPublicOrder}
                         </span>
@@ -739,14 +744,11 @@
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
                       <div className="text-[#E5C158] font-bold text-xs">
                         ----------------------------------------------------------------------------------------<br />
-                        II. RADICAL SEDITION & REFORM WATCH (Clamour for Reform Tracker)<br />
+                        II. RADICAL SEDITION & REFORM WATCH<br />
                         ----------------------------------------------------------------------------------------
                       </div>
-                      <div className="text-slate-400 font-sans text-[11px]">
-                        <div><strong className="text-white">Clamour For Reform Level:</strong> High (10+) | Medium (6–9) | Low (1–5) | None (0)</div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => {
                           const val = homeOfficeForm.clamour[region];
                           const clamour = getClamourLabel(val);
@@ -755,8 +757,8 @@
                           return (
                             <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
                               <div>
-                                <span className="font-bold text-white text-xs">{regionName}</span>
-                                <div className={`text-[11px] ${clamour.color}`}>&gt; {clamour.label}</div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${clamour.color}`}>&gt; Clamour Threat: {clamour.label}</div>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-xs text-slate-400 font-mono">Level:</span>
@@ -782,17 +784,17 @@
                       </div>
 
                       {[
-                        { title: 'Garrisoned Forces (Repression)', key: 'garrisons' },
-                        { title: 'People In Government (Repression)', key: 'ministers' },
-                        { title: 'Government Buildings (Repression)', key: 'buildings' },
-                        { title: 'Government Type (Repression)', key: 'govType' }
+                        { title: '[ GARRISONED FORCES (MILITARY REPRESSION) ]', key: 'garrisons' },
+                        { title: '[ CABINET & MAGISTRACY (GOVERNMENT REPRESSION) ]', key: 'ministers' },
+                        { title: '[ CIVIL INFRASTRUCTURE (CIVIC REPRESSION) ]', key: 'buildings' },
+                        { title: '[ CONSTITUTIONAL FRAMEWORK (GOVERNMENT TYPE REPRESSION) ]', key: 'govType' }
                       ].map((category) => (
                         <div key={category.key} className="border-t border-slate-800 pt-3">
-                          <div className="text-xs font-bold text-white mb-2">{category.title}</div>
+                          <div className="text-xs font-bold text-[#E5C158] mb-2">{category.title}</div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {['london', 'wales', 'scotland', 'ireland'].map((region) => (
                               <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
-                                <span className="text-[11px] text-slate-300 uppercase">{region}:</span>
+                                <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
                                 <input
                                   type="number"
                                   value={homeOfficeForm[category.key][region]}
@@ -813,11 +815,11 @@
                         IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br />
                         ----------------------------------------------------------------------------------------
                       </div>
-                      <div className="text-xs font-bold text-white mb-2">Entertainment & Culture</div>
+                      <div className="text-xs font-bold text-[#E5C158] mb-2">[ PUBLIC AMUSEMENTS & CIVIC SATISFACTION ]</div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => (
                           <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
-                            <span className="text-[11px] text-slate-300 uppercase">{region}:</span>
+                            <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
                             <input
                               type="number"
                               value={homeOfficeForm.culture[region]}
@@ -830,16 +832,51 @@
                     </div>
 
                     {/* SECTION V */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        V. RADICALISATION OF RELIGION AND CULT<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.religiousUnrest[region];
+                          const unrest = getReligiousUnrestLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${unrest.color}`}>&gt; Religious Unrest: {unrest.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Level:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* SECTION VI */}
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
                       <div className="text-[#E5C158] font-bold text-xs font-mono">
                         ----------------------------------------------------------------------------------------<br />
-                        V. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
+                        VI. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
                         ----------------------------------------------------------------------------------------
                       </div>
 
                       <div className="flex justify-between items-center pt-1">
                         <span className="text-xs text-slate-300 font-bold">
-                          • Foreign Agents Detected ({homeOfficeForm.foreignAgents.length})
+                          [+] DETECTED FOREIGN AGENTS REGISTER ({homeOfficeForm.foreignAgents.length}):
                         </span>
                         <button
                           onClick={handleAddAgent}
@@ -866,9 +903,10 @@
                                   ✕
                                 </button>
                               )}
+                              <div className="text-xs font-bold text-[#E5C158] font-mono">• ENTRY #{index + 1}:</div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                 <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Nation</label>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Nation Origin</label>
                                   <input
                                     type="text"
                                     value={agent.nation}
@@ -878,31 +916,31 @@
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Name</label>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Agent Alias</label>
                                   <input
                                     type="text"
                                     value={agent.name}
-                                    placeholder="e.g. Agent Name"
+                                    placeholder="e.g. Agent Dupris"
                                     onChange={(e) => handleAgentChange(index, 'name', e.target.value)}
                                     className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Status of the Relation with the Agent</label>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Status</label>
                                   <input
                                     type="text"
                                     value={agent.status}
-                                    placeholder="e.g. Under Surveillance / Detained"
+                                    placeholder="e.g. Under Surveillance / Intercepted / At Large"
                                     onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
                                     className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Location</label>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Current Sector</label>
                                   <input
                                     type="text"
                                     value={agent.location}
-                                    placeholder="e.g. London (Soho)"
+                                    placeholder="e.g. London"
                                     onChange={(e) => handleAgentChange(index, 'location', e.target.value)}
                                     className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
                                   />
@@ -914,20 +952,20 @@
                       )}
                     </div>
 
-                    {/* SECTION VI */}
+                    {/* SECTION VII */}
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
                       <div className="text-[#E5C158] font-bold text-xs font-mono">
                         ----------------------------------------------------------------------------------------<br />
-                        VI. DOMESTIC SUMMARY<br />
+                        VII. DOMESTIC SUMMARY & SECRETARY'S JUDGEMENT<br />
                         ----------------------------------------------------------------------------------------
                       </div>
                       <div className="space-y-2 text-xs">
                         <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
-                          <span className="text-slate-300">Total Stabilizing Measures :</span>
+                          <span className="text-slate-300">• Total Positive Factors (Order & Amusements) :</span>
                           <span className="text-emerald-400 font-bold">+{totalPositiveEffects} Points</span>
                         </div>
                         <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
-                          <span className="text-slate-300">Total Sedition & Radical Clamour :</span>
+                          <span className="text-slate-300">• Total Negative Factors (Sedition & Discontent) :</span>
                           <span className="text-rose-400 font-bold">-{totalNegativeEffects} Points</span>
                         </div>
                         <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
@@ -939,7 +977,7 @@
 
                         <div className="bg-[#0B192C] p-3 rounded border border-slate-800 mt-2 space-y-1">
                           <div className="text-[11px] font-bold text-[#E5C158] uppercase tracking-wider">
-                            Magisterial Judgement on Domestic Tranquility:
+                            OFFICIAL JUDGEMENT:
                           </div>
                           <div className={`text-xs leading-relaxed ${domesticJudgementColor}`}>
                             {domesticJudgement}
@@ -1292,14 +1330,14 @@
                           onClick={handleCalculateGrowth} 
                           className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-2.5 rounded text-xs hover:bg-yellow-400 cursor-pointer transition-colors shadow"
                         >
-                          Calculate Compound Growth Rate ($g$)
+                          Calculate Compound Growth Rate (g)
                         </button>
 
                         {growthRate !== null && (
                           <div className="border border-[#E5C158]/40 p-4 rounded bg-[#0F223D] space-y-3">
                             <div className="flex justify-between items-center">
                               <div>
-                                <div className="text-xs text-slate-300">Calculated Growth Rate ($g$):</div>
+                                <div className="text-xs text-slate-300">Calculated Growth Rate (g):</div>
                                 <div className="text-2xl font-bold text-[#E5C158]">{(growthRate * 100).toFixed(2)}% per turn</div>
                               </div>
                               <div className="text-right text-[11px] text-slate-400">
