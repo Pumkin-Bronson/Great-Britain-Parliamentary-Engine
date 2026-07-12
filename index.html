@@ -48,23 +48,6 @@
       const [turn8Rev, setTurn8Rev] = React.useState(12500);
       const [growthRate, setGrowthRate] = React.useState(null);
 
-      // Helper logic for checking whether an Exchequer sub-tab is unlocked on current turn
-      const isExchequerSubTabUnlocked = (subTabKey) => {
-        const gdiTurns = [1, 2, 3, 4, 5, 7];
-        const cfTurns = [9, 10, 11, 12, 17, 19, 20, 21, 22, 23];
-
-        if (subTabKey === 'GDI_ASSESSMENT') {
-          return gdiTurns.includes(currentTurn);
-        }
-        if (subTabKey === 'FINANCIAL_STATEMENT') {
-          return currentTurn === 8;
-        }
-        if (subTabKey === 'CONSOLIDATED_FUNDS') {
-          return cfTurns.includes(currentTurn);
-        }
-        return true;
-      };
-
       // Consolidated Funds Ledger Form State
       const [cfForm, setCfForm] = React.useState({
         domTax: 0,
@@ -89,6 +72,21 @@
         initialLiquidity: 24500
       });
 
+      // Home Office State
+      const [homeOfficeForm, setHomeOfficeForm] = React.useState({
+        reportingOfficer: 'Viscount Sidmouth',
+        publicOrder: { london: 8, wales: 6, scotland: 7, ireland: 4 },
+        clamour: { london: 3, wales: 5, scotland: 2, ireland: 8 },
+        garrisons: { london: 4, wales: 2, scotland: 2, ireland: 6 },
+        ministers: { london: 2, wales: 1, scotland: 1, ireland: 1 },
+        buildings: { london: 3, wales: 1, scotland: 1, ireland: 0 },
+        govType: { london: 2, wales: 2, scotland: 2, ireland: 2 },
+        culture: { london: 5, wales: 2, scotland: 3, ireland: 1 },
+        foreignAgents: [
+          { nation: 'Kingdom of France', name: 'Jean-Luc Moreau', status: 'Under Surveillance', location: 'London (Soho)' }
+        ]
+      });
+
       const handleCfChange = (field, val) => {
         const parsed = parseFloat(val);
         setCfForm((prev) => ({
@@ -97,7 +95,53 @@
         }));
       };
 
-      // Calculations for Consolidated Funds Audit
+      const handleHomeOfficeChange = (category, region, val) => {
+        const parsed = parseInt(val) || 0;
+        setHomeOfficeForm((prev) => ({
+          ...prev,
+          [category]: {
+            ...prev[category],
+            [region]: parsed
+          }
+        }));
+      };
+
+      const handleAddAgent = () => {
+        setHomeOfficeForm((prev) => ({
+          ...prev,
+          foreignAgents: [
+            ...prev.foreignAgents,
+            { nation: '', name: '', status: 'Unconfirmed', location: '' }
+          ]
+        }));
+      };
+
+      const handleAgentChange = (index, field, value) => {
+        setHomeOfficeForm((prev) => {
+          const updated = [...prev.foreignAgents];
+          updated[index][field] = value;
+          return { ...prev, foreignAgents: updated };
+        });
+      };
+
+      const handleRemoveAgent = (index) => {
+        setHomeOfficeForm((prev) => ({
+          ...prev,
+          foreignAgents: prev.foreignAgents.filter((_, i) => i !== index)
+        }));
+      };
+
+      const isExchequerSubTabUnlocked = (subTabKey) => {
+        const gdiTurns = [1, 2, 3, 4, 5, 7];
+        const cfTurns = [9, 10, 11, 12, 17, 19, 20, 21, 22, 23];
+
+        if (subTabKey === 'GDI_ASSESSMENT') return gdiTurns.includes(currentTurn);
+        if (subTabKey === 'FINANCIAL_STATEMENT') return currentTurn === 8;
+        if (subTabKey === 'CONSOLIDATED_FUNDS') return cfTurns.includes(currentTurn);
+        return true;
+      };
+
+      // Consolidated Funds Calculations
       const totalCapacity = (cfForm.bristol || 0) + (cfForm.chatham || 0) + (cfForm.liverpool || 0) + (cfForm.waterford || 0);
       const totalInflows = 
         (cfForm.domTax || 0) + totalCapacity + (cfForm.tradeIncome || 0) + (cfForm.coreTreasury || 0) +
@@ -110,6 +154,55 @@
 
       const netYield = totalInflows - totalOutflows;
       const totalLiquidity = (cfForm.initialLiquidity || 0) + netYield;
+
+      // Home Office Calculations
+      const getPublicOrderStatusLabel = (score) => {
+        if (score >= 10) return { label: 'Exceptional', color: 'text-emerald-400' };
+        if (score >= 7) return { label: 'Stable', color: 'text-blue-400' };
+        if (score >= 0) return { label: 'Elevated Risk', color: 'text-amber-400' };
+        return { label: 'Risk', color: 'text-rose-500 font-bold' };
+      };
+
+      const getClamourLabel = (score) => {
+        if (score >= 10) return { label: 'High', color: 'text-rose-400 font-bold' };
+        if (score >= 6) return { label: 'Medium', color: 'text-amber-400' };
+        if (score >= 1) return { label: 'Low', color: 'text-blue-400' };
+        return { label: 'None', color: 'text-emerald-400' };
+      };
+
+      const avgPublicOrder = (
+        (homeOfficeForm.publicOrder.london +
+          homeOfficeForm.publicOrder.wales +
+          homeOfficeForm.publicOrder.scotland +
+          homeOfficeForm.publicOrder.ireland) /
+        4
+      ).toFixed(1);
+
+      // Section VI: Domestic Summary Logic
+      const sumRegion = (obj) => obj.london + obj.wales + obj.scotland + obj.ireland;
+      const totalPositiveEffects = 
+        sumRegion(homeOfficeForm.garrisons) + 
+        sumRegion(homeOfficeForm.ministers) + 
+        sumRegion(homeOfficeForm.buildings) + 
+        sumRegion(homeOfficeForm.govType) + 
+        sumRegion(homeOfficeForm.culture);
+
+      const totalNegativeEffects = sumRegion(homeOfficeForm.clamour);
+      const netDomesticBalance = totalPositiveEffects - totalNegativeEffects;
+
+      let domesticJudgement = "";
+      let domesticJudgementColor = "";
+
+      if (netDomesticBalance >= 15) {
+        domesticJudgement = "The Realm is in complete domestic tranquility. Public order measures and civic contentedness firmly suppress radical elements across all Home Provinces.";
+        domesticJudgementColor = "text-emerald-400";
+      } else if (netDomesticBalance >= 0) {
+        domesticJudgement = "Domestic conditions remain generally orderly, though mild social unrest persists in localized industrial districts. Regular policing and garrison strength are currently sufficient.";
+        domesticJudgementColor = "text-amber-300";
+      } else {
+        domesticJudgement = "WARNING: Widespread social disorder detected. Radical reform agitation exceeds local peacekeeping capacity. Imminent risk of sedition and civil violence if garrisons or concessions are not deployed.";
+        domesticJudgementColor = "text-rose-400 font-bold";
+      }
 
       // Save & Load Handlers
       const handleSaveGame = () => {
@@ -126,7 +219,8 @@
           turn3Rev,
           turn8Rev,
           growthRate,
-          cfForm
+          cfForm,
+          homeOfficeForm
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -151,6 +245,7 @@
             setTurn8Rev(parsed.turn8Rev || 12500);
             setGrowthRate(parsed.growthRate || null);
             if (parsed.cfForm) setCfForm(parsed.cfForm);
+            if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -469,7 +564,7 @@
               </div>
 
               <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-[#E5C158] text-sm mb-1">Admiralty Annual Report</h3>
+                <h3 className="font-bold text-white text-sm mb-1">Admiralty Annual Report</h3>
                 <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
                 <select
                   value={admiraltyTurn || ''}
@@ -503,6 +598,8 @@
         'Cabinet', "Lord Chancellor's Department", 
         'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office'
       ];
+
+      const isHomeOfficeScheduled = peaceTurns.includes(currentTurn);
 
       return (
         <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-serif flex flex-col relative">
@@ -558,6 +655,308 @@
                 Advance to Next Turn →
               </button>
             </div>
+
+            {/* HOME OFFICE TAB */}
+            {activeTab === 'Home Office' && (
+              <div className="space-y-4">
+                {!isHomeOfficeScheduled ? (
+                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4 font-sans">
+                    <div className="text-3xl mb-2">📜🔒</div>
+                    <h3 className="text-lg font-bold text-slate-200">No Home Office Report Scheduled for Turn {currentTurn}</h3>
+                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                      Home Office reports are only delivered during their designated sitting turns on the Parliamentary Timetable (Scheduled turns: {peaceTurns.length > 0 ? peaceTurns.map(t => `Turn ${t}`).join(', ') : 'None'}).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-sm">WHITEHALL // SECRETARY OF STATE FOR THE HOME DEPARTMENT</div>
+                      <div className="text-[#E5C158] font-bold tracking-wide">REPORT ON THE STATE OF THE PUBLIC PEACE & DOMESTIC TRANQUILITY</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
+                        <div>
+                          <strong className="text-white">Date of Audit :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-white">Reporting Officer :</strong>
+                          <input
+                            type="text"
+                            value={homeOfficeForm.reportingOfficer}
+                            onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
+                            className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION I */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="text-slate-400 font-sans text-[11px] space-y-0.5">
+                        <div><strong className="text-white">Public Order Measures:</strong> Exceptional (10+) | Stable (7–9) | Elevated Risk (0–6) | Risk (-1 or below)</div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-2">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.publicOrder[region];
+                          const status = getPublicOrderStatusLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">{regionName}</span>
+                                <div className={`text-[11px] ${status.color}`}>&gt; {status.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Rating:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-xs font-bold font-sans">
+                        <span className="text-[#E5C158]">• National Stability Index :</span>
+                        <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
+                          {avgPublicOrder}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* SECTION II */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        II. RADICAL SEDITION & REFORM WATCH (Clamour for Reform Tracker)<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="text-slate-400 font-sans text-[11px]">
+                        <div><strong className="text-white">Clamour For Reform Level:</strong> High (10+) | Medium (6–9) | Low (1–5) | None (0)</div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-2">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.clamour[region];
+                          const clamour = getClamourLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">{regionName}</span>
+                                <div className={`text-[11px] ${clamour.color}`}>&gt; {clamour.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Level:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('clamour', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* SECTION III */}
+                    <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        III. PROVINCIAL TRANQUILITY & MAGISTRACY RETURNS<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      {[
+                        { title: 'Garrisoned Forces (Repression)', key: 'garrisons' },
+                        { title: 'People In Government (Repression)', key: 'ministers' },
+                        { title: 'Government Buildings (Repression)', key: 'buildings' },
+                        { title: 'Government Type (Repression)', key: 'govType' }
+                      ].map((category) => (
+                        <div key={category.key} className="border-t border-slate-800 pt-3">
+                          <div className="text-xs font-bold text-white mb-2">{category.title}</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                              <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
+                                <span className="text-[11px] text-slate-300 uppercase">{region}:</span>
+                                <input
+                                  type="number"
+                                  value={homeOfficeForm[category.key][region]}
+                                  onChange={(e) => handleHomeOfficeChange(category.key, region, e.target.value)}
+                                  className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-emerald-400 p-0.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* SECTION IV */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="text-xs font-bold text-white mb-2">Entertainment & Culture</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                          <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
+                            <span className="text-[11px] text-slate-300 uppercase">{region}:</span>
+                            <input
+                              type="number"
+                              value={homeOfficeForm.culture[region]}
+                              onChange={(e) => handleHomeOfficeChange('culture', region, e.target.value)}
+                              className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-cyan-400 p-0.5 rounded focus:border-[#E5C158]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SECTION V */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        V. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="text-xs text-slate-300 font-bold">
+                          • Foreign Agents Detected ({homeOfficeForm.foreignAgents.length})
+                        </span>
+                        <button
+                          onClick={handleAddAgent}
+                          className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded text-xs hover:bg-yellow-400 transition-colors cursor-pointer"
+                        >
+                          + Add Agent
+                        </button>
+                      </div>
+
+                      {homeOfficeForm.foreignAgents.length === 0 ? (
+                        <div className="text-center text-slate-500 italic py-4 text-xs bg-[#0B192C] rounded border border-slate-800">
+                          No foreign agents currently logged under surveillance.
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {homeOfficeForm.foreignAgents.map((agent, index) => (
+                            <div key={index} className="bg-[#0B192C] p-3 rounded border border-slate-800 relative space-y-2">
+                              {homeOfficeForm.foreignAgents.length > 1 && (
+                                <button
+                                  onClick={() => handleRemoveAgent(index)}
+                                  className="absolute top-2 right-2 text-rose-400 hover:text-rose-200 text-xs font-bold px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
+                                  title="Remove Entry"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Nation</label>
+                                  <input
+                                    type="text"
+                                    value={agent.nation}
+                                    placeholder="e.g. Kingdom of France"
+                                    onChange={(e) => handleAgentChange(index, 'nation', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Name</label>
+                                  <input
+                                    type="text"
+                                    value={agent.name}
+                                    placeholder="e.g. Agent Name"
+                                    onChange={(e) => handleAgentChange(index, 'name', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Status of the Relation with the Agent</label>
+                                  <input
+                                    type="text"
+                                    value={agent.status}
+                                    placeholder="e.g. Under Surveillance / Detained"
+                                    onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Location</label>
+                                  <input
+                                    type="text"
+                                    value={agent.location}
+                                    placeholder="e.g. London (Soho)"
+                                    onChange={(e) => handleAgentChange(index, 'location', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECTION VI */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        VI. DOMESTIC SUMMARY<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-slate-300">Total Stabilizing Measures :</span>
+                          <span className="text-emerald-400 font-bold">+{totalPositiveEffects} Points</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-slate-300">Total Sedition & Radical Clamour :</span>
+                          <span className="text-rose-400 font-bold">-{totalNegativeEffects} Points</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-white font-bold">Net Civil Peace Index :</span>
+                          <span className={`font-bold ${netDomesticBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {netDomesticBalance >= 0 ? `+${netDomesticBalance}` : netDomesticBalance} Points
+                          </span>
+                        </div>
+
+                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800 mt-2 space-y-1">
+                          <div className="text-[11px] font-bold text-[#E5C158] uppercase tracking-wider">
+                            Magisterial Judgement on Domestic Tranquility:
+                          </div>
+                          <div className={`text-xs leading-relaxed ${domesticJudgementColor}`}>
+                            {domesticJudgement}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* EXCHEQUER TAB */}
             {activeTab === 'Exchequer' && (
@@ -620,7 +1019,6 @@
                         <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
                           <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
                           
-                          {/* Domestic Inflows */}
                           <div className="space-y-3 font-sans">
                             <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflow(s)</div>
                             
@@ -652,7 +1050,6 @@
                               </div>
                             </div>
 
-                            {/* Gross Commercial Port Traffic */}
                             <div className="border border-slate-800 p-3 rounded bg-[#0B192C]/50 space-y-2 ml-2">
                               <div className="text-slate-300 font-semibold text-[11px]">Gross Commercial Port Traffic</div>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -712,7 +1109,6 @@
                             </div>
                           </div>
 
-                          {/* Foreign Inflows */}
                           <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
                             <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Inflow(s)</div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
@@ -754,7 +1150,6 @@
                         <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
                           <div className="text-rose-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">OUTFLOWS:</div>
                           
-                          {/* Domestic Outflows */}
                           <div className="space-y-3 font-sans">
                             <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Outflow(s)</div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
@@ -781,7 +1176,6 @@
                             </div>
                           </div>
 
-                          {/* Foreign Outflows */}
                           <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
                             <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Outflow(s)</div>
                             <div className="pl-2 max-w-md">
@@ -1056,7 +1450,7 @@
               </div>
             )}
 
-            {activeTab !== 'Exchequer' && activeTab !== 'Parliamentary Timetable' && (
+            {activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Parliamentary Timetable' && (
               <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center">
                 <h2 className="text-lg font-bold text-[#E5C158] mb-2">{activeTab} Department</h2>
                 <p className="text-xs text-slate-400">Department administrative controls under active development.</p>
