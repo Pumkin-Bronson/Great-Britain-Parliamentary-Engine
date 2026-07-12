@@ -88,6 +88,33 @@
         ]
       });
 
+      // Foreign Office State
+      const [foreignOfficeForm, setForeignOfficeForm] = React.useState({
+        reportingOfficer: 'Viscount Castlereagh',
+        treatyName: '',
+        treatyNature: 'Coalition Accord',
+        selectedActions: [],
+        sec1_highContractingSovereign: '',
+        sec2_signatoryState: '',
+        sec3_recipientCourt: '',
+        sec3_stipulatedSum: '',
+        sec4_adversaryPower: '',
+        sec5_targetState: '',
+        sec6_proscribedPower: '',
+        sec7_formerAlliedPower: '',
+        sec8_grantingCourt: '',
+        sec8_termOfTransit: '',
+        sec9_negotiatingPower: '',
+        sec9_natureOfTransaction: 'Cession to foreign sovereign',
+        sec9_demarcatedTerritory: '',
+        sec10_recipientProvidingPower: '',
+        sec10_directionOfTransmission: 'Imported',
+        sec10_scientificPrinciples: '',
+        sec11_transactingPower: '',
+        sec11_directionOfSettlement: 'Remittance to Foreign Treasury',
+        sec11_quantumOfSettlement: ''
+      });
+
       const handleCfChange = (field, val) => {
         const parsed = parseFloat(val);
         setCfForm((prev) => ({
@@ -130,6 +157,25 @@
           ...prev,
           foreignAgents: prev.foreignAgents.filter((_, i) => i !== index)
         }));
+      };
+
+      const handleForeignOfficeChange = (field, value) => {
+        setForeignOfficeForm((prev) => ({
+          ...prev,
+          [field]: value
+        }));
+      };
+
+      const toggleDiplomaticAction = (action) => {
+        setForeignOfficeForm((prev) => {
+          const exists = prev.selectedActions.includes(action);
+          return {
+            ...prev,
+            selectedActions: exists
+              ? prev.selectedActions.filter((a) => a !== action)
+              : [...prev.selectedActions, action]
+          };
+        });
       };
 
       const isExchequerSubTabUnlocked = (subTabKey) => {
@@ -228,7 +274,8 @@
           turn8Rev,
           growthRate,
           cfForm,
-          homeOfficeForm
+          homeOfficeForm,
+          foreignOfficeForm
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -254,6 +301,7 @@
             setGrowthRate(parsed.growthRate || null);
             if (parsed.cfForm) setCfForm(parsed.cfForm);
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
+            if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -286,10 +334,10 @@
           errors.push("You must designate exactly 2 Opposition Days (Turns 4–12, sitting turns only).");
         }
         if (!warOfficeTurn) {
-          errors.push("War Office Annual Report must be scheduled between Turn 13 and Turn 24 (sitting turns only).");
+          errors.push("War Office Annual Report must be scheduled between Turn 17 and Turn 23 (sitting turns only).");
         }
         if (!admiraltyTurn) {
-          errors.push("Admiralty Annual Report must be scheduled between Turn 13 and Turn 24 (sitting turns only).");
+          errors.push("Admiralty Annual Report must be scheduled between Turn 17 and Turn 23 (sitting turns only).");
         }
         return errors;
       };
@@ -366,7 +414,6 @@
         return (
           <div className="relative pt-6 pb-4 my-2 overflow-x-auto">
             <div className="min-w-[1500px] relative z-10 px-2">
-              {/* Yellow horizontal line fixed inside min-w container so it stretches all 24 turns */}
               <div className="absolute top-3 left-6 right-6 h-[3px] bg-[#E5C158] shadow-[0_0_10px_rgba(229,193,88,0.5)] z-0" />
               
               <div className="flex justify-between relative z-10 gap-2">
@@ -481,7 +528,7 @@
 
       if (gameState === 'TIMETABLE_BUILDER') {
         const optionWindowTurns = [4, 5, 7, 8, 9, 10, 11, 12];
-        const secondHalfTurns = Array.from({ length: 12 }, (_, i) => i + 13).filter(t => !RECESS_TURNS[t]);
+        const secondHalfTurns = [17, 19, 20, 21, 22, 23];
 
         return (
           <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-6xl mx-auto">
@@ -566,7 +613,7 @@
                 <select
                   value={warOfficeTurn || ''}
                   onChange={(e) => setWarOfficeTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
+                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white cursor-pointer"
                 >
                   <option value="">-- Choose Sitting Turn --</option>
                   {secondHalfTurns.map((t) => (
@@ -581,7 +628,7 @@
                 <select
                   value={admiraltyTurn || ''}
                   onChange={(e) => setAdmiraltyTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
+                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white cursor-pointer"
                 >
                   <option value="">-- Choose Sitting Turn --</option>
                   {secondHalfTurns.map((t) => (
@@ -612,6 +659,12 @@
       ];
 
       const isHomeOfficeScheduled = peaceTurns.includes(currentTurn);
+
+      const actionList = [
+        'Alliance', 'Trade Agreement', 'Present State Gift', 'Declaration of War',
+        'Joining Wars', 'Trade Embargoes', 'Breaking Alliances', 'Military Access',
+        'Regions', 'Technology', 'Payment'
+      ];
 
       return (
         <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-serif flex flex-col relative">
@@ -667,6 +720,402 @@
                 Advance to Next Turn →
               </button>
             </div>
+
+            {/* FOREIGN OFFICE TAB */}
+            {activeTab === 'Foreign Office' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">LEGAL & CONSTITUTIONAL AUDIT — MID-JULY {selectedYear}</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white">Reporting Officer :</strong>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.reportingOfficer}
+                        onChange={(e) => handleForeignOfficeChange('reportingOfficer', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <strong className="text-white">Authority:</strong> The Foreign Department
+                    </div>
+                  </div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+
+                {/* HEADER INPUTS */}
+                <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">Treaty Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Convention of London"
+                        value={foreignOfficeForm.treatyName}
+                        onChange={(e) => handleForeignOfficeChange('treatyName', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">Treaty Nature</label>
+                      <select
+                        value={foreignOfficeForm.treatyNature}
+                        onChange={(e) => handleForeignOfficeChange('treatyNature', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded text-xs focus:border-[#E5C158] focus:outline-none cursor-pointer"
+                      >
+                        <option value="Coalition Accord">Coalition Accord</option>
+                        <option value="Commercial Treaty">Commercial Treaty</option>
+                        <option value="Transit Treaty">Transit Treaty</option>
+                        <option value="Cession Accord">Cession Accord</option>
+                        <option value="Manifesto of War">Manifesto of War</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#E5C158] mb-2">
+                      Diplomatic Action(s) (Select all that apply to reveal core action sections):
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 bg-[#0B192C] p-3 rounded border border-slate-800">
+                      {actionList.map((action) => {
+                        const checked = foreignOfficeForm.selectedActions.includes(action);
+                        return (
+                          <label key={action} className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 hover:text-white">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleDiplomaticAction(action)}
+                              className="accent-[#E5C158] cursor-pointer"
+                            />
+                            <span>{action}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* DYNAMIC SECTIONS BASED ON SELECTED ACTIONS */}
+                
+                {/* SECTION I */}
+                {foreignOfficeForm.selectedActions.includes('Alliance') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      I. CORE DIPLOMATIC ACTION : CONCLUDING ALLIANCES & SOLEMN COMPACTS<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">High Contracting Sovereign / Power :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec1_highContractingSovereign}
+                        onChange={(e) => handleForeignOfficeChange('sec1_highContractingSovereign', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION II */}
+                {foreignOfficeForm.selectedActions.includes('Trade Agreement') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      II. CORE DIPLOMATIC ACTION : COMMERCIAL TREATIES & NAVIGATION CONVENTIONS<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Signatory State / Partner Power :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec2_signatoryState}
+                        onChange={(e) => handleForeignOfficeChange('sec2_signatoryState', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION III */}
+                {foreignOfficeForm.selectedActions.includes('Present State Gift') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      III. CORE DIPLOMATIC ACTION : CONFIDENTIAL SUBSIDIES & SECRET DISBURSEMENTS<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Recipient Court / Beneficiary State :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec3_recipientCourt}
+                          onChange={(e) => handleForeignOfficeChange('sec3_recipientCourt', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Stipulated Sum / Discretionary Allowance :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec3_stipulatedSum}
+                          onChange={(e) => handleForeignOfficeChange('sec3_stipulatedSum', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION IV */}
+                {foreignOfficeForm.selectedActions.includes('Declaration of War') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      IV. CORE DIPLOMATIC ACTION : RUPTURE OF RELATIONS & PROCLAMATION OF HOSTILITIES<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Adversary Power / Target State :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec4_adversaryPower}
+                        onChange={(e) => handleForeignOfficeChange('sec4_adversaryPower', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION V */}
+                {foreignOfficeForm.selectedActions.includes('Joining Wars') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      V. CORE DIPLOMATIC ACTION : COALITION ADHESION & BELLIGERENT ACCESSION<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Target State / Hostile Power :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec5_targetState}
+                        onChange={(e) => handleForeignOfficeChange('sec5_targetState', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION VI */}
+                {foreignOfficeForm.selectedActions.includes('Trade Embargoes') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      VI. CORE DIPLOMATIC ACTION : MERCANTILE INTERDICTS & PORT BLOCKADES<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Proscribed Power / Interdicted State :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec6_proscribedPower}
+                        onChange={(e) => handleForeignOfficeChange('sec6_proscribedPower', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION VII */}
+                {foreignOfficeForm.selectedActions.includes('Breaking Alliances') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      VII. CORE DIPLOMATIC ACTION : ABROGATION OF TREATIES & DISSOLUTION OF ALLIANCES<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Former Allied Power / Severed Party :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec7_formerAlliedPower}
+                        onChange={(e) => handleForeignOfficeChange('sec7_formerAlliedPower', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION VIII */}
+                {foreignOfficeForm.selectedActions.includes('Military Access') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      VIII. CORE DIPLOMATIC ACTION : RIGHT OF TRANSIT & MILITARY PASSAGE CONVENTIONS<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Granting Court / Transit Sovereign :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec8_grantingCourt}
+                          onChange={(e) => handleForeignOfficeChange('sec8_grantingCourt', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Term of Transit / Period of Right :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec8_termOfTransit}
+                          onChange={(e) => handleForeignOfficeChange('sec8_termOfTransit', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION IX */}
+                {foreignOfficeForm.selectedActions.includes('Regions') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      IX. CORE DIPLOMATIC ACTION : TERRITORIAL CONCESSIONS & BOUNDARY RECTIFICATION<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Negotiating Power / Neighboring State :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec9_negotiatingPower}
+                          onChange={(e) => handleForeignOfficeChange('sec9_negotiatingPower', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Nature of Transaction :</label>
+                        <select
+                          value={foreignOfficeForm.sec9_natureOfTransaction}
+                          onChange={(e) => handleForeignOfficeChange('sec9_natureOfTransaction', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded text-xs focus:border-[#E5C158]"
+                        >
+                          <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
+                          <option value="Annexation to the Crown">Annexation to the Crown</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Demarcated Territory / Ceded Provinces :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec9_demarcatedTerritory}
+                        onChange={(e) => handleForeignOfficeChange('sec9_demarcatedTerritory', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION X */}
+                {foreignOfficeForm.selectedActions.includes('Technology') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      X. CORE DIPLOMATIC ACTION : EXCHANGE OF SCIENTIFIC & TECHNICAL KNOWLEDGE<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Recipient / Providing Power :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec10_recipientProvidingPower}
+                          onChange={(e) => handleForeignOfficeChange('sec10_recipientProvidingPower', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Direction of Transmission :</label>
+                        <select
+                          value={foreignOfficeForm.sec10_directionOfTransmission}
+                          onChange={(e) => handleForeignOfficeChange('sec10_directionOfTransmission', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded text-xs focus:border-[#E5C158]"
+                        >
+                          <option value="Imported">Imported</option>
+                          <option value="Imparted">Imparted</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Scientific Principles & Innovations :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec10_scientificPrinciples}
+                        onChange={(e) => handleForeignOfficeChange('sec10_scientificPrinciples', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION XI */}
+                {foreignOfficeForm.selectedActions.includes('Payment') && (
+                  <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                    <div className="text-[#E5C158] font-bold text-xs font-mono">
+                      ----------------------------------------------------------------------------------------<br />
+                      XI. CORE DIPLOMATIC ACTION : FINANCIAL INDEMNITIES & TREASURY TRANSFERS<br />
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Transacting Power / Reciprocal State :</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.sec11_transactingPower}
+                          onChange={(e) => handleForeignOfficeChange('sec11_transactingPower', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1 font-bold">Direction of Settlement :</label>
+                        <select
+                          value={foreignOfficeForm.sec11_directionOfSettlement}
+                          onChange={(e) => handleForeignOfficeChange('sec11_directionOfSettlement', e.target.value)}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded text-xs focus:border-[#E5C158]"
+                        >
+                          <option value="Remittance to Foreign Treasury">Remittance to Foreign Treasury</option>
+                          <option value="Disbursement from State Vaults">Disbursement from State Vaults</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-300 mb-1 font-bold">Quantum of Settlement / Principal Sum :</label>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.sec11_quantumOfSettlement}
+                        onChange={(e) => handleForeignOfficeChange('sec11_quantumOfSettlement', e.target.value)}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+              </div>
+            )}
 
             {/* HOME OFFICE TAB */}
             {activeTab === 'Home Office' && (
@@ -1003,7 +1452,6 @@
             {/* EXCHEQUER TAB */}
             {activeTab === 'Exchequer' && (
               <div className="space-y-4">
-                {/* SUB NAVIGATION WITH TURN LOCKING */}
                 <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
                   {[
                     { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
@@ -1033,7 +1481,6 @@
                   })}
                 </div>
 
-                {/* GUARD CLAUSE FOR LOCKED SUB-TABS */}
                 {!isExchequerSubTabUnlocked(exchequerSubTab) ? (
                   <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4">
                     <div className="text-3xl mb-2">📜🔒</div>
@@ -1044,7 +1491,6 @@
                   </div>
                 ) : (
                   <>
-                    {/* SUBTAB 1: CONSOLIDATED FUNDS LEDGER */}
                     {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
                       <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                         <div className="text-center space-y-1">
@@ -1057,7 +1503,6 @@
                           </div>
                         </div>
 
-                        {/* INFLOWS SECTION */}
                         <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
                           <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
                           
@@ -1188,7 +1633,6 @@
                           </div>
                         </div>
 
-                        {/* OUTFLOWS SECTION */}
                         <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
                           <div className="text-rose-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">OUTFLOWS:</div>
                           
@@ -1233,7 +1677,6 @@
                           </div>
                         </div>
 
-                        {/* NET AUDIT SUMMARY */}
                         <div className="bg-[#0F223D] border-2 border-[#E5C158] p-4 rounded space-y-3 font-mono">
                           <div className="text-slate-400 text-center">=======================================================</div>
                           <div className="flex justify-between items-center text-sm font-bold">
@@ -1260,7 +1703,6 @@
                       </div>
                     )}
 
-                    {/* SUBTAB 2: GDI GROWTH ASSESSMENT */}
                     {exchequerSubTab === 'GDI_ASSESSMENT' && (
                       <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-6">
                         <div className="flex justify-between items-start border-b border-slate-800 pb-4">
@@ -1380,7 +1822,6 @@
                       </div>
                     )}
 
-                    {/* SUBTAB 3: FINANCIAL STATEMENT */}
                     {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
                       <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-6">
                         <div className="flex justify-between items-start border-b border-slate-800 pb-4">
@@ -1492,7 +1933,7 @@
               </div>
             )}
 
-            {activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Parliamentary Timetable' && (
+            {activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Foreign Office' && activeTab !== 'Parliamentary Timetable' && (
               <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center">
                 <h2 className="text-lg font-bold text-[#E5C158] mb-2">{activeTab} Department</h2>
                 <p className="text-xs text-slate-400">Department administrative controls under active development.</p>
