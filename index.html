@@ -13,410 +13,103 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    const { useState } = React;
+
     const MONTH_NAMES = [
-      'Jan', 'Jan', 'Feb', 'Feb', 'Mar', 'Mar', 
+      'Jan', 'Jan', 'Feb', 'Feb', 'Mar', 'Mar',
       'Apr', 'Apr', 'May', 'May', 'Jun', 'Jun',
       'Jul', 'Jul', 'Aug', 'Aug', 'Sep', 'Sep',
       'Oct', 'Oct', 'Nov', 'Nov', 'Dec', 'Dec'
     ];
 
-    function ParliamentaryEngine() {
-      const [gameState, setGameState] = React.useState('MAIN_MENU');
-      const [selectedYear, setSelectedYear] = React.useState(1820);
-      const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
-      const [currentTurn, setCurrentTurn] = React.useState(1);
+    function App() {
+      const [view, setView] = useState('menu'); // 'menu', 'timetable-setup', 'gameplay'
+      const [activeTab, setActiveTab] = useState('timetable');
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+      const [currentTurn, setCurrentTurn] = useState(8);
 
-      const [justiceTurns, setJusticeTurns] = React.useState([]);
-      const [peaceTurns, setPeaceTurns] = React.useState([]);
-      const [oppositionTurns, setOppositionTurns] = React.useState([]);
-      const [warOfficeTurn, setWarOfficeTurn] = React.useState(null);
-      const [admiraltyTurn, setAdmiraltyTurn] = React.useState(null);
-
-      const [turn3Rev, setTurn3Rev] = React.useState(100000);
-      const [turn8Rev, setTurn8Rev] = React.useState(150000);
-      const [growthRate, setGrowthRate] = React.useState(null);
-
-      const validateRules = () => {
-        const errors = [];
-        if (justiceTurns.length > 1) {
-          const sorted = [...justiceTurns].sort((a, b) => a - b);
-          for (let i = 0; i < sorted.length - 1; i++) {
-            if (sorted[i + 1] - sorted[i] !== 8) {
-              errors.push("Lord Chancellor reports must be exactly 8 turns (4 months) apart.");
-            }
-          }
-        }
-        if (peaceTurns.length > 1) {
-          const sorted = [...peaceTurns].sort((a, b) => a - b);
-          for (let i = 0; i < sorted.length - 1; i++) {
-            if (sorted[i + 1] - sorted[i] !== 4) {
-              errors.push("Home Office reports must be exactly 4 turns (2 months) apart.");
-            }
-          }
-        }
-        if (oppositionTurns.length !== 2) {
-          errors.push("You must designate exactly 2 Whig Opposition Days (Turns 4–12).");
-        }
-        if (!warOfficeTurn) {
-          errors.push("War Office Annual Report must be scheduled between Turn 13 and Turn 24.");
-        }
-        if (!admiraltyTurn) {
-          errors.push("Admiralty Annual Report must be scheduled between Turn 13 and Turn 24.");
-        }
-        return errors;
+      // Save Game Handler
+      const handleSaveGame = () => {
+        const gameState = { currentTurn, activeTab };
+        localStorage.setItem('parliament_savegame', JSON.stringify(gameState));
+        alert('Game saved successfully!');
+        setIsMenuOpen(false);
       };
 
-      const validationErrors = validateRules();
-      const isValid = validationErrors.length === 0;
-
-      const toggleTurn = (turn, currentList, setList) => {
-        if (currentList.includes(turn)) {
-          setList(currentList.filter((t) => t !== turn));
+      // Load Game Handler
+      const handleLoadGame = () => {
+        const saved = localStorage.getItem('parliament_savegame');
+        if (saved) {
+          const gameState = JSON.parse(saved);
+          setCurrentTurn(gameState.currentTurn || 8);
+          setActiveTab(gameState.activeTab || 'timetable');
+          setView('gameplay');
         } else {
-          setList([...currentList, turn]);
+          alert('No saved game found.');
         }
       };
 
-      const handleCalculateGrowth = () => {
-        if (turn3Rev > 0 && turn8Rev > 0) {
-          const g = Math.pow(turn8Rev / turn3Rev, 1 / 5) - 1;
-          setGrowthRate(g);
-        }
-      };
-
-      const handleNextTurn = () => {
-        if (currentTurn < 24) {
-          setCurrentTurn(currentTurn + 1);
-        } else {
-          setSelectedYear((prev) => prev + 1);
-          setCurrentTurn(1);
-          setGameState('TIMETABLE_BUILDER');
-        }
-      };
-
-      if (gameState === 'MAIN_MENU') {
+      // Main Menu View
+      if (view === 'menu') {
         return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] flex flex-col items-center justify-center p-6 font-serif">
-            <div className="border-4 border-[#E5C158] p-8 rounded-lg max-w-md w-full text-center bg-[#0B192C] shadow-2xl">
-              <div className="border-2 border-[#E5C158] p-2 mb-6 bg-[#0F223D]">
-                <svg viewBox="0 0 60 30" className="w-full h-24 shadow-md">
-                  <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
-                  <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
-                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
-                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="2"/>
-                  <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
-                  <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-[#E5C158] mb-2 tracking-wide">PARLIAMENTARY ENGINE</h1>
-              <p className="text-sm italic text-slate-400 mb-8">British Political Strategy Simulation · 1800s</p>
-              <div className="space-y-4">
-                <button
-                  onClick={() => setGameState('YEAR_INPUT')}
-                  className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-3 px-6 rounded hover:bg-yellow-400 transition-colors"
-                >
-                  NEW GAME
-                </button>
-                <button
-                  onClick={() => alert("Load game feature coming soon!")}
-                  className="w-full border border-[#E5C158] text-[#E5C158] font-bold py-3 px-6 rounded hover:bg-[#E5C158] hover:text-[#0F223D] transition-colors"
-                >
-                  LOAD GAME
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      if (gameState === 'YEAR_INPUT') {
-        return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] flex flex-col items-center justify-center p-6 font-serif">
-            <div className="border-2 border-[#E5C158] p-8 rounded-lg max-w-sm w-full bg-[#0B192C]">
-              <h2 className="text-2xl font-bold text-[#E5C158] mb-4 text-center">Select Starting Year</h2>
-              <input
-                type="number"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value) || 1820)}
-                className="w-full bg-[#0F223D] border border-[#E5C158] text-white p-3 rounded mb-6 text-center text-xl font-bold"
-              />
-              <button
-                onClick={() => setGameState('TIMETABLE_BUILDER')}
-                className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-3 rounded hover:bg-yellow-400 transition-colors"
+          <div className="min-h-screen flex flex-col items-center justify-center bg-[#0B1727] p-6 text-center">
+            <h1 className="text-4xl font-bold tracking-wide text-[#F3C66B] mb-2 font-serif">
+              1800s British Parliamentary Strategy Engine
+            </h1>
+            <p className="text-slate-400 mb-8 max-w-md">
+              Manage the government, balance the budget, and navigate Victorian politics.
+            </p>
+            <div className="space-y-4 w-64">
+              <button 
+                onClick={() => setView('timetable-setup')}
+                className="w-full py-3 bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-semibold rounded-lg shadow-md transition"
               >
-                PROCEED TO TIMETABLE
+                New Game
+              </button>
+              <button 
+                onClick={handleLoadGame}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg border border-slate-600 transition"
+              >
+                Load Game
               </button>
             </div>
           </div>
         );
       }
 
-      if (gameState === 'TIMETABLE_BUILDER') {
+      // Timetable Setup View
+      if (view === 'timetable-setup') {
         return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-5xl mx-auto">
-            <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block">
+          <div className="min-h-screen bg-[#0F223D] p-8 max-w-5xl mx-auto font-serif">
+            <button 
+              onClick={() => setView('menu')}
+              className="text-slate-400 hover:text-white text-sm mb-6 inline-block"
+            >
               ← Return to Menu
             </button>
-            <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
-            <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
-            <p className="text-sm text-slate-300 mb-6">
-              Before Parliament convenes, order the twenty-four bi-weekly turns of {selectedYear}. Place compulsory reports and Opposition Days within their designated windows.
-            </p>
+            
+            <header className="mb-6">
+              <span className="text-xs uppercase tracking-widest text-[#F3C66B]">Pre-Session · Clerk of the House</span>
+              <h1 className="text-3xl font-bold text-white mt-1">Design the Timetable · 1820</h1>
+              <p className="text-sm text-slate-300 mt-2">
+                Before Parliament convenes, order the twenty-four bi-weekly turns of 1820. The Estimates and Budget are fixed by custom; you must place the compulsory reports and Opposition Days within their designated windows.
+              </p>
+            </header>
 
-            {/* ENLARGED WARNINGS & ADVICE BANNER AT TOP */}
-            {!isValid ? (
-              <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg mb-8 shadow-xl">
-                <div className="flex items-center gap-2 mb-2 text-rose-300 font-bold text-base">
-                  <span className="text-xl">⚠️</span> Timetable Requirements & Rules Pending
-                </div>
-                <div className="space-y-2 text-sm text-rose-200">
-                  {validationErrors.map((err, idx) => (
-                    <div key={idx} className="flex items-start gap-2 bg-rose-900/40 p-2 rounded border border-rose-800/60">
-                      <span className="font-bold">•</span>
-                      <span>{err}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-emerald-950/80 border-2 border-emerald-500 p-4 rounded-lg mb-8 text-emerald-200 text-sm font-bold flex items-center gap-3">
-                <span className="text-xl">✓</span> All timetable rules and requirements satisfied! You may begin the session below.
-              </div>
-            )}
-
-            <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
-              <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed by Standing Order</h2>
-              <div className="space-y-2 text-xs">
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURNS 1–7</span> Consolidated Funds — Gross Income Growth Assessment across all years.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 8</span> Financial Statement — Annual Budget.</div>
+            <div className="bg-[#162C4E] border border-slate-700 rounded-lg p-6 mb-6">
+              <h2 className="text-[#F3C66B] font-semibold flex items-center gap-2 mb-2">
+                🔒 Fixed by Standing Order
+              </h2>
+              <div className="text-sm text-slate-300 space-y-1">
+                <p><strong className="text-white">TURNS 1–7:</strong> Consolidated Funds — with the Gross Income Growth Assessment.</p>
+                <p><strong className="text-white">TURN 8:</strong> Financial Statement and Budget Speech.</p>
               </div>
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns (4 months)</span>
-              </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, justiceTurns, setJusticeTurns)}
-                    className={`flex-1 py-2 text-xs rounded border ${justiceTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-white text-sm">Home Office Report <span className="text-xs text-slate-400 font-normal">(State of Public Peace)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns (2 months)</span>
-              </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, peaceTurns, setPeaceTurns)}
-                    className={`flex-1 py-2 text-xs rounded border ${peaceTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-white text-sm">Whig Opposition Days</h3>
-                <span className={`text-xs px-2 py-0.5 rounded ${oppositionTurns.length === 2 ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'}`}>{oppositionTurns.length} of 2 set</span>
-              </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, oppositionTurns, setOppositionTurns)}
-                    className={`flex-1 py-2 text-xs rounded border ${oppositionTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-white text-sm mb-1">War Office Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Turns 13–24</p>
-                <select
-                  value={warOfficeTurn || ''}
-                  onChange={(e) => setWarOfficeTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
-                >
-                  <option value="">-- Choose Turn --</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 13).map((t) => (
-                    <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-white text-sm mb-1">Admiralty Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Turns 13–24</p>
-                <select
-                  value={admiraltyTurn || ''}
-                  onChange={(e) => setAdmiraltyTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
-                >
-                  <option value="">-- Choose Turn --</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 13).map((t) => (
-                    <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <button
-              disabled={!isValid}
-              onClick={() => setGameState('DASHBOARD')}
-              className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
-            >
-              {isValid ? 'Confirm & Start Year' : 'Resolve every rule above before session may begin'}
-            </button>
-          </div>
-        );
-      }
-
-      const tabs = [
-        'Parliamentary Timetable', 'General Election', 'Parliament (House of Commons)', 
-        'House of Lords', 'Cabinet', "Lord Chancellor's Department", 
-        'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office'
-      ];
-
-      return (
-        <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-serif flex flex-col">
-          <header className="border-b border-[#E5C158] bg-[#0B192C] px-4 py-3 flex items-center gap-4">
-            <button className="border border-[#E5C158] text-[#E5C158] p-1.5 rounded">☰</button>
-            <div className="text-sm font-bold text-[#E5C158] whitespace-nowrap">Year {selectedYear} · Turn {currentTurn} of 24</div>
-            <nav className="flex gap-2 overflow-x-auto py-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-xs whitespace-nowrap px-3 py-1.5 rounded ${activeTab === tab ? 'bg-[#E5C158] text-[#0F223D] font-bold' : 'text-slate-300'}`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </nav>
-          </header>
-
-          <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-[#E5C158]">{activeTab}</h1>
-              <button onClick={handleNextTurn} className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded text-xs hover:bg-yellow-400">
-                Advance to Next Turn →
+            <div className="flex justify-end">
+              <button 
+                onClick={() => setView('gameplay')}
+                className="px-6 py-2 bg-[#F3C66B] hover:bg-[#e0b253] text-[#0F223D] font-bold rounded shadow transition font-sans"
+              >
+                Confirm Timetable & Begin Session →
               </button>
-            </div>
-
-            {activeTab === 'Parliamentary Timetable' && (
-              <div className="bg-[#0B192C] border border-slate-800 p-6 rounded">
-                <h2 className="text-lg font-bold text-white mb-4">Active Parliamentary Schedule ({selectedYear})</h2>
-                <div className="space-y-2">
-                  {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => (
-                    <div key={t} className={`p-3 rounded border flex justify-between items-center text-xs ${t === currentTurn ? 'border-[#E5C158] bg-[#0F223D]' : 'border-slate-800 bg-[#0B192C]'}`}>
-                      <div>
-                        <span className="font-bold text-[#E5C158] mr-3">TURN {t} ({MONTH_NAMES[t - 1]})</span>
-                        {t === 1 && <span className="font-semibold text-amber-200">Opening Address | </span>}
-                        {t <= 7 && <span>Consolidated Funds Assessment</span>}
-                        {t === 8 && <span>Financial Statement (Annual Budget)</span>}
-                        {justiceTurns.includes(t) && <span className="ml-2 text-blue-300">| Lord Chancellor Report</span>}
-                        {peaceTurns.includes(t) && <span className="ml-2 text-purple-300">| Home Office Report</span>}
-                        {oppositionTurns.includes(t) && <span className="ml-2 text-rose-300">| Whig Opposition Day</span>}
-                        {warOfficeTurn === t && <span className="ml-2 text-amber-300">| War Office Report</span>}
-                        {admiraltyTurn === t && <span className="ml-2 text-cyan-300">| Admiralty Report</span>}
-                      </div>
-                      {t < currentTurn ? <span className="text-emerald-400 font-bold">✓ Completed</span> : t === currentTurn ? <span className="text-[#E5C158] font-bold">● Active Turn</span> : <span className="text-slate-500">Upcoming</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'Exchequer' && (
-              <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-6">
-                <h2 className="text-lg font-bold text-[#E5C158]">Treasury & Gross Revenue Calculator</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-slate-300 mb-1">Turn 3 Gross Revenue (£)</label>
-                    <input
-                      type="number"
-                      value={turn3Rev}
-                      onChange={(e) => setTurn3Rev(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#0F223D] border border-slate-700 text-white p-2 rounded text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-300 mb-1">Turn 8 Gross Revenue (£)</label>
-                    <input
-                      type="number"
-                      value={turn8Rev}
-                      onChange={(e) => setTurn8Rev(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#0F223D] border border-slate-700 text-white p-2 rounded text-xs"
-                    />
-                  </div>
-                </div>
-
-                <button onClick={handleCalculateGrowth} className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded text-xs hover:bg-yellow-400">
-                  Calculate Growth Rate (g)
-                </button>
-
-                {growthRate !== null && (
-                  <div className="border border-[#E5C158]/40 p-4 rounded bg-[#0F223D]">
-                    <div className="text-xs text-slate-300">Calculated Compound Growth Rate (g):</div>
-                    <div className="text-2xl font-bold text-[#E5C158]">{(growthRate * 100).toFixed(2)}%</div>
-                    <h3 className="text-xs font-bold text-white mt-4 mb-2">24-Turn Revenue Projections</h3>
-                    <div className="max-h-48 overflow-y-auto border border-slate-800 rounded">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-800 text-[#E5C158]">
-                          <tr>
-                            <th className="p-2">Turn</th>
-                            <th className="p-2">Projected Revenue (£)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
-                            const proj = turn3Rev * Math.pow(1 + growthRate, t - 3);
-                            return (
-                              <tr key={t} className="border-t border-slate-800">
-                                <td className="p-2">Turn {t} ({MONTH_NAMES[t - 1]})</td>
-                                <td className="p-2">£{proj.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab !== 'Parliamentary Timetable' && activeTab !== 'Exchequer' && (
-              <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center">
-                <h2 className="text-lg font-bold text-[#E5C158] mb-2">{activeTab} Department</h2>
-                <p className="text-xs text-slate-400">Department administrative controls under active development.</p>
-              </div>
-            )}
-          </main>
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<ParliamentaryEngine />);
-  </script>
-</body>
-</html>
