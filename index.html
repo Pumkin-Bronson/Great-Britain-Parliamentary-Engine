@@ -32,7 +32,7 @@
     };
 
     function ParliamentaryEngine() {
-      const [gameState, setGameState] = React.useState('MAIN_MENU');
+      const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
       const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
       const [currentTurn, setCurrentTurn] = React.useState(1);
@@ -149,7 +149,7 @@
         }
       };
 
-      // Lucidchart style visual timeline axis component for individual selectors
+      // Lucidchart style visual timeline axis component for individual departmental selectors
       const renderLucidTimeline = (turns, currentList, setList) => (
         <div className="relative pt-6 pb-2 my-2 overflow-x-auto">
           {/* Continuous Straight Timeline Axis */}
@@ -166,7 +166,7 @@
                   {/* Tick Mark Connecting to the Main Line */}
                   <div className={`w-[2px] h-3 mb-1 ${isSelected ? 'bg-[#E5C158]' : 'bg-[#E5C158]/60'}`}></div>
 
-                  {/* Node Box (Lucid Diagram Style) */}
+                  {/* Node Box */}
                   <button
                     disabled={isRecess}
                     onClick={() => toggleTurn(t, currentList, setList)}
@@ -193,7 +193,7 @@
         </div>
       );
 
-      // Render Master Timeline showing all 24 Turns in a single continuous axis
+      // Render Master Timeline showing all 24 Turns in a single continuous horizontal axis
       const renderMasterTimeline = () => {
         const allTurns = Array.from({ length: 24 }, (_, i) => i + 1);
 
@@ -222,7 +222,7 @@
                     <div className={`w-[2px] h-3 mb-1 ${recessName ? 'bg-slate-700' : hasScheduledEvent ? 'bg-[#E5C158]' : 'bg-[#E5C158]/50'}`}></div>
 
                     {/* Node Card */}
-                    <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[70px] flex flex-col justify-between ${
+                    <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[72px] flex flex-col justify-between ${
                       recessName
                         ? 'border-slate-800 bg-slate-900/60 text-slate-500'
                         : hasScheduledEvent
@@ -238,7 +238,7 @@
                         </div>
                       </div>
 
-                      {/* Event Badges */}
+                      {/* Dynamic Event Badges */}
                       <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
                         {recessName && <span className="text-slate-500 italic block">Recess</span>}
                         {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
@@ -370,13 +370,13 @@
               </div>
             )}
 
-            {/* MASTER TIMELINE OVERVIEW */}
-            <div className="border-2 border-[#E5C158]/60 bg-[#0B192C] p-5 rounded-lg mb-8 shadow-xl">
+            {/* MASTER TIMELINE OVERVIEW CARD */}
+            <div className="border-2 border-[#E5C158] bg-[#0B192C] p-5 rounded-lg mb-8 shadow-xl">
               <div className="flex justify-between items-center mb-1">
                 <h2 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
                   🗺️ Master Parliamentary Session Timeline (Turns 1–24)
                 </h2>
-                <span className="text-xs text-slate-400">Scroll horizontally to view full session</span>
+                <span className="text-xs text-slate-400">Scroll horizontally to view full session timeline</span>
               </div>
               {renderMasterTimeline()}
             </div>
