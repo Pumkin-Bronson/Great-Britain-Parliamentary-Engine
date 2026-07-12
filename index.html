@@ -325,15 +325,15 @@
 
       const renderLucidTimeline = (turns, currentList, setList) => (
         <div className="relative pt-6 pb-2 my-2 overflow-x-auto">
-          <div className="absolute top-3 left-0 right-0 h-[3px] bg-[#E5C158] shadow-[0_0_8px_rgba(229,193,88,0.4)] z-0" />
           <div className="flex justify-between min-w-[650px] relative z-10 px-2 gap-2">
+            <div className="absolute top-3 left-4 right-4 h-[3px] bg-[#E5C158] shadow-[0_0_8px_rgba(229,193,88,0.4)] z-0" />
             {turns.map((t) => {
               const isRecess = !!RECESS_TURNS[t];
               const isSelected = currentList.includes(t);
               const monthLabel = MONTH_NAMES[t - 1];
 
               return (
-                <div key={t} className="flex flex-col items-center flex-1">
+                <div key={t} className="flex flex-col items-center flex-1 relative z-10">
                   <div className={`w-[2px] h-3 mb-1 ${isSelected ? 'bg-[#E5C158]' : 'bg-[#E5C158]/60'}`}></div>
                   <button
                     disabled={isRecess}
@@ -365,53 +365,57 @@
 
         return (
           <div className="relative pt-6 pb-4 my-2 overflow-x-auto">
-            <div className="absolute top-3 left-0 right-0 h-[3px] bg-[#E5C158] shadow-[0_0_10px_rgba(229,193,88,0.5)] z-0" />
-            <div className="flex justify-between min-w-[1500px] relative z-10 px-2 gap-2">
-              {allTurns.map((t) => {
-                const recessName = RECESS_TURNS[t];
-                const monthLabel = MONTH_NAMES[t - 1];
-                
-                const isJustice = justiceTurns.includes(t);
-                const isPeace = peaceTurns.includes(t);
-                const isOpp = oppositionTurns.includes(t);
-                const isWar = warOfficeTurn === t;
-                const isAdm = admiraltyTurn === t;
-                const isBudget = t === 8;
+            <div className="min-w-[1500px] relative z-10 px-2">
+              {/* Yellow horizontal line fixed inside min-w container so it stretches all 24 turns */}
+              <div className="absolute top-3 left-6 right-6 h-[3px] bg-[#E5C158] shadow-[0_0_10px_rgba(229,193,88,0.5)] z-0" />
+              
+              <div className="flex justify-between relative z-10 gap-2">
+                {allTurns.map((t) => {
+                  const recessName = RECESS_TURNS[t];
+                  const monthLabel = MONTH_NAMES[t - 1];
+                  
+                  const isJustice = justiceTurns.includes(t);
+                  const isPeace = peaceTurns.includes(t);
+                  const isOpp = oppositionTurns.includes(t);
+                  const isWar = warOfficeTurn === t;
+                  const isAdm = admiraltyTurn === t;
+                  const isBudget = t === 8;
 
-                const hasScheduledEvent = isJustice || isPeace || isOpp || isWar || isAdm || isBudget;
+                  const hasScheduledEvent = isJustice || isPeace || isOpp || isWar || isAdm || isBudget;
 
-                return (
-                  <div key={t} className="flex flex-col items-center flex-1 min-w-[55px]">
-                    <div className={`w-[2px] h-3 mb-1 ${recessName ? 'bg-slate-700' : hasScheduledEvent ? 'bg-[#E5C158]' : 'bg-[#E5C158]/50'}`}></div>
-                    <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[72px] flex flex-col justify-between ${
-                      recessName
-                        ? 'border-slate-800 bg-slate-900/60 text-slate-500'
-                        : hasScheduledEvent
-                        ? 'border-[#E5C158] bg-[#0F223D] text-white shadow-lg'
-                        : 'border-slate-700 bg-[#0B192C] text-slate-300'
-                    }`}>
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider opacity-75 font-semibold">
-                          {monthLabel}
+                  return (
+                    <div key={t} className="flex flex-col items-center flex-1 min-w-[55px] relative z-10">
+                      <div className={`w-[2px] h-3 mb-1 ${recessName ? 'bg-slate-700' : hasScheduledEvent ? 'bg-[#E5C158]' : 'bg-[#E5C158]/50'}`}></div>
+                      <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[72px] flex flex-col justify-between ${
+                        recessName
+                          ? 'border-slate-800 bg-slate-900/60 text-slate-500'
+                          : hasScheduledEvent
+                          ? 'border-[#E5C158] bg-[#0F223D] text-white shadow-lg'
+                          : 'border-slate-700 bg-[#0B192C] text-slate-300'
+                      }`}>
+                        <div>
+                          <div className="text-[9px] uppercase tracking-wider opacity-75 font-semibold">
+                            {monthLabel}
+                          </div>
+                          <div className="text-xs font-bold text-[#E5C158]">
+                            T{t}
+                          </div>
                         </div>
-                        <div className="text-xs font-bold text-[#E5C158]">
-                          T{t}
-                        </div>
-                      </div>
 
-                      <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
-                        {recessName && <span className="text-slate-500 italic block">Recess</span>}
-                        {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
-                        {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
-                        {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
-                        {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
-                        {isWar && <span className="bg-amber-600 text-white px-1 rounded block font-bold">War</span>}
-                        {isAdm && <span className="bg-cyan-600 text-white px-1 rounded block font-bold">Admiralty</span>}
+                        <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
+                          {recessName && <span className="text-slate-500 italic block">Recess</span>}
+                          {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
+                          {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
+                          {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
+                          {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
+                          {isWar && <span className="bg-amber-600 text-white px-1 rounded block font-bold">War</span>}
+                          {isAdm && <span className="bg-cyan-600 text-white px-1 rounded block font-bold">Admiralty</span>}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
