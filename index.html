@@ -14,11 +14,22 @@
 
   <script type="text/babel">
     const MONTH_NAMES = [
-      'Jan', 'Jan', 'Feb', 'Feb', 'Mar', 'Mar', 
-      'Apr', 'Apr', 'May', 'May', 'Jun', 'Jun',
-      'Jul', 'Jul', 'Aug', 'Aug', 'Sep', 'Sep',
-      'Oct', 'Oct', 'Nov', 'Nov', 'Dec', 'Dec'
+      'Jan (Early)', 'Jan (Late)', 'Feb (Early)', 'Feb (Late)', 'Mar (Early)', 'Mar (Late)', 
+      'Apr (Early)', 'Apr (Late)', 'May (Early)', 'May (Late)', 'Jun (Early)', 'Jun (Late)',
+      'Jul (Early)', 'Jul (Late)', 'Aug (Early)', 'Aug (Late)', 'Sep (Early)', 'Sep (Late)',
+      'Oct (Early)', 'Oct (Late)', 'Nov (Early)', 'Nov (Late)', 'Dec (Early)', 'Dec (Late)'
     ];
+
+    // Parliamentary Recesses mapped to 24 bi-weekly turns
+    const RECESS_TURNS = {
+      6: 'Easter Recess',               // Late March
+      13: 'Summer Recess',              // Early July
+      14: 'Summer Recess',              // Late July
+      15: 'Summer Recess',              // Early August
+      16: 'Summer Recess',              // Late August
+      18: 'Conference Recess',          // Late September
+      24: 'Christmas & New Year Recess' // Late December
+    };
 
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('MAIN_MENU');
@@ -85,7 +96,7 @@
           const sorted = [...justiceTurns].sort((a, b) => a - b);
           for (let i = 0; i < sorted.length - 1; i++) {
             if (sorted[i + 1] - sorted[i] !== 8) {
-              errors.push("Lord Chancellor reports must be exactly 8 turns (4 months) apart.");
+              errors.push("Lord Chancellor reports must be exactly 8 turns apart.");
             }
           }
         }
@@ -93,18 +104,18 @@
           const sorted = [...peaceTurns].sort((a, b) => a - b);
           for (let i = 0; i < sorted.length - 1; i++) {
             if (sorted[i + 1] - sorted[i] !== 4) {
-              errors.push("Home Office reports must be exactly 4 turns (2 months) apart.");
+              errors.push("Home Office reports must be exactly 4 turns apart.");
             }
           }
         }
         if (oppositionTurns.length !== 2) {
-          errors.push("You must designate exactly 2 Opposition Days (Turns 4–12).");
+          errors.push("You must designate exactly 2 Opposition Days (Turns 4–12, sitting turns only).");
         }
         if (!warOfficeTurn) {
-          errors.push("War Office Annual Report must be scheduled between Turn 13 and Turn 24.");
+          errors.push("War Office Annual Report must be scheduled between Turn 13 and Turn 24 (sitting turns only).");
         }
         if (!admiraltyTurn) {
-          errors.push("Admiralty Annual Report must be scheduled between Turn 13 and Turn 24.");
+          errors.push("Admiralty Annual Report must be scheduled between Turn 13 and Turn 24 (sitting turns only).");
         }
         return errors;
       };
@@ -113,6 +124,7 @@
       const isValid = validationErrors.length === 0;
 
       const toggleTurn = (turn, currentList, setList) => {
+        if (RECESS_TURNS[turn]) return; // Recess turns cannot be selected
         if (currentList.includes(turn)) {
           setList(currentList.filter((t) => t !== turn));
         } else {
@@ -136,6 +148,36 @@
           setGameState('TIMETABLE_BUILDER');
         }
       };
+
+      // Helper to render turn buttons for non-recess days
+      const renderTurnButtons = (turns, currentList, setList) => (
+        <div className="flex gap-1 my-3 overflow-x-auto py-1">
+          {turns.map((t) => {
+            const isRecess = !!RECESS_TURNS[t];
+            const isSelected = currentList.includes(t);
+            return (
+              <button
+                key={t}
+                disabled={isRecess}
+                onClick={() => toggleTurn(t, currentList, setList)}
+                className={`flex-1 min-w-[50px] py-2 text-xs rounded border transition ${
+                  isRecess
+                    ? 'border-slate-800 bg-slate-900/60 text-slate-600 cursor-not-allowed opacity-50'
+                    : isSelected
+                    ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158] cursor-pointer'
+                    : 'border-slate-700 bg-[#0F223D] hover:border-slate-500 cursor-pointer'
+                }`}
+                title={isRecess ? RECESS_TURNS[t] : `Turn ${t}`}
+              >
+                {t} <br/>
+                <span className="text-[9px] opacity-75">
+                  {isRecess ? 'Recess' : MONTH_NAMES[t - 1].split(' ')[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      );
 
       if (gameState === 'MAIN_MENU') {
         return (
@@ -195,6 +237,9 @@
       }
 
       if (gameState === 'TIMETABLE_BUILDER') {
+        const optionWindowTurns = [4, 5, 7, 8, 9, 10, 11, 12]; // Turn 6 excluded (Easter Recess)
+        const secondHalfTurns = Array.from({ length: 12 }, (_, i) => i + 13).filter(t => !RECESS_TURNS[t]);
+
         return (
           <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-5xl mx-auto">
             <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block cursor-pointer">
@@ -203,10 +248,10 @@
             <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
             <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
             <p className="text-sm text-slate-300 mb-6">
-              Before Parliament convenes, order the twenty-four bi-weekly turns of {selectedYear}. Place compulsory reports and Opposition Days within their designated windows.
+              Before Parliament convenes, order the sitting bi-weekly turns of {selectedYear}. Recess turns are excluded from scheduling options.
             </p>
 
-            {/* ENLARGED WARNINGS BANNER */}
+            {/* WARNINGS BANNER */}
             {!isValid ? (
               <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg mb-8 shadow-xl">
                 <div className="flex items-center gap-2 mb-2 text-rose-300 font-bold text-base">
@@ -228,80 +273,50 @@
             )}
 
             <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
-              <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed by Standing Order</h2>
-              <div className="space-y-2 text-xs">
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURNS 1–7</span> Consolidated Funds — Gross Income Growth Assessment across all years.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 8</span> Financial Statement — Annual Budget.</div>
+              <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed Orders & Recesses</h2>
+              <div className="space-y-1.5 text-xs">
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURNS 1–7</span> Consolidated Funds Assessment.</div>
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURN 8</span> Financial Statement — Annual Budget.</div>
+                <div><span className="bg-slate-700/60 text-slate-300 px-2 py-0.5 rounded font-bold mr-2">RECESSES</span> Easter (T6), Summer (T13–16), Conference (T18), Christmas (T24).</div>
               </div>
             </div>
 
             <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns (4 months)</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns</span>
               </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, justiceTurns, setJusticeTurns)}
-                    className={`flex-1 py-2 text-xs rounded border cursor-pointer ${justiceTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
+              {renderTurnButtons(optionWindowTurns, justiceTurns, setJusticeTurns)}
             </div>
 
             <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-white text-sm">Home Office Report <span className="text-xs text-slate-400 font-normal">(State of Public Peace)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns (2 months)</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns</span>
               </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, peaceTurns, setPeaceTurns)}
-                    className={`flex-1 py-2 text-xs rounded border cursor-pointer ${peaceTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
+              {renderTurnButtons(optionWindowTurns, peaceTurns, setPeaceTurns)}
             </div>
 
-            {/* RENAMED: Opposition Days */}
             <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-white text-sm">Opposition Days</h3>
                 <span className={`text-xs px-2 py-0.5 rounded ${oppositionTurns.length === 2 ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'}`}>{oppositionTurns.length} of 2 set</span>
               </div>
-              <div className="flex gap-2 my-3">
-                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTurn(t, oppositionTurns, setOppositionTurns)}
-                    className={`flex-1 py-2 text-xs rounded border cursor-pointer ${oppositionTurns.includes(t) ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158]' : 'border-slate-700 bg-[#0F223D]'}`}
-                  >
-                    {t} <br/> <span className="text-[10px] opacity-75">{MONTH_NAMES[t - 1]}</span>
-                  </button>
-                ))}
-              </div>
+              {renderTurnButtons(optionWindowTurns, oppositionTurns, setOppositionTurns)}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
                 <h3 className="font-bold text-white text-sm mb-1">War Office Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Turns 13–24</p>
+                <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
                 <select
                   value={warOfficeTurn || ''}
                   onChange={(e) => setWarOfficeTurn(e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
                 >
-                  <option value="">-- Choose Turn --</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 13).map((t) => (
+                  <option value="">-- Choose Sitting Turn --</option>
+                  {secondHalfTurns.map((t) => (
                     <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
                   ))}
                 </select>
@@ -309,14 +324,14 @@
 
               <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
                 <h3 className="font-bold text-white text-sm mb-1">Admiralty Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Turns 13–24</p>
+                <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
                 <select
                   value={admiraltyTurn || ''}
                   onChange={(e) => setAdmiraltyTurn(e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
                 >
-                  <option value="">-- Choose Turn --</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 13).map((t) => (
+                  <option value="">-- Choose Sitting Turn --</option>
+                  {secondHalfTurns.map((t) => (
                     <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
                   ))}
                 </select>
@@ -334,7 +349,6 @@
         );
       }
 
-      // MERGED: Parliament replacing Commons and Lords
       const tabs = [
         'Parliamentary Timetable', 'General Election', 'Parliament', 
         'Cabinet', "Lord Chancellor's Department", 
@@ -344,7 +358,6 @@
       return (
         <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-serif flex flex-col relative">
           <header className="border-b border-[#E5C158] bg-[#0B192C] px-4 py-3 flex items-center gap-4">
-            {/* Hamburger Button with Save / Exit Menu Options */}
             <div className="relative">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -353,7 +366,6 @@
                 ☰
               </button>
 
-              {/* Hamburger Dropdown Menu */}
               {isMenuOpen && (
                 <div className="absolute top-10 left-0 w-48 bg-[#0B192C] border border-[#E5C158] rounded shadow-2xl z-50 py-1 font-sans text-xs">
                   <button
@@ -402,27 +414,43 @@
               <div className="bg-[#0B192C] border border-slate-800 p-6 rounded">
                 <h2 className="text-lg font-bold text-white mb-4">Active Parliamentary Schedule ({selectedYear})</h2>
                 <div className="space-y-2">
-                  {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => (
-                    <div key={t} className={`p-3 rounded border flex justify-between items-center text-xs ${t === currentTurn ? 'border-[#E5C158] bg-[#0F223D]' : 'border-slate-800 bg-[#0B192C]'}`}>
-                      <div>
-                        <span className="font-bold text-[#E5C158] mr-3">TURN {t} ({MONTH_NAMES[t - 1]})</span>
-                        {t === 1 && <span className="font-semibold text-amber-200">Opening Address | </span>}
-                        {t <= 7 && <span>Consolidated Funds Assessment</span>}
-                        {t === 8 && <span>Financial Statement (Annual Budget)</span>}
-                        {justiceTurns.includes(t) && <span className="ml-2 text-blue-300">| Lord Chancellor Report</span>}
-                        {peaceTurns.includes(t) && <span className="ml-2 text-purple-300">| Home Office Report</span>}
-                        {oppositionTurns.includes(t) && <span className="ml-2 text-rose-300">| Opposition Day</span>}
-                        {warOfficeTurn === t && <span className="ml-2 text-amber-300">| War Office Report</span>}
-                        {admiraltyTurn === t && <span className="ml-2 text-cyan-300">| Admiralty Report</span>}
+                  {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
+                    const recessName = RECESS_TURNS[t];
+                    return (
+                      <div key={t} className={`p-3 rounded border flex justify-between items-center text-xs ${recessName ? 'border-slate-800 bg-[#0F223D]/40 opacity-70' : t === currentTurn ? 'border-[#E5C158] bg-[#0F223D]' : 'border-slate-800 bg-[#0B192C]'}`}>
+                        <div>
+                          <span className="font-bold text-[#E5C158] mr-3">TURN {t} ({MONTH_NAMES[t - 1]})</span>
+                          {recessName ? (
+                            <span className="text-slate-400 font-semibold">🌴 PARLIAMENTARY RECESS ({recessName})</span>
+                          ) : (
+                            <>
+                              {t === 1 && <span className="font-semibold text-amber-200">Opening Address | </span>}
+                              {t <= 7 && <span>Consolidated Funds Assessment</span>}
+                              {t === 8 && <span>Financial Statement (Annual Budget)</span>}
+                              {justiceTurns.includes(t) && <span className="ml-2 text-blue-300">| Lord Chancellor Report</span>}
+                              {peaceTurns.includes(t) && <span className="ml-2 text-purple-300">| Home Office Report</span>}
+                              {oppositionTurns.includes(t) && <span className="ml-2 text-rose-300">| Opposition Day</span>}
+                              {warOfficeTurn === t && <span className="ml-2 text-amber-300">| War Office Report</span>}
+                              {admiraltyTurn === t && <span className="ml-2 text-cyan-300">| Admiralty Report</span>}
+                            </>
+                          )}
+                        </div>
+                        {recessName ? (
+                          <span className="text-slate-500 italic">No Sitting</span>
+                        ) : t < currentTurn ? (
+                          <span className="text-emerald-400 font-bold">✓ Completed</span>
+                        ) : t === currentTurn ? (
+                          <span className="text-[#E5C158] font-bold">● Active Turn</span>
+                        ) : (
+                          <span className="text-slate-500">Upcoming</span>
+                        )}
                       </div>
-                      {t < currentTurn ? <span className="text-emerald-400 font-bold">✓ Completed</span> : t === currentTurn ? <span className="text-[#E5C158] font-bold">● Active Turn</span> : <span className="text-slate-500">Upcoming</span>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Combined Parliament Chamber Dashboard */}
             {activeTab === 'Parliament' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-[#0B192C] border border-slate-800 p-6 rounded">
