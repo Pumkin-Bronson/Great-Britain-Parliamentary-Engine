@@ -30,6 +30,33 @@
       24: 'Christmas & New Year Recess' 
     };
 
+    // Helper function to convert integers to Roman Numerals (1 -> I, 2 -> II, etc.)
+    function toRoman(num) {
+      const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+      let roman = '';
+      for (let i in lookup) {
+        while (num >= lookup[i]) {
+          roman += i;
+          num -= lookup[i];
+        }
+      }
+      return roman;
+    }
+
+    const DIPLOMATIC_ACTION_TYPES = [
+      { id: 'alliance', label: 'Alliance', coreTitle: 'CONCLUDING ALLIANCES & SOLEMN COMPACTS' },
+      { id: 'trade', label: 'Trade Agreement', coreTitle: 'COMMERCIAL TREATIES & NAVIGATION CONVENTIONS' },
+      { id: 'bribes', label: 'Present State Gift', coreTitle: 'CONFIDENTIAL SUBSIDIES & SECRET DISBURSEMENTS' },
+      { id: 'war', label: 'Declaration of War', coreTitle: 'RUPTURE OF RELATIONS & PROCLAMATION OF HOSTILITIES' },
+      { id: 'joinWar', label: 'Joining Wars', coreTitle: 'COALITION ADHESION & BELLIGERENT ACCESSION' },
+      { id: 'embargo', label: 'Trade Embargoes', coreTitle: 'MERCANTILE INTERDICTS & PORT BLOCKADES' },
+      { id: 'breakAlliance', label: 'Breaking Alliances', coreTitle: 'ABROGATION OF TREATIES & DISSOLUTION OF ALLIANCES' },
+      { id: 'militaryAccess', label: 'Military Access', coreTitle: 'RIGHT OF TRANSIT & MILITARY PASSAGE CONVENTIONS' },
+      { id: 'regions', label: 'Regions', coreTitle: 'TERRITORIAL CONCESSIONS & BOUNDARY RECTIFICATION' },
+      { id: 'technology', label: 'Technology', coreTitle: 'EXCHANGE OF SCIENTIFIC & TECHNICAL KNOWLEDGE' },
+      { id: 'payment', label: 'Payment', coreTitle: 'FINANCIAL INDEMNITIES & TREASURY TRANSFERS' }
+    ];
+
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
@@ -50,26 +77,11 @@
 
       // Consolidated Funds Ledger Form State
       const [cfForm, setCfForm] = React.useState({
-        domTax: 0,
-        bristol: 0,
-        chatham: 0,
-        liverpool: 0,
-        waterford: 0,
-        tradeIncome: 0,
-        coreTreasury: 0,
-        protectorates: 0,
-        subsidies: 0,
-        contributions: 0,
-        reparations: 0,
-        prizeGrants: 0,
-        exactions: 0,
-        landForces: 0,
-        fleetMaint: 0,
-        townWatch: 0,
-        civilList: 0,
-        pensions: 0,
-        diplomatic: 0,
-        initialLiquidity: 24500
+        domTax: 0, bristol: 0, chatham: 0, liverpool: 0, waterford: 0,
+        tradeIncome: 0, coreTreasury: 0, protectorates: 0, subsidies: 0,
+        contributions: 0, reparations: 0, prizeGrants: 0, exactions: 0,
+        landForces: 0, fleetMaint: 0, townWatch: 0, civilList: 0,
+        pensions: 0, diplomatic: 0, initialLiquidity: 24500
       });
 
       // Home Office State
@@ -88,24 +100,25 @@
         ]
       });
 
-      // Foreign Office State
+      // Completely Redone Foreign Office State
       const [foreignOfficeForm, setForeignOfficeForm] = React.useState({
-        foreignSecretary: 'Viscount Castlereagh',
-        diploRelations: [
-          { power: 'Kingdom of France', status: 'Peaceful', posture: 'Cautious Neutrality', ambassador: 'Sir Charles Stuart' },
-          { power: 'Russian Empire', status: 'Allied', posture: 'Holy Alliance Entente', ambassador: 'Lord Cathcart' },
-          { power: 'Austrian Empire', status: 'Allied', posture: 'Metternich System Partner', ambassador: 'Lord Stewart' },
-          { power: 'Kingdom of Prussia', status: 'Allied', posture: 'Northern Quadruple Member', ambassador: 'George Rose' },
-          { power: 'United States of America', status: 'Peaceful', posture: 'Post-Ghent Reconciliation', ambassador: 'Stratford Canning' }
-        ],
-        subsidies: [
-          { recipient: 'Kingdom of Hanover', amount: 1500, status: 'Active' },
-          { recipient: 'Kingdom of Sardinia', amount: 800, status: 'Active' }
-        ],
-        dispatches: [
-          { date: 'Jan 1820', origin: 'Vienna', subject: 'Congress Systems & Unrest in Naples', stance: 'Non-Intervention' },
-          { date: 'Feb 1820', origin: 'Madrid', subject: 'Liberal Revolution of 1820', stance: 'Observation Only' }
-        ]
+        reportingOfficer: 'Viscount Castlereagh',
+        treatyName: '',
+        treatyNature: 'Coalition Accord',
+        selectedActions: [],
+        actionData: {
+          alliance: { power: '' },
+          trade: { power: '' },
+          bribes: { court: '', sum: '' },
+          war: { adversary: '' },
+          joinWar: { target: '' },
+          embargo: { power: '' },
+          breakAlliance: { power: '' },
+          militaryAccess: { court: '', term: '' },
+          regions: { power: '', nature: 'Cession to foreign sovereign', territory: '' },
+          technology: { power: '', direction: 'Imported', principles: '' },
+          payment: { power: '', direction: 'Remittance to Foreign Treasury', quantum: '' }
+        }
       });
 
       const handleCfChange = (field, val) => {
@@ -153,55 +166,26 @@
       };
 
       // Foreign Office Handlers
-      const handleDiploChange = (index, field, value) => {
+      const toggleDiplomaticAction = (actionId) => {
         setForeignOfficeForm((prev) => {
-          const updated = [...prev.diploRelations];
-          updated[index][field] = value;
-          return { ...prev, diploRelations: updated };
+          const exists = prev.selectedActions.includes(actionId);
+          const updatedActions = exists
+            ? prev.selectedActions.filter((id) => id !== actionId)
+            : [...prev.selectedActions, actionId];
+          return { ...prev, selectedActions: updatedActions };
         });
       };
 
-      const handleAddSubsidy = () => {
+      const handleActionDataChange = (actionId, field, value) => {
         setForeignOfficeForm((prev) => ({
           ...prev,
-          subsidies: [...prev.subsidies, { recipient: '', amount: 0, status: 'Active' }]
-        }));
-      };
-
-      const handleSubsidyChange = (index, field, value) => {
-        setForeignOfficeForm((prev) => {
-          const updated = [...prev.subsidies];
-          updated[index][field] = field === 'amount' ? (parseFloat(value) || 0) : value;
-          return { ...prev, subsidies: updated };
-        });
-      };
-
-      const handleRemoveSubsidy = (index) => {
-        setForeignOfficeForm((prev) => ({
-          ...prev,
-          subsidies: prev.subsidies.filter((_, i) => i !== index)
-        }));
-      };
-
-      const handleAddDispatch = () => {
-        setForeignOfficeForm((prev) => ({
-          ...prev,
-          dispatches: [...prev.dispatches, { date: `${MONTH_NAMES[currentTurn - 1]} ${selectedYear}`, origin: '', subject: '', stance: '' }]
-        }));
-      };
-
-      const handleDispatchChange = (index, field, value) => {
-        setForeignOfficeForm((prev) => {
-          const updated = [...prev.dispatches];
-          updated[index][field] = value;
-          return { ...prev, dispatches: updated };
-        });
-      };
-
-      const handleRemoveDispatch = (index) => {
-        setForeignOfficeForm((prev) => ({
-          ...prev,
-          dispatches: prev.dispatches.filter((_, i) => i !== index)
+          actionData: {
+            ...prev.actionData,
+            [actionId]: {
+              ...prev.actionData[actionId],
+              [field]: value
+            }
+          }
         }));
       };
 
@@ -288,21 +272,9 @@
       // Save & Load Handlers
       const handleSaveGame = () => {
         const stateToSave = {
-          selectedYear,
-          currentTurn,
-          activeTab,
-          exchequerSubTab,
-          justiceTurns,
-          peaceTurns,
-          oppositionTurns,
-          warOfficeTurn,
-          admiraltyTurn,
-          turn3Rev,
-          turn8Rev,
-          growthRate,
-          cfForm,
-          homeOfficeForm,
-          foreignOfficeForm
+          selectedYear, currentTurn, activeTab, exchequerSubTab,
+          justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
+          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -742,234 +714,374 @@
               </button>
             </div>
 
-            {/* FOREIGN OFFICE TAB */}
+            {/* FOREIGN OFFICE TAB - COMPLETELY REDONE WITH SEQUENTIAL ROMAN NUMERALS */}
             {activeTab === 'Foreign Office' && (
               <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                 <div className="text-center space-y-1">
                   <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">FOREIGN OFFICE // HIS MAJESTY'S PRINCIPAL SECRETARY OF STATE FOR FOREIGN AFFAIRS</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">REGISTER OF FOREIGN DIPLOMATIC AFFAIRS & SUBSIDY LEDGER</div>
+                  <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">LEGAL & CONSTITUTIONAL AUDIT — MID-JULY 1819</div>
                   <div className="text-slate-400">========================================================================================</div>
-                  <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
-                    <div>
-                      <strong className="text-white">Audit Session :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
-                    </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
                     <div className="flex items-center gap-2">
-                      <strong className="text-white">Secretary of State :</strong>
+                      <strong className="text-white">Reporting Officer :</strong>
                       <input
                         type="text"
-                        value={foreignOfficeForm.foreignSecretary}
-                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, foreignSecretary: e.target.value })}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                        value={foreignOfficeForm.reportingOfficer}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, reportingOfficer: e.target.value })}
+                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158] flex-1"
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* SECTION I */}
-                <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                  <div className="text-[#E5C158] font-bold text-xs font-mono">
-                    ----------------------------------------------------------------------------------------<br />
-                    I. DIPLOMATIC RELATIONS REGISTER (Great Powers & Envoys)<br />
-                    ----------------------------------------------------------------------------------------
-                  </div>
-
-                  <div className="space-y-3">
-                    {foreignOfficeForm.diploRelations.map((item, index) => (
-                      <div key={index} className="bg-[#0B192C] p-3 rounded border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
-                        <div>
-                          <label className="block text-[10px] text-slate-400 mb-0.5">Foreign Power</label>
-                          <span className="font-bold text-white font-mono">{item.power}</span>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-slate-400 mb-0.5">State of Relations</label>
-                          <select
-                            value={item.status}
-                            onChange={(e) => handleDiploChange(index, 'status', e.target.value)}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded focus:border-[#E5C158]"
-                          >
-                            <option value="Allied">Allied (Treaty Bound)</option>
-                            <option value="Peaceful">Peaceful (Neutral)</option>
-                            <option value="Strained">Strained Relations</option>
-                            <option value="Hostile">Hostile / War Footing</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-slate-400 mb-0.5">Strategic Stance</label>
-                          <input
-                            type="text"
-                            value={item.posture}
-                            onChange={(e) => handleDiploChange(index, 'posture', e.target.value)}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-slate-400 mb-0.5">British Ambassador / Envoy</label>
-                          <input
-                            type="text"
-                            value={item.ambassador}
-                            onChange={(e) => handleDiploChange(index, 'ambassador', e.target.value)}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* SECTION II */}
-                <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                  <div className="text-[#E5C158] font-bold text-xs font-mono">
-                    ----------------------------------------------------------------------------------------<br />
-                    II. FOREIGN ALLIANCE SUBSIDIES & CONVENTION STIPENDS (£)<br />
-                    ----------------------------------------------------------------------------------------
-                  </div>
-
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="text-xs text-slate-300 font-bold">
-                      [+] ACTIVE SUBSIDY AGREEMENTS ({foreignOfficeForm.subsidies.length}):
-                    </span>
-                    <button
-                      onClick={handleAddSubsidy}
-                      className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded text-xs hover:bg-yellow-400 transition-colors cursor-pointer"
-                    >
-                      + Add Subsidy
-                    </button>
-                  </div>
-
-                  {foreignOfficeForm.subsidies.length === 0 ? (
-                    <div className="text-center text-slate-500 italic py-4 text-xs bg-[#0B192C] rounded border border-slate-800">
-                      No foreign subsidies currently committed.
+                    <div>
+                      <strong className="text-white">Authority :</strong> The Foreign Department
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {foreignOfficeForm.subsidies.map((sub, index) => (
-                        <div key={index} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex items-center justify-between gap-3 text-xs">
-                          <input
-                            type="text"
-                            placeholder="Recipient Sovereign / State"
-                            value={sub.recipient}
-                            onChange={(e) => handleSubsidyChange(index, 'recipient', e.target.value)}
-                            className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-1/3 focus:border-[#E5C158]"
-                          />
-                          <div className="flex items-center gap-1">
-                            <span className="text-slate-400 font-mono">£</span>
+                  </div>
+                </div>
+
+                {/* TREATY HEADER METADATA */}
+                <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-3 font-sans">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Name :</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Treaty of Vienna / Quadruple Protocol"
+                        value={foreignOfficeForm.treatyName}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyName: e.target.value })}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Nature :</label>
+                      <select
+                        value={foreignOfficeForm.treatyNature}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyNature: e.target.value })}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                      >
+                        <option value="Coalition Accord">Coalition Accord</option>
+                        <option value="Commercial Treaty">Commercial Treaty</option>
+                        <option value="Transit Treaty">Transit Treaty</option>
+                        <option value="Cession Accord">Cession Accord</option>
+                        <option value="Manifesto of War">Manifesto of War</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* DIPLOMATIC ACTIONS SELECTION CHECKBOXES */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <label className="block font-bold text-[#E5C158] mb-2">
+                      Diplomatic Action(s) (Able to choose more than 1, if chosen "CORE DIPLOMATIC ACTIONS" from below would pop up) :
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {DIPLOMATIC_ACTION_TYPES.map((action) => {
+                        const isChecked = foreignOfficeForm.selectedActions.includes(action.id);
+                        return (
+                          <label
+                            key={action.id}
+                            className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'bg-[#E5C158]/20 border-[#E5C158] text-white font-bold'
+                                : 'bg-[#0B192C] border-slate-800 text-slate-400 hover:border-slate-600'
+                            }`}
+                          >
                             <input
-                              type="number"
-                              placeholder="Amount"
-                              value={sub.amount}
-                              onChange={(e) => handleSubsidyChange(index, 'amount', e.target.value)}
-                              className="bg-[#0F223D] border border-slate-700 text-rose-400 font-mono p-1 rounded w-28 text-right focus:border-[#E5C158]"
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleDiplomaticAction(action.id)}
+                              className="accent-[#E5C158]"
                             />
-                          </div>
-                          <select
-                            value={sub.status}
-                            onChange={(e) => handleSubsidyChange(index, 'status', e.target.value)}
-                            className="bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded focus:border-[#E5C158]"
-                          >
-                            <option value="Active">Active Disbursement</option>
-                            <option value="Suspended">Suspended</option>
-                            <option value="Terminated">Terminated</option>
-                          </select>
-                          <button
-                            onClick={() => handleRemoveSubsidy(index)}
-                            className="text-rose-400 hover:text-rose-200 text-xs font-bold px-2 py-1 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                            <span>{action.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* SECTION III */}
-                <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                  <div className="text-[#E5C158] font-bold text-xs font-mono">
-                    ----------------------------------------------------------------------------------------<br />
-                    III. DIPLOMATIC DISPATCHES & LEGATION REPORTS<br />
-                    ----------------------------------------------------------------------------------------
+                {/* DYNAMICALLY GENERATED CORE DIPLOMATIC ACTIONS WITH SEQUENTIAL ROMAN NUMERALS */}
+                {foreignOfficeForm.selectedActions.length === 0 ? (
+                  <div className="text-center text-slate-500 italic py-8 bg-[#0F223D] rounded border border-slate-800">
+                    No Core Diplomatic Actions selected above. Check one or more actions to open foreign dispatch panels.
                   </div>
+                ) : (
+                  <div className="space-y-6">
+                    {foreignOfficeForm.selectedActions.map((actionId, index) => {
+                      const romanIndex = toRoman(index + 1);
+                      const actionDef = DIPLOMATIC_ACTION_TYPES.find((a) => a.id === actionId);
+                      const data = foreignOfficeForm.actionData[actionId] || {};
 
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="text-xs text-slate-300 font-bold">
-                      [+] DIPLOMATIC DISPATCHES LOG ({foreignOfficeForm.dispatches.length}):
-                    </span>
-                    <button
-                      onClick={handleAddDispatch}
-                      className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded text-xs hover:bg-yellow-400 transition-colors cursor-pointer"
-                    >
-                      + Log Dispatch
-                    </button>
-                  </div>
-
-                  {foreignOfficeForm.dispatches.length === 0 ? (
-                    <div className="text-center text-slate-500 italic py-4 text-xs bg-[#0B192C] rounded border border-slate-800">
-                      No diplomatic dispatches recorded this session.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {foreignOfficeForm.dispatches.map((disp, index) => (
-                        <div key={index} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2 text-xs">
-                          <div className="flex justify-between items-center font-mono text-[#E5C158]">
-                            <span>• DISPATCH #{index + 1}</span>
-                            <button
-                              onClick={() => handleRemoveDispatch(index)}
-                              className="text-rose-400 hover:text-rose-200 text-xs font-bold px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
-                            >
-                              ✕
-                            </button>
+                      return (
+                        <div key={actionId} className="space-y-3 bg-[#0F223D] p-4 rounded border border-[#E5C158]/40 font-sans">
+                          <div className="text-[#E5C158] font-bold text-xs font-mono">
+                            ----------------------------------------------------------------------------------------<br />
+                            {romanIndex}. CORE DIPLOMATIC ACTION : {actionDef.coreTitle}<br />
+                            ----------------------------------------------------------------------------------------
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                            <div>
-                              <label className="block text-[10px] text-slate-400 mb-0.5">Date Received</label>
-                              <input
-                                type="text"
-                                value={disp.date}
-                                onChange={(e) => handleDispatchChange(index, 'date', e.target.value)}
-                                className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] text-slate-400 mb-0.5">Embassy / Station</label>
-                              <input
-                                type="text"
-                                value={disp.origin}
-                                placeholder="e.g. Vienna"
-                                onChange={(e) => handleDispatchChange(index, 'origin', e.target.value)}
-                                className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] text-slate-400 mb-0.5">Subject of Intel</label>
-                              <input
-                                type="text"
-                                value={disp.subject}
-                                placeholder="Subject"
-                                onChange={(e) => handleDispatchChange(index, 'subject', e.target.value)}
-                                className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] text-slate-400 mb-0.5">Crown Stance / Action</label>
-                              <input
-                                type="text"
-                                value={disp.stance}
-                                placeholder="Response"
-                                onChange={(e) => handleDispatchChange(index, 'stance', e.target.value)}
-                                className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
-                              />
-                            </div>
+
+                          <div className="pt-1">
+                            {/* ALLIANCE */}
+                            {actionId === 'alliance' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">High Contracting Sovereign / Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Empire of Russia"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('alliance', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* TRADE AGREEMENT */}
+                            {actionId === 'trade' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Signatory State / Partner Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Kingdom of Prussia"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('trade', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* PRESENT STATE GIFT / BRIBES */}
+                            {actionId === 'bribes' && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Recipient Court / Beneficiary State :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Regency of Algiers"
+                                    value={data.court || ''}
+                                    onChange={(e) => handleActionDataChange('bribes', 'court', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Stipulated Sum / Discretionary Allowance :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. £50,000 Secret Service Specie"
+                                    value={data.sum || ''}
+                                    onChange={(e) => handleActionDataChange('bribes', 'sum', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* DECLARATION OF WAR */}
+                            {actionId === 'war' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Adversary Power / Target State :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Sublime Ottoman Porte"
+                                  value={data.adversary || ''}
+                                  onChange={(e) => handleActionDataChange('war', 'adversary', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-bold font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* JOINING WARS */}
+                            {actionId === 'joinWar' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Target State / Hostile Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Kingdom of Spain"
+                                  value={data.target || ''}
+                                  onChange={(e) => handleActionDataChange('joinWar', 'target', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* TRADE EMBARGOES */}
+                            {actionId === 'embargo' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Proscribed Power / Interdicted State :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. United States of America"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('embargo', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* BREAKING ALLIANCES */}
+                            {actionId === 'breakAlliance' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Former Allied Power / Severed Party :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Austrian Empire"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('breakAlliance', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-slate-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* MILITARY ACCESS */}
+                            {actionId === 'militaryAccess' && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Granting Court / Transit Sovereign :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Kingdom of the Two Sicilies"
+                                    value={data.court || ''}
+                                    onChange={(e) => handleActionDataChange('militaryAccess', 'court', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Term of Transit / Period of Right :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. 12 Calendar Months"
+                                    value={data.term || ''}
+                                    onChange={(e) => handleActionDataChange('militaryAccess', 'term', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* REGIONS */}
+                            {actionId === 'regions' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Negotiating Power / Neighboring State :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of the Netherlands"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('regions', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Nature of Transaction :</label>
+                                    <select
+                                      value={data.nature || 'Cession to foreign sovereign'}
+                                      onChange={(e) => handleActionDataChange('regions', 'nature', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
+                                      <option value="Annexation to the Crown">Annexation to the Crown</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Demarcated Territory / Ceded Provinces :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Heligoland / Ionian Islands"
+                                    value={data.territory || ''}
+                                    onChange={(e) => handleActionDataChange('regions', 'territory', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* TECHNOLOGY */}
+                            {actionId === 'technology' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Recipient / Providing Power :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of Hanover"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('technology', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Transmission :</label>
+                                    <select
+                                      value={data.direction || 'Imported'}
+                                      onChange={(e) => handleActionDataChange('technology', 'direction', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Imported">Imported</option>
+                                      <option value="Imparted">Imparted</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Scientific Principles & Innovations :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Steam Packet Machinery / Percussion Cap Lock Metallurgy"
+                                    value={data.principles || ''}
+                                    onChange={(e) => handleActionDataChange('technology', 'principles', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* PAYMENT */}
+                            {actionId === 'payment' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Transacting Power / Reciprocal State :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of Portugal"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('payment', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Settlement :</label>
+                                    <select
+                                      value={data.direction || 'Remittance to Foreign Treasury'}
+                                      onChange={(e) => handleActionDataChange('payment', 'direction', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Remittance to Foreign Treasury">Remittance to Foreign Treasury</option>
+                                      <option value="Disbursement from State Vaults">Disbursement from State Vaults</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Quantum of Settlement / Principal Sum :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. £120,000 Sterling Gold Specie"
+                                    value={data.quantum || ''}
+                                    onChange={(e) => handleActionDataChange('payment', 'quantum', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="text-center space-y-1 pt-4 border-t border-slate-800">
                   <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT SEALED BY HIS MAJESTY'S DIPLOMATIC SERVICE</div>
+                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
                   <div className="text-slate-400">========================================================================================</div>
                 </div>
               </div>
