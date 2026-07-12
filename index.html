@@ -149,33 +149,47 @@
         }
       };
 
-      // Helper to render turn buttons for non-recess days
-      const renderTurnButtons = (turns, currentList, setList) => (
-        <div className="flex gap-1 my-3 overflow-x-auto py-1">
-          {turns.map((t) => {
-            const isRecess = !!RECESS_TURNS[t];
-            const isSelected = currentList.includes(t);
-            return (
-              <button
-                key={t}
-                disabled={isRecess}
-                onClick={() => toggleTurn(t, currentList, setList)}
-                className={`flex-1 min-w-[50px] py-2 text-xs rounded border transition ${
-                  isRecess
-                    ? 'border-slate-800 bg-slate-900/60 text-slate-600 cursor-not-allowed opacity-50'
-                    : isSelected
-                    ? 'bg-[#E5C158] text-[#0F223D] font-bold border-[#E5C158] cursor-pointer'
-                    : 'border-slate-700 bg-[#0F223D] hover:border-slate-500 cursor-pointer'
-                }`}
-                title={isRecess ? RECESS_TURNS[t] : `Turn ${t}`}
-              >
-                {t} <br/>
-                <span className="text-[9px] opacity-75">
-                  {isRecess ? 'Recess' : MONTH_NAMES[t - 1].split(' ')[0]}
-                </span>
-              </button>
-            );
-          })}
+      // Lucidchart style visual timeline axis component
+      const renderLucidTimeline = (turns, currentList, setList) => (
+        <div className="relative pt-6 pb-2 my-2 overflow-x-auto">
+          {/* Continuous Straight Timeline Axis */}
+          <div className="absolute top-3 left-0 right-0 h-[3px] bg-[#E5C158] shadow-[0_0_8px_rgba(229,193,88,0.4)] z-0" />
+          
+          <div className="flex justify-between min-w-[650px] relative z-10 px-2 gap-2">
+            {turns.map((t) => {
+              const isRecess = !!RECESS_TURNS[t];
+              const isSelected = currentList.includes(t);
+              const monthLabel = MONTH_NAMES[t - 1];
+
+              return (
+                <div key={t} className="flex flex-col items-center flex-1">
+                  {/* Tick Mark Connecting to the Main Line */}
+                  <div className={`w-[2px] h-3 mb-1 ${isSelected ? 'bg-[#E5C158]' : 'bg-[#E5C158]/60'}`}></div>
+
+                  {/* Node Box (Lucid Diagram Style) */}
+                  <button
+                    disabled={isRecess}
+                    onClick={() => toggleTurn(t, currentList, setList)}
+                    className={`w-full py-2 px-1 rounded-md text-center border transition-all duration-150 shadow-md ${
+                      isRecess
+                        ? 'border-slate-800 bg-slate-900/80 text-slate-600 cursor-not-allowed opacity-50'
+                        : isSelected
+                        ? 'border-[#E5C158] bg-[#E5C158] text-[#0F223D] font-bold scale-105 shadow-yellow-500/20'
+                        : 'border-slate-600 bg-[#0B192C] text-slate-200 hover:border-[#E5C158] hover:bg-[#0F223D] cursor-pointer'
+                    }`}
+                    title={isRecess ? RECESS_TURNS[t] : `Turn ${t}`}
+                  >
+                    <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none mb-1">
+                      {monthLabel}
+                    </div>
+                    <div className="text-xs font-bold leading-none">
+                      Turn {t}
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
 
@@ -303,28 +317,28 @@
               </div>
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
+              <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns</span>
               </div>
-              {renderTurnButtons(optionWindowTurns, justiceTurns, setJusticeTurns)}
+              {renderLucidTimeline(optionWindowTurns, justiceTurns, setJusticeTurns)}
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
+              <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Home Office Report <span className="text-xs text-slate-400 font-normal">(State of Public Peace)</span></h3>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns</span>
               </div>
-              {renderTurnButtons(optionWindowTurns, peaceTurns, setPeaceTurns)}
+              {renderLucidTimeline(optionWindowTurns, peaceTurns, setPeaceTurns)}
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-4 rounded mb-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
+              <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Opposition Days</h3>
                 <span className={`text-xs px-2 py-0.5 rounded ${oppositionTurns.length === 2 ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'}`}>{oppositionTurns.length} of 2 set</span>
               </div>
-              {renderTurnButtons(optionWindowTurns, oppositionTurns, setOppositionTurns)}
+              {renderLucidTimeline(optionWindowTurns, oppositionTurns, setOppositionTurns)}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
