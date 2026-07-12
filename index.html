@@ -49,6 +49,52 @@
       const [turn8Rev, setTurn8Rev] = React.useState(12500);
       const [growthRate, setGrowthRate] = React.useState(null);
 
+      // Consolidated Funds Audit Form State
+      const [cfForm, setCfForm] = React.useState({
+        domTax: 0,
+        bristol: 0,
+        chatham: 0,
+        liverpool: 0,
+        waterford: 0,
+        tradeIncome: 0,
+        coreTreasury: 0,
+        naples: 0,
+        sardinia: 0,
+        subsidies: 0,
+        contributions: 0,
+        reparations: 0,
+        prizeGrants: 0,
+        exactions: 0,
+        landForces: 0,
+        fleetMaint: 0,
+        townWatch: 0,
+        civilList: 0,
+        pensions: 0,
+        diplomatic: 0,
+        initialLiquidity: 24500
+      });
+
+      const handleCfChange = (field, val) => {
+        setCfForm((prev) => ({
+          ...prev,
+          [field]: parseFloat(val) || 0
+        }));
+      };
+
+      // Calculations for Consolidated Funds Audit
+      const totalCapacity = cfForm.bristol + cfForm.chatham + cfForm.liverpool + cfForm.waterford;
+      const totalInflows = 
+        cfForm.domTax + totalCapacity + cfForm.tradeIncome + cfForm.coreTreasury +
+        cfForm.naples + cfForm.sardinia + cfForm.subsidies + cfForm.contributions +
+        cfForm.reparations + cfForm.prizeGrants + cfForm.exactions;
+
+      const totalOutflows = 
+        cfForm.landForces + cfForm.fleetMaint + cfForm.townWatch +
+        cfForm.civilList + cfForm.pensions + cfForm.diplomatic;
+
+      const netYield = totalInflows - totalOutflows;
+      const totalLiquidity = cfForm.initialLiquidity + netYield;
+
       // Save & Load Handlers
       const handleSaveGame = () => {
         const stateToSave = {
@@ -63,7 +109,8 @@
           admiraltyTurn,
           turn3Rev,
           turn8Rev,
-          growthRate
+          growthRate,
+          cfForm
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -86,6 +133,7 @@
           setTurn3Rev(parsed.turn3Rev || 9154);
           setTurn8Rev(parsed.turn8Rev || 12500);
           setGrowthRate(parsed.growthRate || null);
+          if (parsed.cfForm) setCfForm(parsed.cfForm);
           setGameState('DASHBOARD');
           setIsMenuOpen(false);
         } else {
@@ -401,7 +449,7 @@
               </div>
 
               <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-white text-sm mb-1">Admiralty Annual Report</h3>
+                <h3 className="font-bold text-[#E5C158] text-sm mb-1">Admiralty Annual Report</h3>
                 <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
                 <select
                   value={admiraltyTurn || ''}
@@ -546,11 +594,11 @@
                       
                       <div className="bg-[#0B192C] p-3 rounded border border-slate-700/80 space-y-2">
                         <p className="text-slate-200">
-                          Open your in-game <strong className="text-white">Government Menu</strong> (referred to in <em className="text-[#E5C158]">image_9249d7.jpg</em>):
+                          Open your in-game <strong className="text-white">Government Menu</strong>:
                         </p>
                         <ul className="list-disc list-inside space-y-1 text-slate-300 pl-1">
                           <li>Look at the middle panel titled <strong className="text-white">Projected Income</strong>.</li>
-                          <li>Find the left column subtotal line below Tax, Trade, and Other income (shows <strong className="text-emerald-400 font-mono">+9154</strong> in <em>image_9249d7.jpg</em>).</li>
+                          <li>Find the left column subtotal line below Tax, Trade, and Other income (shows <strong className="text-emerald-400 font-mono">+9154</strong>).</li>
                           <li><strong className="text-amber-300">Do not</strong> use "Income next turn" (which deducts military upkeep)—use the <strong className="text-white">Gross Total (+9154)</strong>.</li>
                         </ul>
                       </div>
@@ -650,57 +698,213 @@
 
                 {/* REPORT 2: CONSOLIDATED FUNDS */}
                 {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
-                  <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-5">
-                    <div className="flex justify-between items-start border-b border-slate-800 pb-4">
-                      <div>
-                        <h2 className="text-xl font-bold text-[#E5C158]">Consolidated Funds General Ledger</h2>
-                        <p className="text-xs text-slate-400 mt-1">Bi-Weekly Session Fund Balance & National Debt Account</p>
-                      </div>
-                      <span className="bg-blue-900/50 text-blue-300 border border-blue-700 text-[10px] font-bold px-3 py-1 rounded">
-                        Active Ledger
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-[#0F223D] p-4 rounded border border-slate-700">
-                        <div className="text-xs text-slate-400">Opening Balance (Turn {currentTurn})</div>
-                        <div className="text-xl font-bold text-white font-mono mt-1">£24,500</div>
-                      </div>
-                      <div className="bg-[#0F223D] p-4 rounded border border-slate-700">
-                        <div className="text-xs text-slate-400">Net Turn Receipts</div>
-                        <div className="text-xl font-bold text-emerald-400 font-mono mt-1">+£{turn3Rev.toLocaleString()}</div>
-                      </div>
-                      <div className="bg-[#0F223D] p-4 rounded border border-slate-700">
-                        <div className="text-xs text-slate-400">Current Reserve Balance</div>
-                        <div className="text-xl font-bold text-[#E5C158] font-mono mt-1">£{(24500 + turn3Rev).toLocaleString()}</div>
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
+                      <div className="text-slate-400">=======================================================</div>
+                      <div className="text-white font-bold tracking-wider">HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND</div>
+                      <div className="text-slate-400">=======================================================</div>
+                      <div className="text-left pt-2 font-sans text-slate-300">
+                        <strong className="text-white">Date :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
                       </div>
                     </div>
 
-                    <div className="border border-slate-800 rounded overflow-hidden">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-800 text-slate-300">
-                          <tr>
-                            <th className="p-3">Turn</th>
-                            <th className="p-3">Category</th>
-                            <th className="p-3">Description</th>
-                            <th className="p-3 text-right">Amount (£)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800">
-                          <tr className="hover:bg-[#0F223D]">
-                            <td className="p-3 font-bold">Turn 1</td>
-                            <td className="p-3"><span className="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded text-[10px]">Income</span></td>
-                            <td className="p-3">Consolidated Customs & Excise Revenue</td>
-                            <td className="p-3 text-right font-mono text-emerald-400">+£9,154</td>
-                          </tr>
-                          <tr className="hover:bg-[#0F223D]">
-                            <td className="p-3 font-bold">Turn 1</td>
-                            <td className="p-3"><span className="bg-rose-950 text-rose-300 px-2 py-0.5 rounded text-[10px]">Disbursement</span></td>
-                            <td className="p-3">Civil List & Royal Household Appropriation</td>
-                            <td className="p-3 text-right font-mono text-rose-400">-£2,100</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    {/* INFLOWS SECTION */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-sans">
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Domestic Tax Income</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                            <input
+                              type="number"
+                              value={cfForm.domTax || ''}
+                              onChange={(e) => handleCfChange('domTax', e.target.value)}
+                              className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Total Trade Income (Custom Duties Collected)</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                            <input
+                              type="number"
+                              value={cfForm.tradeIncome || ''}
+                              onChange={(e) => handleCfChange('tradeIncome', e.target.value)}
+                              className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Gross Commercial Port Traffic Sub-Section */}
+                      <div className="border border-slate-800 p-3 rounded bg-[#0B192C]/50 space-y-2 font-sans">
+                        <div className="text-[#E5C158] font-bold text-[11px]">Gross Commercial Port Traffic</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Bristol</label>
+                            <input
+                              type="number"
+                              value={cfForm.bristol || ''}
+                              onChange={(e) => handleCfChange('bristol', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Chatham Docks</label>
+                            <input
+                              type="number"
+                              value={cfForm.chatham || ''}
+                              onChange={(e) => handleCfChange('chatham', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Liverpool</label>
+                            <input
+                              type="number"
+                              value={cfForm.liverpool || ''}
+                              onChange={(e) => handleCfChange('liverpool', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Waterford</label>
+                            <input
+                              type="number"
+                              value={cfForm.waterford || ''}
+                              onChange={(e) => handleCfChange('waterford', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right text-[11px] text-slate-300 font-mono pt-1">
+                          Total Commercial Capacity : <strong className="text-emerald-400">£{totalCapacity.toLocaleString()}</strong>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-sans">
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Core Treasury Income</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                            <input
+                              type="number"
+                              value={cfForm.coreTreasury || ''}
+                              onChange={(e) => handleCfChange('coreTreasury', e.target.value)}
+                              className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Protectorates and Grants */}
+                      <div className="border border-slate-800 p-3 rounded bg-[#0B192C]/50 space-y-2 font-sans">
+                        <div className="text-[#E5C158] font-bold text-[11px]"> Protectorate(s) & Special Grants</div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Kingdom of Naples</label>
+                            <input type="number" value={cfForm.naples || ''} onChange={(e) => handleCfChange('naples', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Kingdom of Sardinia</label>
+                            <input type="number" value={cfForm.sardinia || ''} onChange={(e) => handleCfChange('sardinia', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Allied Subsidies</label>
+                            <input type="number" value={cfForm.subsidies || ''} onChange={(e) => handleCfChange('subsidies', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Convention Contributions</label>
+                            <input type="number" value={cfForm.contributions || ''} onChange={(e) => handleCfChange('contributions', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">War Reparations</label>
+                            <input type="number" value={cfForm.reparations || ''} onChange={(e) => handleCfChange('reparations', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400">Admiralty Prize Grants</label>
+                            <input type="number" value={cfForm.prizeGrants || ''} onChange={(e) => handleCfChange('prizeGrants', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-[10px] text-slate-400">Exactions / Requisitions</label>
+                            <input type="number" value={cfForm.exactions || ''} onChange={(e) => handleCfChange('exactions', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-slate-400">———————————————————————————————————————</div>
+                      <div className="flex justify-between items-center text-sm font-bold text-emerald-400 font-mono">
+                        <span>Total Inflows :</span>
+                        <span>£{totalInflows.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {/* OUTFLOWS SECTION */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-rose-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">OUTFLOWS:</div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 font-sans">
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Land Forces Expenditure</label>
+                          <input type="number" value={cfForm.landForces || ''} onChange={(e) => handleCfChange('landForces', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Fleet Maintenance & Ordnance</label>
+                          <input type="number" value={cfForm.fleetMaint || ''} onChange={(e) => handleCfChange('fleetMaint', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Town Watch</label>
+                          <input type="number" value={cfForm.townWatch || ''} onChange={(e) => handleCfChange('townWatch', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Statutory Civil List</label>
+                          <input type="number" value={cfForm.civilList || ''} onChange={(e) => handleCfChange('civilList', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Pensions, Grants & Privy Purse</label>
+                          <input type="number" value={cfForm.pensions || ''} onChange={(e) => handleCfChange('pensions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-300 mb-1">Diplomatic Expenditures</label>
+                          <input type="number" value={cfForm.diplomatic || ''} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                        </div>
+                      </div>
+
+                      <div className="text-slate-400">———————————————————————————————————————</div>
+                      <div className="flex justify-between items-center text-sm font-bold text-rose-400 font-mono">
+                        <span>Total Outflow Expenditure :</span>
+                        <span>£{totalOutflows.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {/* NET AUDIT SUMMARY */}
+                    <div className="bg-[#0F223D] border-2 border-[#E5C158] p-4 rounded space-y-3 font-mono">
+                      <div className="text-slate-400 text-center">=======================================================</div>
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="text-white">NET YIELD TO SPECIE VAULTS :</span>
+                        <span className={netYield >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                          £{netYield.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm font-bold border-t border-slate-800 pt-2">
+                        <span className="text-[#E5C158]">TOTAL TREASURY LIQUIDITY :</span>
+                        <span className="text-[#E5C158] text-base">£{totalLiquidity.toLocaleString()}</span>
+                      </div>
+                      <div className="text-slate-400 text-center">=======================================================</div>
+                      <div className="flex items-center gap-2 pt-1 font-sans text-[11px] text-slate-400">
+                        <span>Starting Vault Balance:</span>
+                        <input
+                          type="number"
+                          value={cfForm.initialLiquidity || ''}
+                          onChange={(e) => handleCfChange('initialLiquidity', e.target.value)}
+                          className="bg-[#0B192C] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs w-28"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
