@@ -149,7 +149,7 @@
         }
       };
 
-      // Lucidchart style visual timeline axis component
+      // Lucidchart style visual timeline axis component for individual selectors
       const renderLucidTimeline = (turns, currentList, setList) => (
         <div className="relative pt-6 pb-2 my-2 overflow-x-auto">
           {/* Continuous Straight Timeline Axis */}
@@ -192,6 +192,70 @@
           </div>
         </div>
       );
+
+      // Render Master Timeline showing all 24 Turns in a single continuous axis
+      const renderMasterTimeline = () => {
+        const allTurns = Array.from({ length: 24 }, (_, i) => i + 1);
+
+        return (
+          <div className="relative pt-6 pb-4 my-2 overflow-x-auto">
+            {/* Continuous Master Gold Line */}
+            <div className="absolute top-3 left-0 right-0 h-[3px] bg-[#E5C158] shadow-[0_0_10px_rgba(229,193,88,0.5)] z-0" />
+            
+            <div className="flex justify-between min-w-[1500px] relative z-10 px-2 gap-2">
+              {allTurns.map((t) => {
+                const recessName = RECESS_TURNS[t];
+                const monthLabel = MONTH_NAMES[t - 1];
+                
+                const isJustice = justiceTurns.includes(t);
+                const isPeace = peaceTurns.includes(t);
+                const isOpp = oppositionTurns.includes(t);
+                const isWar = warOfficeTurn === t;
+                const isAdm = admiraltyTurn === t;
+                const isBudget = t === 8;
+
+                const hasScheduledEvent = isJustice || isPeace || isOpp || isWar || isAdm || isBudget;
+
+                return (
+                  <div key={t} className="flex flex-col items-center flex-1 min-w-[55px]">
+                    {/* Tick Mark */}
+                    <div className={`w-[2px] h-3 mb-1 ${recessName ? 'bg-slate-700' : hasScheduledEvent ? 'bg-[#E5C158]' : 'bg-[#E5C158]/50'}`}></div>
+
+                    {/* Node Card */}
+                    <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[70px] flex flex-col justify-between ${
+                      recessName
+                        ? 'border-slate-800 bg-slate-900/60 text-slate-500'
+                        : hasScheduledEvent
+                        ? 'border-[#E5C158] bg-[#0F223D] text-white shadow-lg'
+                        : 'border-slate-700 bg-[#0B192C] text-slate-300'
+                    }`}>
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider opacity-75 font-semibold">
+                          {monthLabel}
+                        </div>
+                        <div className="text-xs font-bold text-[#E5C158]">
+                          T{t}
+                        </div>
+                      </div>
+
+                      {/* Event Badges */}
+                      <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
+                        {recessName && <span className="text-slate-500 italic block">Recess</span>}
+                        {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
+                        {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
+                        {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
+                        {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
+                        {isWar && <span className="bg-amber-600 text-white px-1 rounded block font-bold">War</span>}
+                        {isAdm && <span className="bg-cyan-600 text-white px-1 rounded block font-bold">Admiralty</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      };
 
       // Helper for turn primary item label
       const getTurnPrimaryLabel = (t) => {
@@ -275,7 +339,7 @@
         const secondHalfTurns = Array.from({ length: 12 }, (_, i) => i + 13).filter(t => !RECESS_TURNS[t]);
 
         return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-5xl mx-auto">
+          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-6xl mx-auto">
             <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block cursor-pointer">
               ← Return to Menu
             </button>
@@ -305,6 +369,17 @@
                 <span className="text-xl">✓</span> All timetable rules and requirements satisfied! You may begin the session below.
               </div>
             )}
+
+            {/* MASTER TIMELINE OVERVIEW */}
+            <div className="border-2 border-[#E5C158]/60 bg-[#0B192C] p-5 rounded-lg mb-8 shadow-xl">
+              <div className="flex justify-between items-center mb-1">
+                <h2 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
+                  🗺️ Master Parliamentary Session Timeline (Turns 1–24)
+                </h2>
+                <span className="text-xs text-slate-400">Scroll horizontally to view full session</span>
+              </div>
+              {renderMasterTimeline()}
+            </div>
 
             <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
               <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed Orders & Recesses</h2>
