@@ -160,14 +160,36 @@
             <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
             <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
             <p className="text-sm text-slate-300 mb-6">
-              Before Parliament convenes, order the twenty-four bi-weekly turns of {selectedYear}. The Estimates and Budget are fixed by custom; you must place the compulsory reports and Opposition Days within their designated windows.
+              Before Parliament convenes, order the twenty-four bi-weekly turns of {selectedYear}. Place compulsory reports and Opposition Days within their designated windows.
             </p>
+
+            {/* ENLARGED WARNINGS & ADVICE BANNER AT TOP */}
+            {!isValid ? (
+              <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg mb-8 shadow-xl">
+                <div className="flex items-center gap-2 mb-2 text-rose-300 font-bold text-base">
+                  <span className="text-xl">⚠️</span> Timetable Requirements & Rules Pending
+                </div>
+                <div className="space-y-2 text-sm text-rose-200">
+                  {validationErrors.map((err, idx) => (
+                    <div key={idx} className="flex items-start gap-2 bg-rose-900/40 p-2 rounded border border-rose-800/60">
+                      <span className="font-bold">•</span>
+                      <span>{err}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-emerald-950/80 border-2 border-emerald-500 p-4 rounded-lg mb-8 text-emerald-200 text-sm font-bold flex items-center gap-3">
+                <span className="text-xl">✓</span> All timetable rules and requirements satisfied! You may begin the session below.
+              </div>
+            )}
 
             <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
               <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed by Standing Order</h2>
               <div className="space-y-2 text-xs">
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURNS 1–7</span> Consolidated Funds — with the Gross Income Growth Assessment.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 8</span> Financial Statement — the Budget of the year.</div>
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURNS 1–7</span> Consolidated Funds — Gross Income Growth Assessment across all years.</div>
+                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-1 rounded font-bold mr-2">TURN 8</span> Financial Statement — Annual Budget.</div>
               </div>
             </div>
 
@@ -257,19 +279,10 @@
               </div>
             </div>
 
-            {!isValid && (
-              <div className="bg-rose-950/60 border border-rose-800 p-3 rounded mb-4 text-xs text-rose-300 space-y-1">
-                <div className="font-bold mb-1">Validation Warnings:</div>
-                {validationErrors.map((err, idx) => (
-                  <div key={idx}>• {err}</div>
-                ))}
-              </div>
-            )}
-
             <button
               disabled={!isValid}
               onClick={() => setGameState('DASHBOARD')}
-              className={`w-full py-3 rounded font-bold text-sm transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+              className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
             >
               {isValid ? 'Confirm & Start Year' : 'Resolve every rule above before session may begin'}
             </button>
@@ -280,7 +293,7 @@
       const tabs = [
         'Parliamentary Timetable', 'General Election', 'Parliament (House of Commons)', 
         'House of Lords', 'Cabinet', "Lord Chancellor's Department", 
-        'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office (Horse Guards)'
+        'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office'
       ];
 
       return (
@@ -317,6 +330,7 @@
                     <div key={t} className={`p-3 rounded border flex justify-between items-center text-xs ${t === currentTurn ? 'border-[#E5C158] bg-[#0F223D]' : 'border-slate-800 bg-[#0B192C]'}`}>
                       <div>
                         <span className="font-bold text-[#E5C158] mr-3">TURN {t} ({MONTH_NAMES[t - 1]})</span>
+                        {t === 1 && <span className="font-semibold text-amber-200">Opening Address | </span>}
                         {t <= 7 && <span>Consolidated Funds Assessment</span>}
                         {t === 8 && <span>Financial Statement (Annual Budget)</span>}
                         {justiceTurns.includes(t) && <span className="ml-2 text-blue-300">| Lord Chancellor Report</span>}
