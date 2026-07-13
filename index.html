@@ -210,28 +210,13 @@
         cabinetMinutes: 'Ministers aligned on maintaining current garrison posture across industrial centers.'
       });
 
-      // Patronage Offices State
-      const [patronageOffices, setPatronageOffices] = React.useState([
-        { id: 1, office: 'Paymaster of the Forces', appointee: 'Sir Charles Long', stipend: '£2,000/yr', faction: 'Tory Backbenchers', influence: '+15 Vote Commitment' },
-        { id: 2, office: 'Postmaster General', appointee: 'Earl of Chichester', stipend: '£2,500/yr', faction: 'Landed Aristocracy', influence: '+10 Loyalty' },
-        { id: 3, office: 'Master of the Mint', appointee: 'William Wellesley-Pole', stipend: '£3,000/yr', faction: 'Wellington Faction', influence: '+12 Ministerial Support' },
-        { id: 4, office: 'Governor of Barbados', appointee: 'Lord Combermere', stipend: '£4,000/yr', faction: 'Colonial Interest', influence: '+8 West India Committee' }
-      ]);
-
-      const handleAddPatronageOffice = () => {
-        setPatronageOffices(prev => [
-          ...prev,
-          { id: Date.now(), office: 'New Crown Office', appointee: 'Unassigned', stipend: '£1,000/yr', faction: 'Independent', influence: '+5 Parliamentary Loyalty' }
-        ]);
-      };
-
-      const handleUpdatePatronageField = (id, field, value) => {
-        setPatronageOffices(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-      };
-
-      const handleRemovePatronageOffice = (id) => {
-        setPatronageOffices(prev => prev.filter(item => item.id !== id));
-      };
+      const [patronageForm, setPatronageForm] = React.useState({
+        patronageNotes: 'Crown patronage allocations, sinecures, bishoprics, and peerages dispensations.',
+        discretionaryFunds: 12500,
+        peeragesCreated: 2,
+        sinecuresGranted: 5,
+        ecclesiasticalAppointments: 3
+      });
 
       // Helper Handlers for Ministers Traits and Followers
       const toggleMinisterTraitsOpen = (key) => {
@@ -564,7 +549,7 @@
         domesticJudgementColor = "text-emerald-400";
       } else if (netDomesticBalance >= 0) {
         domesticJudgement = "Domestic conditions remain generally orderly, though mild social unrest persists in localized industrial districts. Regular policing and garrison strength are currently sufficient.";
-        domesticJudgementColor = "text-[#E5C158]";
+        domesticJudgementColor = "text-amber-300";
       } else {
         domesticJudgement = "CRITICAL WARNING: Widespread social disorder detected. Radical reform agitation exceeds local peacekeeping capacity. Imminent risk of sedition and civil violence if garrisons or concessions are not deployed.";
         domesticJudgementColor = "text-rose-400 font-bold";
@@ -575,7 +560,7 @@
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters, patronageOffices
+          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, patronageForm, cabinetMinisters
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -604,8 +589,8 @@
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
+            if (parsed.patronageForm) setPatronageForm(parsed.patronageForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
-            if (parsed.patronageOffices) setPatronageOffices(parsed.patronageOffices);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -755,7 +740,7 @@
 
                         <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
                           {recessName && <span className="text-slate-500 italic block">Recess</span>}
-                          {isBudget && <span className="bg-[#E5C158] text-black px-1 rounded block font-bold">Budget</span>}
+                          {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
                           {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
                           {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
                           {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
@@ -1253,7 +1238,7 @@
                         {getTurnPrimaryLabel(currentTurn) && (
                           <div className="flex items-center gap-2">
                             <span className="text-[#E5C158]">▸</span>
-                            <span className="font-bold text-[#E5C158]">{getTurnPrimaryLabel(currentTurn)}</span>
+                            <span className="font-bold text-amber-300">{getTurnPrimaryLabel(currentTurn)}</span>
                           </div>
                         )}
                         {justiceTurns.includes(currentTurn) && (
@@ -1341,7 +1326,7 @@
                               ) : (
                                 <div className="space-y-1">
                                   {primaryLabel && (
-                                    <div className="text-[#E5C158] font-medium">{primaryLabel}</div>
+                                    <div className="text-amber-300 font-medium">{primaryLabel}</div>
                                   )}
                                   <div className="flex flex-wrap gap-1.5 pt-0.5">
                                     {isJustice && (
@@ -1396,46 +1381,31 @@
             {/* CABINET TAB */}
             {activeTab === 'Cabinet' && (
               <div className="space-y-6">
-                {/* INTERACTIVE NAVIGATION BUTTONS (MUTUALLY EXCLUSIVE TABS) */}
-                <div className="flex border-b border-[#E5C158]/50 bg-[#0B192C] p-2 rounded-t gap-2 text-xs font-sans">
-                  <button
-                    onClick={() => setCabinetSubTab('DOWNING_STREET')}
-                    className={`px-5 py-2.5 rounded font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                      cabinetSubTab === 'DOWNING_STREET'
-                        ? 'bg-[#E5C158] text-[#0F223D] shadow-lg scale-[1.02]'
-                        : 'text-slate-300 hover:bg-[#0F223D] hover:text-white border border-slate-700'
-                    }`}
-                  >
-                    <span>🏛️</span>
-                    <span>No. 10 Downing Street</span>
-                  </button>
-
-                  <button
-                    onClick={() => setCabinetSubTab('CABINET_MEETING')}
-                    className={`px-5 py-2.5 rounded font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                      cabinetSubTab === 'CABINET_MEETING'
-                        ? 'bg-[#E5C158] text-[#0F223D] shadow-lg scale-[1.02]'
-                        : 'text-slate-300 hover:bg-[#0F223D] hover:text-white border border-slate-700'
-                    }`}
-                  >
-                    <span>📜</span>
-                    <span>Cabinet Meeting</span>
-                  </button>
-
-                  <button
-                    onClick={() => setCabinetSubTab('PATRONAGE')}
-                    className={`px-5 py-2.5 rounded font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                      cabinetSubTab === 'PATRONAGE'
-                        ? 'bg-[#E5C158] text-[#0F223D] shadow-lg scale-[1.02]'
-                        : 'text-slate-300 hover:bg-[#0F223D] hover:text-white border border-slate-700'
-                    }`}
-                  >
-                    <span>🎖️</span>
-                    <span>Patronage</span>
-                  </button>
+                {/* CABINET NAVIGATION BUTTONS (MUTUALLY EXCLUSIVE VISIBILITY) */}
+                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'DOWNING_STREET', label: 'No. 10 Downing Street' },
+                    { key: 'CABINET_MEETING', label: 'Cabinet Meeting' },
+                    { key: 'PATRONAGE', label: 'Patronage' }
+                  ].map((btn) => {
+                    const isActive = cabinetSubTab === btn.key;
+                    return (
+                      <button
+                        key={btn.key}
+                        onClick={() => setCabinetSubTab(btn.key)}
+                        className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
+                          isActive
+                            ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        }`}
+                      >
+                        {btn.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* PANEL 1: NO. 10 DOWNING STREET */}
+                {/* 1. NO. 10 DOWNING STREET PANEL */}
                 {cabinetSubTab === 'DOWNING_STREET' && (
                   <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
                     <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
@@ -1461,175 +1431,127 @@
                   </div>
                 )}
 
-                {/* PANEL 2: CABINET MEETING (MERGED EXECUTIVE PRIORITIES & CABINET DELIBERATIONS) */}
+                {/* 2. CABINET MEETING PANEL */}
                 {cabinetSubTab === 'CABINET_MEETING' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
-                    <div className="border-b border-[#E5C158]/40 pb-4 flex justify-between items-center">
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-sans">
+                    <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
                       <div>
-                        <h2 className="text-xl font-bold text-[#E5C158] uppercase tracking-wider">📜 Cabinet Meeting</h2>
+                        <h2 className="text-xl font-bold text-[#E5C158]">🏛️ Cabinet Meeting</h2>
                         <p className="text-xs text-slate-400">Executive Priorities, Strategic Directives & Ministerial Deliberations</p>
                       </div>
-                      <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] border border-[#E5C158]/40 px-3 py-1 rounded font-mono font-bold">
-                        Year {selectedYear} · Turn {currentTurn}
+                      <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-2.5 py-1 rounded font-mono font-bold">
+                        {selectedYear} · Turn {currentTurn}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* SECTION 1: EXECUTIVE PRIORITIES & DIRECTIVES */}
-                      <div className="bg-[#0F223D] border border-slate-700 p-5 rounded-lg space-y-4">
-                        <div className="border-b border-slate-700 pb-2">
-                          <h3 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
-                            <span>👑</span> Executive Priorities & Directives
-                          </h3>
-                          <p className="text-[11px] text-slate-400">First Lord of the Treasury Strategic Intentions</p>
+                      {/* STRATEGIC DIRECTIVES */}
+                      <div className="space-y-4 text-xs">
+                        <h3 className="text-sm font-bold text-[#E5C158] border-b border-slate-700 pb-1">📜 Executive Priorities</h3>
+                        <div>
+                          <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
+                          <textarea
+                            rows={5}
+                            value={cabinetForm.pmNotes}
+                            onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
+                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                            placeholder="Enter executive priorities and party political notes..."
+                          />
                         </div>
 
-                        <div className="space-y-4 text-xs">
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.pmNotes}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none focus:outline-none"
-                              placeholder="Enter executive priorities and party political notes..."
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.keyDirectives}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none focus:outline-none"
-                              placeholder="Enter strategic goals for the current session..."
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
+                          <textarea
+                            rows={5}
+                            value={cabinetForm.keyDirectives}
+                            onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
+                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                            placeholder="Enter strategic goals for the current session..."
+                          />
                         </div>
                       </div>
 
-                      {/* SECTION 2: CABINET DELIBERATIONS & MINUTES */}
-                      <div className="bg-[#0F223D] border border-slate-700 p-5 rounded-lg space-y-4">
-                        <div className="border-b border-slate-700 pb-2">
-                          <h3 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
-                            <span>🗣️</span> Cabinet Deliberations & Minutes
-                          </h3>
-                          <p className="text-[11px] text-slate-400">Confidential Servants & Secret Dispatches</p>
+                      {/* CABINET MINUTES */}
+                      <div className="space-y-4 text-xs">
+                        <h3 className="text-sm font-bold text-[#E5C158] border-b border-slate-700 pb-1">🏛️ Cabinet Deliberations</h3>
+                        <div>
+                          <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
+                          <textarea
+                            rows={5}
+                            value={cabinetForm.cabinetAgenda}
+                            onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
+                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                            placeholder="Detail items for Cabinet discussion..."
+                          />
                         </div>
 
-                        <div className="space-y-4 text-xs">
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.cabinetAgenda}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none focus:outline-none"
-                              placeholder="Detail items for Cabinet discussion..."
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.cabinetMinutes}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none focus:outline-none"
-                              placeholder="Record Cabinet decisions and ministerial consensus..."
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
+                          <textarea
+                            rows={5}
+                            value={cabinetForm.cabinetMinutes}
+                            onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
+                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                            placeholder="Record Cabinet decisions and ministerial consensus..."
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* PANEL 3: PATRONAGE */}
+                {/* 3. PATRONAGE PANEL */}
                 {cabinetSubTab === 'PATRONAGE' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
-                    <div className="border-b border-[#E5C158]/40 pb-4 flex justify-between items-center">
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-sans">
+                    <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
                       <div>
-                        <h2 className="text-xl font-bold text-[#E5C158] uppercase tracking-wider">🎖️ Crown Patronage & Offices of Profit</h2>
-                        <p className="text-xs text-slate-400">Distribution of Sinecural Posts, Colonial Appointments & Treasury Patronage</p>
+                        <h2 className="text-xl font-bold text-[#E5C158]">👑 Crown & Treasury Patronage</h2>
+                        <p className="text-xs text-slate-400">Dispensation of Honors, Offices, Sinecures, and Civil List Favors</p>
                       </div>
-                      <button
-                        onClick={handleAddPatronageOffice}
-                        className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1.5 rounded text-xs hover:bg-yellow-400 cursor-pointer transition-colors shadow"
-                      >
-                        + Create Crown Office
-                      </button>
+                      <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded font-mono font-bold">
+                        Patronage Active
+                      </span>
                     </div>
 
-                    <div className="border border-slate-700 rounded-lg overflow-hidden bg-[#0F223D]">
-                      <table className="w-full text-left text-xs font-sans">
-                        <thead className="bg-[#0B192C] text-[#E5C158] font-bold border-b border-slate-700">
-                          <tr>
-                            <th className="p-3 border-r border-slate-700">Office / Sinecure Title</th>
-                            <th className="p-3 border-r border-slate-700">Crown Appointee</th>
-                            <th className="p-3 border-r border-slate-700">Stipend / Income</th>
-                            <th className="p-3 border-r border-slate-700">Beneficiary Faction</th>
-                            <th className="p-3 border-r border-slate-700">Political Effect</th>
-                            <th className="p-3 text-center">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800">
-                          {patronageOffices.map((item) => (
-                            <tr key={item.id} className="hover:bg-[#0B192C]/50 transition-colors">
-                              <td className="p-2 border-r border-slate-800">
-                                <input
-                                  type="text"
-                                  value={item.office}
-                                  onChange={(e) => handleUpdatePatronageField(item.id, 'office', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-semibold p-1 rounded focus:border-[#E5C158] focus:outline-none"
-                                />
-                              </td>
-                              <td className="p-2 border-r border-slate-800">
-                                <input
-                                  type="text"
-                                  value={item.appointee}
-                                  onChange={(e) => handleUpdatePatronageField(item.id, 'appointee', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 p-1 rounded focus:border-[#E5C158] focus:outline-none"
-                                />
-                              </td>
-                              <td className="p-2 border-r border-slate-800">
-                                <input
-                                  type="text"
-                                  value={item.stipend}
-                                  onChange={(e) => handleUpdatePatronageField(item.id, 'stipend', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1 rounded focus:border-[#E5C158] focus:outline-none"
-                                />
-                              </td>
-                              <td className="p-2 border-r border-slate-800">
-                                <input
-                                  type="text"
-                                  value={item.faction}
-                                  onChange={(e) => handleUpdatePatronageField(item.id, 'faction', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 p-1 rounded focus:border-[#E5C158] focus:outline-none"
-                                />
-                              </td>
-                              <td className="p-2 border-r border-slate-800">
-                                <input
-                                  type="text"
-                                  value={item.influence}
-                                  onChange={(e) => handleUpdatePatronageField(item.id, 'influence', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-1 rounded focus:border-[#E5C158] focus:outline-none"
-                                />
-                              </td>
-                              <td className="p-2 text-center">
-                                <button
-                                  onClick={() => handleRemovePatronageOffice(item.id)}
-                                  className="text-rose-400 hover:text-rose-200 font-bold px-2 py-1 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
-                                  title="Vacate Office"
-                                >
-                                  ✕
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
+                        <label className="block text-slate-300 font-bold mb-1">Peerages Created</label>
+                        <input
+                          type="number"
+                          value={patronageForm.peeragesCreated}
+                          onChange={(e) => setPatronageForm({ ...patronageForm, peeragesCreated: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
+                        <label className="block text-slate-300 font-bold mb-1">Sinecures & Offices Granted</label>
+                        <input
+                          type="number"
+                          value={patronageForm.sinecuresGranted}
+                          onChange={(e) => setPatronageForm({ ...patronageForm, sinecuresGranted: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
+                        />
+                      </div>
+                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
+                        <label className="block text-slate-300 font-bold mb-1">Ecclesiastical Appointments</label>
+                        <input
+                          type="number"
+                          value={patronageForm.ecclesiasticalAppointments}
+                          onChange={(e) => setPatronageForm({ ...patronageForm, ecclesiasticalAppointments: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-xs space-y-2">
+                      <label className="block text-slate-300 font-bold">Patronage Register & Ministerial Dispensation Directives</label>
+                      <textarea
+                        rows={6}
+                        value={patronageForm.patronageNotes}
+                        onChange={(e) => setPatronageForm({ ...patronageForm, patronageNotes: e.target.value })}
+                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-3 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                        placeholder="Record patronage arrangements, government whips notes, or peerage creations..."
+                      />
                     </div>
                   </div>
                 )}
@@ -1833,7 +1755,7 @@
                                   placeholder="e.g. United States of America"
                                   value={data.power || ''}
                                   onChange={(e) => handleActionDataChange('embargo', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                 />
                               </div>
                             )}
@@ -1897,7 +1819,7 @@
                                     <select
                                       value={data.nature || 'Cession to foreign sovereign'}
                                       onChange={(e) => handleActionDataChange('regions', 'nature', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     >
                                       <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
                                       <option value="Annexation to the Crown">Annexation to the Crown</option>
@@ -2277,7 +2199,7 @@
                                     value={agent.status}
                                     placeholder="e.g. Under Surveillance / Intercepted / At Large"
                                     onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
-                                    className="w-full bg-[#0F223D] border border-slate-700 text-[#E5C158] font-mono p-1 rounded focus:border-[#E5C158]"
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                                 <div>
