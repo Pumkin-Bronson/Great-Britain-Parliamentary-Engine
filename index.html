@@ -2295,132 +2295,209 @@
             )}
 
             {/* EXCHEQUER TAB */}
-            {activeTab === 'Exchequer' && (
-              <div className="space-y-4">
-                {/* SUB NAVIGATION WITH TURN LOCKING */}
-                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
-                  {[
-                    { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
-                    { key: 'GDI_ASSESSMENT', label: 'Consolidated Funds (GDI Growth Assessment)' },
-                    { key: 'FINANCIAL_STATEMENT', label: 'Financial Statement' }
-                  ].map((subTab) => {
-                    const unlocked = isExchequerSubTabUnlocked(subTab.key);
-                    const isActive = exchequerSubTab === subTab.key;
+           {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
+  <div className="p-6 bg-slate-900 text-amber-100 font-mono border-2 border-amber-800/60 rounded-lg shadow-2xl space-y-6">
+    {/* HEADER */}
+    <div className="text-center space-y-2 border-b border-amber-800/40 pb-4">
+      <h2 className="text-xl font-bold tracking-widest text-amber-400">
+        💰 {dateDisplay} Consolidated Funds
+      </h2>
+      <div className="text-xs text-amber-200/70 tracking-tight">
+        =======================================================<br />
+        HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND<br />
+        =======================================================
+      </div>
+      <div className="text-sm font-semibold text-amber-300">
+        DATE: {dateDisplay}
+      </div>
+    </div>
 
-                    return (
-                      <button
-                        key={subTab.key}
-                        disabled={!unlocked}
-                        onClick={() => unlocked && setExchequerSubTab(subTab.key)}
-                        className={`px-4 py-2 rounded font-bold transition-colors flex items-center gap-1.5 ${
-                          !unlocked
-                            ? 'opacity-40 cursor-not-allowed bg-slate-900 text-slate-500 border border-slate-800'
-                            : isActive
-                            ? 'bg-[#E5C158] text-[#0F223D] shadow cursor-pointer'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
-                        }`}
-                      >
-                        <span>{subTab.label}</span>
-                        {!unlocked && <span className="text-[10px]">🔒</span>}
-                      </button>
-                    );
-                  })}
-                </div>
+    {/* INFLOWS SECTION */}
+    <div className="space-y-3">
+      <h3 className="text-emerald-400 font-bold text-base border-b border-emerald-800/50 pb-1">
+        INFLOWS:
+      </h3>
+      
+      {/* Domestic Inflows */}
+      <div className="pl-4 space-y-1">
+        <div className="text-amber-300 font-semibold">&gt; Domestic Inflows</div>
+        <div className="flex justify-between pl-4">
+          <span>Domestic Tax Income :</span>
+          <span className="text-emerald-300">£{(cfForm?.domesticTax || 0).toLocaleString()}</span>
+        </div>
+        
+        <div className="pl-4 pt-1 font-semibold text-slate-300">Gross Commercial Port Traffic</div>
+        <div className="flex justify-between pl-8 text-slate-300">
+          <span>Bristol :</span>
+          <span>£{(cfForm?.bristol || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-8 text-slate-300">
+          <span>Chatham Docks :</span>
+          <span>£{(cfForm?.chatham || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-8 text-slate-300">
+          <span>Liverpool :</span>
+          <span>£{(cfForm?.liverpool || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-8 text-slate-300">
+          <span>Waterford :</span>
+          <span>£{(cfForm?.waterford || 0).toLocaleString()}</span>
+        </div>
+        
+        {/* Calculated Port Capacity */}
+        <div className="flex justify-between pl-4 font-bold text-emerald-400 border-t border-slate-800 pt-1 my-1">
+          <span>Total Commercial Capacity :</span>
+          <span>£{((cfForm?.bristol || 0) + (cfForm?.chatham || 0) + (cfForm?.liverpool || 0) + (cfForm?.waterford || 0)).toLocaleString()}</span>
+        </div>
+        
+        <div className="flex justify-between pl-4">
+          <span>Total Trade Income (Custom Duties Collected) :</span>
+          <span className="text-emerald-300">£{(cfForm?.totalTradeIncome || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Core Treasury Income :</span>
+          <span className="text-emerald-300">£{(cfForm?.coreTreasuryIncome || 0).toLocaleString()}</span>
+        </div>
+      </div>
 
-                {/* GUARD CLAUSE FOR LOCKED SUB-TABS */}
-                {!isExchequerSubTabUnlocked(exchequerSubTab) ? (
-                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4">
-                    <div className="text-3xl mb-2">📜🔒</div>
-                    <h3 className="text-lg font-bold text-slate-200">Parliament Not in Session</h3>
-                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                      This Exchequer section is currently locked. Advance turns to reach its scheduled session on the Parliamentary timeline to interact.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* SUBTAB 1: CONSOLIDATED FUNDS LEDGER */}
-                    {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
-                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                        <div className="text-center space-y-1">
-                          <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
-                          <div className="text-slate-400">=======================================================</div>
-                          <div className="text-white font-bold tracking-wider">HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND</div>
-                          <div className="text-slate-400">=======================================================</div>
-                          <div className="text-left pt-2 font-sans text-slate-300">
-                            <strong className="text-white">DATE:</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
-                          </div>
-                        </div>
+      {/* Foreign Inflows */}
+      <div className="pl-4 space-y-1 pt-2">
+        <div className="text-amber-300 font-semibold">&gt; Foreign Inflows</div>
+        <div className="flex justify-between pl-4">
+          <span>Protectorate(s) Income :</span>
+          <span className="text-emerald-300">£{(cfForm?.protectorates || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Allied Subsidies :</span>
+          <span className="text-emerald-300">£{(cfForm?.alliedSubsidies || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Convention Contributions :</span>
+          <span className="text-emerald-300">£{(cfForm?.conventionContributions || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>War Reparations :</span>
+          <span className="text-emerald-300">£{(cfForm?.warReparations || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Admiralty Prize Grants :</span>
+          <span className="text-emerald-300">£{(cfForm?.admiraltyPrize || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Exactions / Requisitions :</span>
+          <span className="text-emerald-300">£{(cfForm?.exactions || 0).toLocaleString()}</span>
+        </div>
+      </div>
 
-                        {/* INFLOWS SECTION */}
-                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
-                          <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
-                          
-                          <div className="space-y-3 font-sans">
-                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflows</div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Domestic Tax Income</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
-                                  <input
-                                    type="number"
-                                    value={cfForm.domTax}
-                                    onChange={(e) => handleCfChange('domTax', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            </div>
+      {/* Total Inflows Banner */}
+      <div className="text-slate-500 text-xs">———————————————————————————————————————</div>
+      <div className="flex justify-between text-emerald-400 font-bold text-base px-2 py-1 bg-emerald-950/40 rounded border border-emerald-800/40">
+        <span>Total Inflows Income :</span>
+        <span>
+          £{(
+            (cfForm?.domesticTax || 0) +
+            ((cfForm?.bristol || 0) + (cfForm?.chatham || 0) + (cfForm?.liverpool || 0) + (cfForm?.waterford || 0)) +
+            (cfForm?.totalTradeIncome || 0) +
+            (cfForm?.coreTreasuryIncome || 0) +
+            (cfForm?.protectorates || 0) +
+            (cfForm?.alliedSubsidies || 0) +
+            (cfForm?.conventionContributions || 0) +
+            (cfForm?.warReparations || 0) +
+            (cfForm?.admiraltyPrize || 0) +
+            (cfForm?.exactions || 0)
+          ).toLocaleString()}
+        </span>
+      </div>
+    </div>
 
-                            <div className="pl-2 space-y-2 pt-1">
-                              <div className="text-xs text-slate-300 font-semibold">Gross Commercial Port Traffic</div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Bristol</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.bristol}
-                                    onChange={(e) => handleCfChange('bristol', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Chatham</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.chatham}
-                                    onChange={(e) => handleCfChange('chatham', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Liverpool</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.liverpool}
-                                    onChange={(e) => handleCfChange('liverpool', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Waterford</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.waterford}
-                                    onChange={(e) => handleCfChange('waterford', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                              <div className="text-[11px] text-slate-400 font-mono pt-1">
-                                Total Capacity Yield: <span className="text-[#E5C158] font-bold">£{totalCapacity.toLocaleString()}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+    {/* OUTFLOWS SECTION */}
+    <div className="space-y-3 pt-4 border-t border-amber-800/40">
+      <h3 className="text-rose-400 font-bold text-base border-b border-rose-800/50 pb-1">
+        OUTFLOWS:
+      </h3>
+      
+      {/* Domestic Outflows */}
+      <div className="pl-4 space-y-1">
+        <div className="text-amber-300 font-semibold">&gt; Domestic Outflows</div>
+        <div className="flex justify-between pl-4">
+          <span>Land Forces Expenditure :</span>
+          <span className="text-rose-300">£{(cfForm?.landForces || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Fleet Maintenance & Ordnance :</span>
+          <span className="text-rose-300">£{(cfForm?.fleetMaintenance || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Town Watch :</span>
+          <span className="text-rose-300">£{(cfForm?.townWatch || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Statutory Civil List :</span>
+          <span className="text-rose-300">£{(cfForm?.statutoryCivilList || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between pl-4">
+          <span>Pensions, Grants & Privy Purse Supplements :</span>
+          <span className="text-rose-300">£{(cfForm?.pensionsPrivyPurse || 0).toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Foreign Outflows */}
+      <div className="pl-4 space-y-1 pt-2">
+        <div className="text-amber-300 font-semibold">&gt; Foreign Outflows</div>
+        <div className="flex justify-between pl-4">
+          <span>Diplomatic Expenditures :</span>
+          <span className="text-rose-300">£{(cfForm?.diplomaticExpenditures || 0).toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Total Outflows Banner */}
+      <div className="text-slate-500 text-xs">———————————————————————————————————————</div>
+      <div className="flex justify-between text-rose-400 font-bold text-base px-2 py-1 bg-rose-950/40 rounded border border-rose-800/40">
+        <span>Total Outflows Expenditure :</span>
+        <span>
+          £{(
+            (cfForm?.landForces || 0) +
+            (cfForm?.fleetMaintenance || 0) +
+            (cfForm?.townWatch || 0) +
+            (cfForm?.statutoryCivilList || 0) +
+            (cfForm?.pensionsPrivyPurse || 0) +
+            (cfForm?.diplomaticExpenditures || 0)
+          ).toLocaleString()}
+        </span>
+      </div>
+    </div>
+
+    {/* NET YIELD & LIQUIDITY SUMMARY */}
+    <div className="space-y-2 pt-4 border-t-2 border-amber-600/60">
+      <div className="flex justify-between text-base font-bold bg-amber-950/60 p-2 rounded border border-amber-700/50">
+        <span className="text-amber-300">NET YIELD TO SPECIE VAULTS :</span>
+        <span className={
+          (
+            ((cfForm?.domesticTax || 0) + ((cfForm?.bristol || 0) + (cfForm?.chatham || 0) + (cfForm?.liverpool || 0) + (cfForm?.waterford || 0)) + (cfForm?.totalTradeIncome || 0) + (cfForm?.coreTreasuryIncome || 0) + (cfForm?.protectorates || 0) + (cfForm?.alliedSubsidies || 0) + (cfForm?.conventionContributions || 0) + (cfForm?.warReparations || 0) + (cfForm?.admiraltyPrize || 0) + (cfForm?.exactions || 0)) -
+            ((cfForm?.landForces || 0) + (cfForm?.fleetMaintenance || 0) + (cfForm?.townWatch || 0) + (cfForm?.statutoryCivilList || 0) + (cfForm?.pensionsPrivyPurse || 0) + (cfForm?.diplomaticExpenditures || 0))
+          ) >= 0 ? "text-emerald-400" : "text-rose-400"
+        }>
+          £{(
+            ((cfForm?.domesticTax || 0) + ((cfForm?.bristol || 0) + (cfForm?.chatham || 0) + (cfForm?.liverpool || 0) + (cfForm?.waterford || 0)) + (cfForm?.totalTradeIncome || 0) + (cfForm?.coreTreasuryIncome || 0) + (cfForm?.protectorates || 0) + (cfForm?.alliedSubsidies || 0) + (cfForm?.conventionContributions || 0) + (cfForm?.warReparations || 0) + (cfForm?.admiraltyPrize || 0) + (cfForm?.exactions || 0)) -
+            ((cfForm?.landForces || 0) + (cfForm?.fleetMaintenance || 0) + (cfForm?.townWatch || 0) + (cfForm?.statutoryCivilList || 0) + (cfForm?.pensionsPrivyPurse || 0) + (cfForm?.diplomaticExpenditures || 0))
+          ).toLocaleString()}
+        </span>
+      </div>
+      
+      <div className="flex justify-between text-base font-bold bg-amber-950/60 p-2 rounded border border-amber-700/50">
+        <span className="text-amber-300">TOTAL TREASURY LIQUIDITY :</span>
+        <span className="text-amber-400">£{(cfForm?.treasuryLiquidity || 0).toLocaleString()}</span>
+      </div>
+    </div>
+
+    {/* DOCUMENT SEAL FOOTER */}
+    <div className="text-center pt-6 text-[11px] text-amber-200/60 font-serif uppercase tracking-widest leading-relaxed">
+      ========================================================================================<br />
+      DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN<br />
+      ========================================================================================
+    </div>
+  </div>
+)}
                   </>
                 )}
               </div>
