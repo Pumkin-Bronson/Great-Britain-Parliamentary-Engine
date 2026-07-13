@@ -73,7 +73,6 @@
       const [selectedYear, setSelectedYear] = React.useState(1820);
       const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
-      const [cabinetSubTab, setCabinetSubTab] = React.useState('DOWNING_STREET');
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -208,14 +207,6 @@
         keyDirectives: '1. Secure Treasury appropriations.\n2. Maintain public tranquility via local garrisons.\n3. Oversee diplomatic posture with the Quadruple Alliance.',
         cabinetAgenda: 'Discussions regarding the repeal of wartime duties and local civil order response.',
         cabinetMinutes: 'Ministers aligned on maintaining current garrison posture across industrial centers.'
-      });
-
-      const [patronageForm, setPatronageForm] = React.useState({
-        patronageNotes: 'Crown patronage allocations, sinecures, bishoprics, and peerages dispensations.',
-        discretionaryFunds: 12500,
-        peeragesCreated: 2,
-        sinecuresGranted: 5,
-        ecclesiasticalAppointments: 3
       });
 
       // Helper Handlers for Ministers Traits and Followers
@@ -558,9 +549,9 @@
       // Save & Load Handlers
       const handleSaveGame = () => {
         const stateToSave = {
-          selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab,
+          selectedYear, currentTurn, activeTab, exchequerSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, patronageForm, cabinetMinisters
+          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -576,7 +567,6 @@
             setCurrentTurn(parsed.currentTurn || 1);
             setActiveTab(parsed.activeTab || 'Parliamentary Timetable');
             setExchequerSubTab(parsed.exchequerSubTab || 'CONSOLIDATED_FUNDS');
-            setCabinetSubTab(parsed.cabinetSubTab || 'DOWNING_STREET');
             setJusticeTurns(parsed.justiceTurns || []);
             setPeaceTurns(parsed.peaceTurns || []);
             setOppositionTurns(parsed.oppositionTurns || []);
@@ -589,7 +579,6 @@
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
-            if (parsed.patronageForm) setPatronageForm(parsed.patronageForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
@@ -1380,181 +1369,107 @@
 
             {/* CABINET TAB */}
             {activeTab === 'Cabinet' && (
-              <div className="space-y-6">
-                {/* CABINET NAVIGATION BUTTONS (MUTUALLY EXCLUSIVE VISIBILITY) */}
-                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
-                  {[
-                    { key: 'DOWNING_STREET', label: 'No. 10 Downing Street' },
-                    { key: 'CABINET_MEETING', label: 'Cabinet Meeting' },
-                    { key: 'PATRONAGE', label: 'Patronage' }
-                  ].map((btn) => {
-                    const isActive = cabinetSubTab === btn.key;
-                    return (
-                      <button
-                        key={btn.key}
-                        onClick={() => setCabinetSubTab(btn.key)}
-                        className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
-                          isActive
-                            ? 'bg-[#E5C158] text-[#0F223D] shadow'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        }`}
-                      >
-                        {btn.label}
-                      </button>
-                    );
-                  })}
+              <div className="space-y-8">
+                {/* CABINET HIERARCHY PANEL: NO. 10 DOWNING STREET */}
+                <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
+                  <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
+                    <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🏛️ No. 10 Downing Street</h2>
+                    <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
+                  </div>
+
+                  {/* PRIME MINISTER & MONARCH (TOP LEVEL SIDE BY SIDE) */}
+                  <div className="flex justify-center gap-12 mb-12">
+                    {renderMinisterProfile('pm')}
+                    {renderMinisterProfile('monarch')}
+                  </div>
+
+                  {/* MINISTERS (ROW OF 6) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center pt-4 border-t border-slate-800">
+                    {renderMinisterProfile('lordChancellor')}
+                    {renderMinisterProfile('exchequer')}
+                    {renderMinisterProfile('foreign')}
+                    {renderMinisterProfile('home')}
+                    {renderMinisterProfile('admiralty')}
+                    {renderMinisterProfile('war')}
+                  </div>
                 </div>
 
-                {/* 1. NO. 10 DOWNING STREET PANEL */}
-                {cabinetSubTab === 'DOWNING_STREET' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
-                    <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
-                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🏛️ No. 10 Downing Street</h2>
-                      <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
-                    </div>
-
-                    {/* PRIME MINISTER & MONARCH (TOP LEVEL SIDE BY SIDE) */}
-                    <div className="flex justify-center gap-12 mb-12">
-                      {renderMinisterProfile('pm')}
-                      {renderMinisterProfile('monarch')}
-                    </div>
-
-                    {/* MINISTERS (ROW OF 6) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center pt-4 border-t border-slate-800">
-                      {renderMinisterProfile('lordChancellor')}
-                      {renderMinisterProfile('exchequer')}
-                      {renderMinisterProfile('foreign')}
-                      {renderMinisterProfile('home')}
-                      {renderMinisterProfile('admiralty')}
-                      {renderMinisterProfile('war')}
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. CABINET MEETING PANEL */}
-                {cabinetSubTab === 'CABINET_MEETING' && (
-                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-sans">
+                {/* EXECUTIVE & DELIBERATION NOTES PANELS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* STRATEGIC DIRECTIVES */}
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
                     <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
                       <div>
-                        <h2 className="text-xl font-bold text-[#E5C158]">🏛️ Cabinet Meeting</h2>
-                        <p className="text-xs text-slate-400">Executive Priorities, Strategic Directives & Ministerial Deliberations</p>
+                        <h2 className="text-base font-bold text-[#E5C158]">📜 Executive Priorities</h2>
+                        <p className="text-xs text-slate-400">First Lord of the Treasury & Executive Office</p>
                       </div>
                       <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-2.5 py-1 rounded font-mono font-bold">
-                        {selectedYear} · Turn {currentTurn}
+                        {selectedYear}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* STRATEGIC DIRECTIVES */}
-                      <div className="space-y-4 text-xs">
-                        <h3 className="text-sm font-bold text-[#E5C158] border-b border-slate-700 pb-1">📜 Executive Priorities</h3>
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
-                          <textarea
-                            rows={5}
-                            value={cabinetForm.pmNotes}
-                            onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                            placeholder="Enter executive priorities and party political notes..."
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
-                          <textarea
-                            rows={5}
-                            value={cabinetForm.keyDirectives}
-                            onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                            placeholder="Enter strategic goals for the current session..."
-                          />
-                        </div>
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.pmNotes}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Enter executive priorities and party political notes..."
+                        />
                       </div>
 
-                      {/* CABINET MINUTES */}
-                      <div className="space-y-4 text-xs">
-                        <h3 className="text-sm font-bold text-[#E5C158] border-b border-slate-700 pb-1">🏛️ Cabinet Deliberations</h3>
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
-                          <textarea
-                            rows={5}
-                            value={cabinetForm.cabinetAgenda}
-                            onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                            placeholder="Detail items for Cabinet discussion..."
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
-                          <textarea
-                            rows={5}
-                            value={cabinetForm.cabinetMinutes}
-                            onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
-                            className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                            placeholder="Record Cabinet decisions and ministerial consensus..."
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.keyDirectives}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Enter strategic goals for the current session..."
+                        />
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* 3. PATRONAGE PANEL */}
-                {cabinetSubTab === 'PATRONAGE' && (
-                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-sans">
+                  {/* CABINET MINUTES */}
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
                     <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
                       <div>
-                        <h2 className="text-xl font-bold text-[#E5C158]">👑 Crown & Treasury Patronage</h2>
-                        <p className="text-xs text-slate-400">Dispensation of Honors, Offices, Sinecures, and Civil List Favors</p>
+                        <h2 className="text-base font-bold text-[#E5C158]">🏛️ Cabinet Deliberations</h2>
+                        <p className="text-xs text-slate-400">Confidential Servants & Ministerial Deliberations</p>
                       </div>
                       <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded font-mono font-bold">
-                        Patronage Active
+                        Turn {currentTurn}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
-                        <label className="block text-slate-300 font-bold mb-1">Peerages Created</label>
-                        <input
-                          type="number"
-                          value={patronageForm.peeragesCreated}
-                          onChange={(e) => setPatronageForm({ ...patronageForm, peeragesCreated: parseInt(e.target.value) || 0 })}
-                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.cabinetAgenda}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Detail items for Cabinet discussion..."
                         />
                       </div>
-                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
-                        <label className="block text-slate-300 font-bold mb-1">Sinecures & Offices Granted</label>
-                        <input
-                          type="number"
-                          value={patronageForm.sinecuresGranted}
-                          onChange={(e) => setPatronageForm({ ...patronageForm, sinecuresGranted: parseInt(e.target.value) || 0 })}
-                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
-                        />
-                      </div>
-                      <div className="bg-[#0F223D] p-3.5 rounded border border-slate-700">
-                        <label className="block text-slate-300 font-bold mb-1">Ecclesiastical Appointments</label>
-                        <input
-                          type="number"
-                          value={patronageForm.ecclesiasticalAppointments}
-                          onChange={(e) => setPatronageForm({ ...patronageForm, ecclesiasticalAppointments: parseInt(e.target.value) || 0 })}
-                          className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-bold p-2 rounded focus:border-[#E5C158]"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="text-xs space-y-2">
-                      <label className="block text-slate-300 font-bold">Patronage Register & Ministerial Dispensation Directives</label>
-                      <textarea
-                        rows={6}
-                        value={patronageForm.patronageNotes}
-                        onChange={(e) => setPatronageForm({ ...patronageForm, patronageNotes: e.target.value })}
-                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-3 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                        placeholder="Record patronage arrangements, government whips notes, or peerage creations..."
-                      />
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.cabinetMinutes}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Record Cabinet decisions and ministerial consensus..."
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
 
@@ -2316,7 +2231,7 @@
                           <div className="text-white font-bold tracking-wider">HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND</div>
                           <div className="text-slate-400">=======================================================</div>
                           <div className="text-left pt-2 font-sans text-slate-300">
-                            <strong className="text-white">Date :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                            <strong className="text-white">DATE:</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
                           </div>
                         </div>
 
@@ -2325,34 +2240,410 @@
                           <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
                           
                           <div className="space-y-3 font-sans">
-                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflow(s)</div>
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflows</div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
                               <div>
                                 <label className="block text-[11px] text-slate-300 mb-1">Domestic Tax Income</label>
                                 <div className="relative">
-                                  <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
                                   <input
                                     type="number"
-                                    value={cfForm.domTax || ''}
+                                    value={cfForm.domTax}
                                     onChange={(e) => handleCfChange('domTax', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                               </div>
+                            </div>
 
+                            <div className="pl-2 space-y-2 pt-1">
+                              <div className="text-xs text-slate-300 font-semibold">Gross Commercial Port Traffic</div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Bristol</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                    <input
+                                      type="number"
+                                      value={cfForm.bristol}
+                                      onChange={(e) => handleCfChange('bristol', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Chatham Docks</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                    <input
+                                      type="number"
+                                      value={cfForm.chatham}
+                                      onChange={(e) => handleCfChange('chatham', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Liverpool</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                    <input
+                                      type="number"
+                                      value={cfForm.liverpool}
+                                      onChange={(e) => handleCfChange('liverpool', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Waterford</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                    <input
+                                      type="number"
+                                      value={cfForm.waterford}
+                                      onChange={(e) => handleCfChange('waterford', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center bg-[#0B192C] p-2 rounded border border-slate-800 font-mono text-xs ml-2">
+                              <span className="text-slate-300">Total Commercial Capacity :</span>
+                              <span className="text-emerald-400 font-bold">£{totalCapacity.toLocaleString()}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2 pt-1">
                               <div>
                                 <label className="block text-[11px] text-slate-300 mb-1">Total Trade Income (Custom Duties Collected)</label>
                                 <div className="relative">
-                                  <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
                                   <input
                                     type="number"
-                                    value={cfForm.tradeIncome || ''}
+                                    value={cfForm.tradeIncome}
                                     onChange={(e) => handleCfChange('tradeIncome', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                               </div>
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Core Treasury Income</label>
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.coreTreasury}
+                                    onChange={(e) => handleCfChange('coreTreasury', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-[#E5C158] font-bold text-xs pt-2">&gt; Foreign Inflows</div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Protectorate(s) Income</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.protectorates}
+                                    onChange={(e) => handleCfChange('protectorates', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Allied Subsidies</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.subsidies}
+                                    onChange={(e) => handleCfChange('subsidies', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Convention Contributions</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.contributions}
+                                    onChange={(e) => handleCfChange('contributions', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">War Reparations</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.reparations}
+                                    onChange={(e) => handleCfChange('reparations', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Admiralty Prize Grants</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.prizeGrants}
+                                    onChange={(e) => handleCfChange('prizeGrants', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Exactions / Requisitions</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.exactions}
+                                    onChange={(e) => handleCfChange('exactions', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-2 font-mono">
+                            <div className="text-slate-400 text-xs">———————————————————————————————————————</div>
+                            <div className="flex justify-between items-center text-sm font-bold pt-1">
+                              <span className="text-emerald-400">Total Inflows Income :</span>
+                              <span className="text-emerald-400">£{totalInflows.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* OUTFLOWS SECTION */}
+                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
+                          <div className="text-rose-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">OUTFLOWS:</div>
+                          
+                          <div className="space-y-3 font-sans">
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Outflows</div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Land Forces Expenditure</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.landForces}
+                                    onChange={(e) => handleCfChange('landForces', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Fleet Maintenance & Ordnance</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.fleetMaint}
+                                    onChange={(e) => handleCfChange('fleetMaint', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Town Watch</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.townWatch}
+                                    onChange={(e) => handleCfChange('townWatch', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Statutory Civil List</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.civilList}
+                                    onChange={(e) => handleCfChange('civilList', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                              <div className="col-span-2">
+                                <label className="block text-[10px] text-slate-300 mb-0.5">Pensions, Grants & Privy Purse Supplements</label>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.pensions}
+                                    onChange={(e) => handleCfChange('pensions', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-[#E5C158] font-bold text-xs pt-2">&gt; Foreign Outflows</div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Diplomatic Expenditures</label>
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.diplomatic}
+                                    onChange={(e) => handleCfChange('diplomatic', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-2 font-mono">
+                            <div className="text-slate-400 text-xs">———————————————————————————————————————</div>
+                            <div className="flex justify-between items-center text-sm font-bold pt-1">
+                              <span className="text-rose-400">Total Outflows Expenditure :</span>
+                              <span className="text-rose-400">£{totalOutflows.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SUMMARY VAULT SECTION */}
+                        <div className="space-y-3 bg-[#0F223D] p-4 rounded border-2 border-[#E5C158]/50">
+                          <div className="text-slate-400">=======================================================</div>
+                          <div className="flex justify-between items-center text-sm font-bold">
+                            <span className="text-[#E5C158]">NET YIELD TO SPECIE VAULTS :</span>
+                            <span className={netYield >= 0 ? "text-emerald-400 font-mono text-base" : "text-rose-400 font-mono text-base"}>
+                              £{netYield.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs font-bold pt-2 border-t border-slate-800 font-sans">
+                            <span className="text-slate-300">TOTAL TREASURY LIQUIDITY :</span>
+                            <div className="flex items-center gap-2">
+                              <div className="relative w-36">
+                                <span className="absolute left-2 top-1 text-slate-400 font-mono text-xs">£</span>
+                                <input
+                                  type="number"
+                                  value={cfForm.initialLiquidity}
+                                  onChange={(e) => handleCfChange('initialLiquidity', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono font-bold pl-5 p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                              <span className="text-slate-400 text-[10px]">(Initial Liquidity Input)</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center text-sm font-bold bg-[#0B192C] p-2 rounded border border-slate-800">
+                            <span className="text-white">EFFECTIVE TOTAL LIQUIDITY :</span>
+                            <span className="text-[#E5C158] font-mono text-base">£{totalLiquidity.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                          <div className="text-slate-400">========================================================================================</div>
+                          <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                          <div className="text-slate-400">========================================================================================</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUBTAB 2: GDI GROWTH ASSESSMENT */}
+                    {exchequerSubTab === 'GDI_ASSESSMENT' && (
+                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                        <div className="text-center space-y-1">
+                          <div className="text-white font-bold tracking-wider text-sm">HM TREASURY // CHANCELLOR OF THE EXCHEQUER</div>
+                          <div className="text-[#E5C158] font-bold tracking-wide">GROSS DOMESTIC INCOME (GDI) GROWTH RATE CALCULATOR</div>
+                          <div className="text-slate-400">========================================================================================</div>
+                        </div>
+
+                        <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                          <p className="text-slate-300 text-xs leading-relaxed">
+                            Under Treasury protocols, annual compound revenue growth is assessed using historical revenue checkpoints (Turn 3 baseline vs Turn 8 projections).
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                              <label className="block text-slate-300 font-bold mb-1 text-xs">Turn 3 Revenue Baseline (£):</label>
+                              <input
+                                type="number"
+                                value={turn3Rev}
+                                onChange={(e) => setTurn3Rev(parseFloat(e.target.value) || 0)}
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono font-bold p-2 rounded focus:border-[#E5C158]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-slate-300 font-bold mb-1 text-xs">Turn 8 Target Revenue (£):</label>
+                              <input
+                                type="number"
+                                value={turn8Rev}
+                                onChange={(e) => setTurn8Rev(parseFloat(e.target.value) || 0)}
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono font-bold p-2 rounded focus:border-[#E5C158]"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={handleCalculateGrowth}
+                            className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-2.5 rounded hover:bg-yellow-400 transition-colors cursor-pointer"
+                          >
+                            Execute GDI Compound Growth Calculation
+                          </button>
+
+                          {growthRate !== null && (
+                            <div className="bg-[#0B192C] p-4 rounded border border-[#E5C158]/50 text-center space-y-1 font-mono">
+                              <div className="text-slate-400 text-xs">CALCULATED ANNUALIZED GDI GROWTH RATE:</div>
+                              <div className="text-2xl font-bold text-[#E5C158]">{(growthRate * 100).toFixed(2)}%</div>
+                              <div className="text-[10px] text-slate-400">Formula: (Turn 8 Rev / Turn 3 Rev) ^ (1/5) - 1</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUBTAB 3: FINANCIAL STATEMENT */}
+                    {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
+                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                        <div className="text-center space-y-1">
+                          <div className="text-white font-bold tracking-wider text-sm">HM TREASURY // FINANCIAL STATEMENT & BUDGET PRESENTATION</div>
+                          <div className="text-[#E5C158] font-bold tracking-wide">ANNUAL BUDGET STATEMENT (TURN 8)</div>
+                          <div className="text-slate-400">========================================================================================</div>
+                        </div>
+
+                        <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans text-xs">
+                          <p className="text-slate-200 leading-relaxed">
+                            The Chancellor of the Exchequer presents the Annual Budget to the House of Commons. Appropriations for civil administration, national defence, and Sinking Fund debt servicing are ratified during this turn.
+                          </p>
+
+                          <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-2 font-mono">
+                            <div className="flex justify-between text-slate-300">
+                              <span>• Projected Annual Revenue:</span>
+                              <span className="text-emerald-400 font-bold">£{turn8Rev.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-300">
+                              <span>• Total Appropriations Required:</span>
+                              <span className="text-rose-400 font-bold">£{(turn8Rev * 0.92).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-white font-bold border-t border-slate-800 pt-2">
+                              <span>• Net Budgetary Surplus:</span>
+                              <span className="text-[#E5C158]">£{(turn8Rev * 0.08).toLocaleString()}</span>
                             </div>
                           </div>
                         </div>
