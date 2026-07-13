@@ -58,8 +58,8 @@
 
     // Historical 19th Century Portraits for Profiles
     const HISTORICAL_PORTRAITS = {
-      monarch: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/King_George_IV_by_Sir_Thomas_Lawrence.jpg/400px-King_George_IV_by_Sir_Thomas_Lawrence.jpg',
       primeMinister: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
+      monarch: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/King_George_IV_by_Sir_Thomas_Lawrence.jpg/400px-King_George_IV_by_Sir_Thomas_Lawrence.jpg',
       lordChancellor: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg/400px-John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg',
       exchequer: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
       foreign: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg',
@@ -88,6 +88,20 @@
 
       // Cabinet State with Ministers, Character Traits, Followers, and Effects
       const [cabinetMinisters, setCabinetMinisters] = React.useState({
+        primeMinister: {
+          id: 'primeMinister',
+          role: 'Prime Minister',
+          name: 'Lord Liverpool',
+          title: 'Earl of Liverpool',
+          img: HISTORICAL_PORTRAITS.primeMinister,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'First Lord of the Treasury', effects: [{ id: 1, text: '+2 Cabinet Harmony & Political Stability' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Parliamentary Secretary', effects: [{ id: 1, text: '+1 Executive Command Authority' }] }
+          ]
+        },
         monarch: {
           id: 'monarch',
           role: 'Monarch',
@@ -100,20 +114,6 @@
           ],
           followers: [
             { id: 1, name: 'Privy Purse Keeper', effects: [{ id: 1, text: '+£5,000 Royal Discretionary Fund' }] }
-          ]
-        },
-        primeMinister: {
-          id: 'primeMinister',
-          role: 'Prime Minister',
-          name: 'Lord Liverpool',
-          title: 'First Lord of the Treasury',
-          img: HISTORICAL_PORTRAITS.primeMinister,
-          isTraitsOpen: false,
-          traits: [
-            { id: 1, name: 'Tory Arch-Consolidator', effects: [{ id: 1, text: '+2 Parliamentary Discipline' }] }
-          ],
-          followers: [
-            { id: 1, name: 'Treasury Secretary', effects: [{ id: 1, text: '+1 Executive Efficiency' }] }
           ]
         },
         lordChancellor: {
@@ -811,7 +811,7 @@
               <span>{minister.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
             </button>
 
-            {/* Expanded Traits & Followers Drawer (Reference: Screenshot 2026-07-13 at 14.32.19.png) */}
+            {/* Expanded Traits & Followers Drawer (Reference: Screenshot 2026-07-13 at 14.45.59.jpg) */}
             {minister.isTraitsOpen && (
               <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
                 {/* CHARACTER TRAITS SECTION */}
@@ -1197,7 +1197,7 @@
               </button>
             </div>
 
-            {/* CABINET TAB - UPDATED WITH NO. 10 DOWNING STREET CABINET PROFILE PANEL (Screenshot 2026-07-13 at 14.32.19.png) */}
+            {/* CABINET TAB - UPDATED WITH PRIME MINISTER SECTION ON THE LEFT OF MONARCH (Screenshot 2026-07-13 at 14.45.59.jpg) */}
             {activeTab === 'Cabinet' && (
               <div className="space-y-8">
                 {/* CABINET HIERARCHY PANEL: NO. 10 DOWNING STREET */}
@@ -1207,10 +1207,10 @@
                     <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
                   </div>
 
-                  {/* MONARCH & PRIME MINISTER (TOP LEVEL HIERARCHY) */}
-                  <div className="flex justify-center items-center gap-12 mb-12 flex-wrap">
-                    {renderMinisterProfile('monarch')}
+                  {/* PRIME MINISTER & MONARCH (TOP LEVEL) */}
+                  <div className="flex justify-center items-center gap-12 mb-12">
                     {renderMinisterProfile('primeMinister')}
+                    {renderMinisterProfile('monarch')}
                   </div>
 
                   {/* MINISTERS (ROW OF 6) */}
@@ -2220,17 +2220,13 @@
                                 <input type="number" value={cfForm.civilList || ''} onChange={(e) => handleCfChange('civilList', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
                               </div>
                               <div className="col-span-2">
-                                <label className="block text-[11px] text-slate-300 mb-1">Crown Civil Pensions & Retiring Allowances</label>
+                                <label className="block text-[11px] text-slate-300 mb-1">Pensions & Annuities</label>
                                 <input type="number" value={cfForm.pensions || ''} onChange={(e) => handleCfChange('pensions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
                               </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
-                            <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Outflow(s)</div>
-                            <div className="pl-2 max-w-md">
-                              <label className="block text-[11px] text-slate-300 mb-1">Diplomatic Service Expenditure</label>
-                              <input type="number" value={cfForm.diplomatic || ''} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              <div className="col-span-2">
+                                <label className="block text-[11px] text-slate-300 mb-1">Diplomatic & Secret Service Service</label>
+                                <input type="number" value={cfForm.diplomatic || ''} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
                             </div>
                           </div>
 
@@ -2241,82 +2237,68 @@
                           </div>
                         </div>
 
-                        {/* SUMMARY STATEMENT */}
-                        <div className="space-y-2 bg-[#0F223D] p-4 rounded border border-[#E5C158]/50 text-sm font-mono">
-                          <div className="flex justify-between items-center text-slate-300">
-                            <span>Initial Liquidity Balance :</span>
-                            <span>£{cfForm.initialLiquidity.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-slate-300">
-                            <span>Net Consolidated Yield (Inflows - Outflows) :</span>
-                            <span className={netYield >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                        {/* NET YIELD & LIQUIDITY */}
+                        <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-[#E5C158]/50 font-sans">
+                          <div className="flex justify-between items-center text-xs font-bold text-[#E5C158]">
+                            <span>NET EXCHEQUER YIELD :</span>
+                            <span className={`font-mono text-sm ${netYield >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {netYield >= 0 ? `+£${netYield.toLocaleString()}` : `-£${Math.abs(netYield).toLocaleString()}`}
                             </span>
                           </div>
-                          <div className="border-t border-slate-700 pt-2 flex justify-between items-center text-base font-bold text-[#E5C158]">
-                            <span>Final Available Treasury Balance :</span>
-                            <span>£{totalLiquidity.toLocaleString()}</span>
+                          <div className="flex justify-between items-center text-xs font-bold text-white pt-2 border-t border-slate-800">
+                            <span>TOTAL TREASURY LIQUIDITY :</span>
+                            <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
+                              £{totalLiquidity.toLocaleString()}
+                            </span>
                           </div>
-                        </div>
-
-                        <div className="text-center text-slate-500 text-[10px] pt-2">
-                          DOCUMENT CERTIFIED & SEALED BY HIS MAJESTY'S EXCHEQUER
                         </div>
                       </div>
                     )}
 
-                    {/* SUBTAB 2: GDI GROWTH ASSESSMENT */}
+                    {/* SUBTAB 2: GDI ASSESSMENT */}
                     {exchequerSubTab === 'GDI_ASSESSMENT' && (
                       <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                         <div className="text-center space-y-1">
-                          <div className="text-[#E5C158] font-bold text-base">📈 GROSS DOMESTIC INCOME (GDI) GROWTH ASSESSMENT</div>
+                          <div className="text-[#E5C158] font-bold text-base">📈 Gross Domestic Income Growth Assessment</div>
                           <div className="text-slate-400">=======================================================</div>
-                          <div className="text-white font-bold tracking-wider">HM TREASURY // REVENUE ESTIMATION MODEL</div>
+                          <div className="text-white font-bold tracking-wider">HM TREASURY // REVENUE ESTIMATES & ECONOMIC PROJECTIONS</div>
                           <div className="text-slate-400">=======================================================</div>
                         </div>
 
                         <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                          <p className="text-slate-300 text-xs leading-relaxed">
-                            Under Treasury standing rules, the annual compound growth rate ($g$) of Gross Domestic Income is derived from revenue recorded at Turn 3 and Turn 8:
-                          </p>
-                          <div className="bg-[#0B192C] p-3 rounded text-center text-amber-300 font-mono text-sm border border-slate-800">
-                            g = ( Revenue_T8 / Revenue_T3 )^(1/5) - 1
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-slate-300 text-xs font-bold mb-1">Turn 3 Recorded Revenue (£)</label>
+                              <label className="block text-xs font-bold text-slate-300 mb-1">Turn 3 Revenue Baseline (£)</label>
                               <input
                                 type="number"
                                 value={turn3Rev}
                                 onChange={(e) => setTurn3Rev(parseFloat(e.target.value) || 0)}
-                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded focus:border-[#E5C158]"
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded text-sm focus:border-[#E5C158]"
                               />
                             </div>
                             <div>
-                              <label className="block text-slate-300 text-xs font-bold mb-1">Turn 8 Recorded Revenue (£)</label>
+                              <label className="block text-xs font-bold text-slate-300 mb-1">Turn 8 Target Revenue (£)</label>
                               <input
                                 type="number"
                                 value={turn8Rev}
                                 onChange={(e) => setTurn8Rev(parseFloat(e.target.value) || 0)}
-                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded focus:border-[#E5C158]"
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded text-sm focus:border-[#E5C158]"
                               />
                             </div>
                           </div>
 
                           <button
                             onClick={handleCalculateGrowth}
-                            className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-2 rounded hover:bg-yellow-400 transition-colors cursor-pointer mt-2"
+                            className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-2 rounded text-xs hover:bg-yellow-400 cursor-pointer transition-colors"
                           >
-                            Calculate Compound Growth Rate
+                            Calculate Compound Annual Growth Rate
                           </button>
 
                           {growthRate !== null && (
-                            <div className="mt-4 bg-[#0B192C] p-4 rounded border border-[#E5C158] font-mono text-center space-y-1">
-                              <div className="text-slate-400 text-xs">DERIVED COMPOUND GROWTH RATE (g):</div>
-                              <div className="text-2xl font-bold text-emerald-400">{(growthRate * 100).toFixed(2)}%</div>
-                              <div className="text-[10px] text-slate-400 pt-1">
-                                Applied to domestic economic projections for subsequent financial cycles.
+                            <div className="bg-[#0B192C] p-4 rounded border border-[#E5C158]/40 text-center space-y-1">
+                              <div className="text-xs text-slate-400">Projected Growth Rate</div>
+                              <div className="text-xl font-bold text-emerald-400 font-mono">
+                                {(growthRate * 100).toFixed(2)}%
                               </div>
                             </div>
                           )}
@@ -2328,33 +2310,25 @@
                     {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
                       <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                         <div className="text-center space-y-1">
-                          <div className="text-[#E5C158] font-bold text-base">📜 FINANCIAL STATEMENT — ANNUAL BUDGET (TURN 8)</div>
+                          <div className="text-[#E5C158] font-bold text-base">📜 Annual Financial Statement (Budget)</div>
                           <div className="text-slate-400">=======================================================</div>
-                          <div className="text-white font-bold tracking-wider">CHANCELLOR OF THE EXCHEQUER // ANNUAL BUDGET STATEMENT TO PARLIAMENT</div>
+                          <div className="text-white font-bold tracking-wider">CHANCELLOR OF THE EXCHEQUER // ANNUAL BUDGET LAID BEFORE PARLIAMENT</div>
                           <div className="text-slate-400">=======================================================</div>
                         </div>
 
-                        <div className="space-y-4 bg-[#0F223D] p-5 rounded border border-slate-700 font-sans leading-relaxed text-xs text-slate-200">
-                          <h3 className="text-sm font-bold text-[#E5C158]">Ministerial Budget Presentation</h3>
-                          <p>
-                            The Chancellor of the Exchequer presents the annual financial balance sheet before the House of Commons. All national revenues, customs yields, and service appropriations are formally laid on the table.
+                        <div className="bg-[#0F223D] p-6 rounded border border-slate-700 font-sans space-y-4">
+                          <div className="text-sm font-bold text-[#E5C158]">Budgetary Appropriations & Fiscal Policy Statement</div>
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            The Chancellor lays the Annual Budget before the House of Commons. Appropriations for Civil List, Naval Forces, Land Forces, and Debt Servicing are presented for parliamentary scrutiny and approval.
                           </p>
-                          <div className="border-t border-slate-800 pt-3 space-y-2 font-mono text-xs">
-                            <div className="flex justify-between text-slate-300">
-                              <span>Gross Estimated Domestic Revenue:</span>
-                              <span className="text-emerald-400">£{turn8Rev.toLocaleString()}</span>
+                          <div className="grid grid-cols-2 gap-4 pt-2 text-xs font-mono">
+                            <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
+                              <div className="text-slate-400">Total Approved Revenue</div>
+                              <div className="text-base font-bold text-emerald-400">£{totalInflows.toLocaleString()}</div>
                             </div>
-                            <div className="flex justify-between text-slate-300">
-                              <span>Total Consolidated Inflows (Turn 8):</span>
-                              <span className="text-emerald-400">£{totalInflows.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-300">
-                              <span>Total Consolidated Outflows (Turn 8):</span>
-                              <span className="text-rose-400">£{totalOutflows.toLocaleString()}</span>
-                            </div>
-                            <div className="border-t border-slate-700 pt-2 flex justify-between font-bold text-sm text-[#E5C158]">
-                              <span>Net Surplus / Deficit Position:</span>
-                              <span>£{netYield.toLocaleString()}</span>
+                            <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
+                              <div className="text-slate-400">Total Approved Outflows</div>
+                              <div className="text-base font-bold text-rose-400">£{totalOutflows.toLocaleString()}</div>
                             </div>
                           </div>
                         </div>
@@ -2362,17 +2336,6 @@
                     )}
                   </>
                 )}
-              </div>
-            )}
-
-            {/* DEFAULT TAB PLACEHOLDER */}
-            {['Parliamentary Timetable', 'General Election', 'Parliament', "Lord Chancellor's Department", 'Admiralty', 'War Office'].includes(activeTab) && (
-              <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-6 font-sans">
-                <div className="text-3xl mb-2">🏛️</div>
-                <h3 className="text-lg font-bold text-slate-200">{activeTab}</h3>
-                <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                  Departmental operations and records for {activeTab} are active for Turn {currentTurn}, {selectedYear}. Select Cabinet, Exchequer, Home Office, or Foreign Office to access detailed management tools.
-                </p>
               </div>
             )}
           </main>
