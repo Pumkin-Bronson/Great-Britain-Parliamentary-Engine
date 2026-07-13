@@ -59,9 +59,9 @@
     // Historical 19th Century Portraits for Profiles
     const HISTORICAL_PORTRAITS = {
       monarch: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/King_George_IV_by_Sir_Thomas_Lawrence.jpg/400px-King_George_IV_by_Sir_Thomas_Lawrence.jpg',
-      pm: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
+      primeMinister: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
       lordChancellor: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg/400px-John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg',
-      exchequer: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Nicholas_Vansittart%2C_1st_Baron_Bexley_by_Sir_Thomas_Lawrence.jpg/400px-Nicholas_Vansittart%2C_1st_Baron_Bexley_by_Sir_Thomas_Lawrence.jpg',
+      exchequer: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
       foreign: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg',
       home: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Henry_Addington%2C_1st_Viscount_Sidmouth_by_George_Richmond.jpg/400px-Henry_Addington%2C_1st_Viscount_Sidmouth_by_George_Richmond.jpg',
       admiralty: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Robert_Dundas%2C_2nd_Viscount_Melville.jpg/400px-Robert_Dundas%2C_2nd_Viscount_Melville.jpg',
@@ -71,7 +71,7 @@
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
-      const [activeTab, setActiveTab] = React.useState('Cabinet');
+      const [activeTab, setActiveTab] = React.useState('Parliament');
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -86,7 +86,7 @@
       const [turn8Rev, setTurn8Rev] = React.useState(12500);
       const [growthRate, setGrowthRate] = React.useState(null);
 
-      // Cabinet State with Monarch, Prime Minister, Ministers, Character Traits, Followers, and Effects
+      // Cabinet State with Ministers, Character Traits, Followers, and Effects
       const [cabinetMinisters, setCabinetMinisters] = React.useState({
         monarch: {
           id: 'monarch',
@@ -102,18 +102,18 @@
             { id: 1, name: 'Privy Purse Keeper', effects: [{ id: 1, text: '+£5,000 Royal Discretionary Fund' }] }
           ]
         },
-        pm: {
-          id: 'pm',
+        primeMinister: {
+          id: 'primeMinister',
           role: 'Prime Minister',
           name: 'Lord Liverpool',
           title: 'First Lord of the Treasury',
-          img: HISTORICAL_PORTRAITS.pm,
+          img: HISTORICAL_PORTRAITS.primeMinister,
           isTraitsOpen: false,
           traits: [
-            { id: 1, name: 'Consensus Builder', effects: [{ id: 1, text: '+2 Cabinet Coalition Stability' }] }
+            { id: 1, name: 'Tory Arch-Consolidator', effects: [{ id: 1, text: '+2 Parliamentary Discipline' }] }
           ],
           followers: [
-            { id: 1, name: 'Chief Whip', effects: [{ id: 1, text: '+5% Parliamentary Discipline' }] }
+            { id: 1, name: 'Treasury Secretary', effects: [{ id: 1, text: '+1 Executive Efficiency' }] }
           ]
         },
         lordChancellor: {
@@ -174,7 +174,7 @@
         },
         admiralty: {
           id: 'admiralty',
-          role: 'First Lord of Admiralty',
+          role: 'First Lord of the Admiralty',
           name: 'Viscount Melville',
           title: 'Baron Dunira',
           img: HISTORICAL_PORTRAITS.admiralty,
@@ -442,6 +442,7 @@
         }));
       };
 
+      // Foreign Office Handlers
       const toggleDiplomaticAction = (actionId) => {
         setForeignOfficeForm((prev) => {
           const exists = prev.selectedActions.includes(actionId);
@@ -564,7 +565,7 @@
             const parsed = JSON.parse(saved);
             setSelectedYear(parsed.selectedYear || 1820);
             setCurrentTurn(parsed.currentTurn || 1);
-            setActiveTab(parsed.activeTab || 'Cabinet');
+            setActiveTab(parsed.activeTab || 'Parliament');
             setExchequerSubTab(parsed.exchequerSubTab || 'CONSOLIDATED_FUNDS');
             setJusticeTurns(parsed.justiceTurns || []);
             setPeaceTurns(parsed.peaceTurns || []);
@@ -628,6 +629,13 @@
           setList(currentList.filter((t) => t !== turn));
         } else {
           setList([...currentList, turn]);
+        }
+      };
+
+      const handleCalculateGrowth = () => {
+        if (turn3Rev > 0 && turn8Rev > 0) {
+          const g = Math.pow(turn8Rev / turn3Rev, 1 / 5) - 1;
+          setGrowthRate(g);
         }
       };
 
@@ -738,6 +746,17 @@
         );
       };
 
+      const getTurnPrimaryLabel = (t) => {
+        const gdiTurns = [1, 2, 3, 4, 5, 7];
+        const cfTurns = [9, 10, 11, 12, 17, 19, 20, 21, 22, 23];
+
+        if (t === 1) return "Opening Address | Consolidated Funds (Gross Domestic Income Growth Assessment)";
+        if (gdiTurns.includes(t)) return "Consolidated Funds (Gross Domestic Income Growth Assessment)";
+        if (t === 8) return "Financial Statement (Annual Budget)";
+        if (cfTurns.includes(t)) return "Consolidated Funds";
+        return "";
+      };
+
       // Helper Component to Render Minister Profile Badge
       const renderMinisterProfile = (ministerKey) => {
         const minister = cabinetMinisters[ministerKey];
@@ -755,6 +774,7 @@
                   e.target.style.display = 'none';
                 }}
               />
+              {/* Silhouette Fallback */}
               <div className="absolute inset-0 bg-[#0F223D] flex items-center justify-center text-[#E5C158] font-bold text-2xl -z-10">
                 👤
               </div>
@@ -791,9 +811,9 @@
               <span>{minister.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
             </button>
 
-            {/* Expanded Traits & Followers Drawer */}
+            {/* Expanded Traits & Followers Drawer (Reference: Screenshot 2026-07-13 at 14.32.19.png) */}
             {minister.isTraitsOpen && (
-              <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans absolute top-full">
+              <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
                 {/* CHARACTER TRAITS SECTION */}
                 <div className="border-b border-slate-700 pb-2">
                   <div className="flex justify-between items-center mb-1">
@@ -828,6 +848,7 @@
                             </button>
                           </div>
 
+                          {/* Nested Trait Effects (Parent to Character Trait) */}
                           <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
                               <span>Trait Effects:</span>
@@ -898,6 +919,7 @@
                             </button>
                           </div>
 
+                          {/* Nested Follower Effects (Parent to Follower) */}
                           <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
                               <span>Follower Effects:</span>
@@ -1101,7 +1123,7 @@
             <button
               disabled={!isValid}
               onClick={() => {
-                setActiveTab('Cabinet');
+                setActiveTab('Parliament');
                 setGameState('DASHBOARD');
               }}
               className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
@@ -1175,7 +1197,7 @@
               </button>
             </div>
 
-            {/* CABINET TAB WITH NO. 10 DOWNING STREET & PRIME MINISTER INTEGRATION */}
+            {/* CABINET TAB - UPDATED WITH NO. 10 DOWNING STREET CABINET PROFILE PANEL (Screenshot 2026-07-13 at 14.32.19.png) */}
             {activeTab === 'Cabinet' && (
               <div className="space-y-8">
                 {/* CABINET HIERARCHY PANEL: NO. 10 DOWNING STREET */}
@@ -1185,18 +1207,14 @@
                     <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
                   </div>
 
-                  {/* MONARCH (TOP LEVEL) */}
-                  <div className="flex justify-center mb-8">
+                  {/* MONARCH & PRIME MINISTER (TOP LEVEL HIERARCHY) */}
+                  <div className="flex justify-center items-center gap-12 mb-12 flex-wrap">
                     {renderMinisterProfile('monarch')}
+                    {renderMinisterProfile('primeMinister')}
                   </div>
 
-                  {/* PRIME MINISTER (HEAD OF GOVERNMENT - TOP/CENTER OF CABINET) */}
-                  <div className="flex justify-center mb-10 pb-6 border-b border-slate-800/80">
-                    {renderMinisterProfile('pm')}
-                  </div>
-
-                  {/* CABINET MINISTERS (ROW OF 6) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center">
+                  {/* MINISTERS (ROW OF 6) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center pt-4 border-t border-slate-800">
                     {renderMinisterProfile('lordChancellor')}
                     {renderMinisterProfile('exchequer')}
                     {renderMinisterProfile('foreign')}
@@ -1285,11 +1303,1075 @@
               </div>
             )}
 
-            {/* OTHER TABS (Parliament, Exchequer, Foreign, Home, etc.) */}
-            {activeTab !== 'Cabinet' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/40 p-8 rounded text-center">
-                <p className="text-slate-300 font-sans text-sm">
-                  Active view: <strong className="text-[#E5C158]">{activeTab}</strong>. You may switch between the top tabs or interact with Cabinet directives above. Reference image_1d5f91.png as specified.
+            {/* FOREIGN OFFICE TAB */}
+            {activeTab === 'Foreign Office' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">LEGAL & CONSTITUTIONAL AUDIT — MID-JULY 1819</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white">Reporting Officer :</strong>
+                      <input
+                        type="text"
+                        value={foreignOfficeForm.reportingOfficer}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, reportingOfficer: e.target.value })}
+                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158] flex-1"
+                      />
+                    </div>
+                    <div>
+                      <strong className="text-white">Authority :</strong> The Foreign Department
+                    </div>
+                  </div>
+                </div>
+
+                {/* TREATY HEADER METADATA */}
+                <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-3 font-sans">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Name :</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Treaty of Vienna / Quadruple Protocol"
+                        value={foreignOfficeForm.treatyName}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyName: e.target.value })}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Nature :</label>
+                      <select
+                        value={foreignOfficeForm.treatyNature}
+                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyNature: e.target.value })}
+                        className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                      >
+                        <option value="Coalition Accord">Coalition Accord</option>
+                        <option value="Commercial Treaty">Commercial Treaty</option>
+                        <option value="Transit Treaty">Transit Treaty</option>
+                        <option value="Cession Accord">Cession Accord</option>
+                        <option value="Manifesto of War">Manifesto of War</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* DIPLOMATIC ACTIONS SELECTION CHECKBOXES */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <label className="block font-bold text-[#E5C158] mb-2">
+                      Diplomatic Action(s) (Able to choose more than 1, if chosen "CORE DIPLOMATIC ACTIONS" from below would pop up) :
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {DIPLOMATIC_ACTION_TYPES.map((action) => {
+                        const isChecked = foreignOfficeForm.selectedActions.includes(action.id);
+                        return (
+                          <label
+                            key={action.id}
+                            className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'bg-[#E5C158]/20 border-[#E5C158] text-white font-bold'
+                                : 'bg-[#0B192C] border-slate-800 text-slate-400 hover:border-slate-600'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleDiplomaticAction(action.id)}
+                              className="accent-[#E5C158]"
+                            />
+                            <span>{action.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* DYNAMICALLY GENERATED CORE DIPLOMATIC ACTIONS WITH SEQUENTIAL ROMAN NUMERALS */}
+                {foreignOfficeForm.selectedActions.length === 0 ? (
+                  <div className="text-center text-slate-500 italic py-8 bg-[#0F223D] rounded border border-slate-800">
+                    No Core Diplomatic Actions selected above. Check one or more actions to open foreign dispatch panels.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {foreignOfficeForm.selectedActions.map((actionId, index) => {
+                      const romanIndex = toRoman(index + 1);
+                      const actionDef = DIPLOMATIC_ACTION_TYPES.find((a) => a.id === actionId);
+                      const data = foreignOfficeForm.actionData[actionId] || {};
+
+                      return (
+                        <div key={actionId} className="space-y-3 bg-[#0F223D] p-4 rounded border border-[#E5C158]/40 font-sans">
+                          <div className="text-[#E5C158] font-bold text-xs font-mono">
+                            ----------------------------------------------------------------------------------------<br />
+                            {romanIndex}. CORE DIPLOMATIC ACTION : {actionDef.coreTitle}<br />
+                            ----------------------------------------------------------------------------------------
+                          </div>
+
+                          <div className="pt-1">
+                            {/* ALLIANCE */}
+                            {actionId === 'alliance' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">High Contracting Sovereign / Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Empire of Russia"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('alliance', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* TRADE AGREEMENT */}
+                            {actionId === 'trade' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Signatory State / Partner Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Kingdom of Prussia"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('trade', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* PRESENT STATE GIFT / BRIBES */}
+                            {actionId === 'bribes' && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Recipient Court / Beneficiary State :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Regency of Algiers"
+                                    value={data.court || ''}
+                                    onChange={(e) => handleActionDataChange('bribes', 'court', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Stipulated Sum / Discretionary Allowance :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. £50,000 Secret Service Specie"
+                                    value={data.sum || ''}
+                                    onChange={(e) => handleActionDataChange('bribes', 'sum', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* DECLARATION OF WAR */}
+                            {actionId === 'war' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Adversary Power / Target State :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Sublime Ottoman Porte"
+                                  value={data.adversary || ''}
+                                  onChange={(e) => handleActionDataChange('war', 'adversary', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-bold font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* JOINING WARS */}
+                            {actionId === 'joinWar' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Target State / Hostile Power :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Kingdom of Spain"
+                                  value={data.target || ''}
+                                  onChange={(e) => handleActionDataChange('joinWar', 'target', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* TRADE EMBARGOES */}
+                            {actionId === 'embargo' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Proscribed Power / Interdicted State :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. United States of America"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('embargo', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* BREAKING ALLIANCES */}
+                            {actionId === 'breakAlliance' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Former Allied Power / Severed Party :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Austrian Empire"
+                                  value={data.power || ''}
+                                  onChange={(e) => handleActionDataChange('breakAlliance', 'power', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-slate-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {/* MILITARY ACCESS */}
+                            {actionId === 'militaryAccess' && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Granting Court / Transit Sovereign :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Kingdom of the Two Sicilies"
+                                    value={data.court || ''}
+                                    onChange={(e) => handleActionDataChange('militaryAccess', 'court', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Term of Transit / Period of Right :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. 12 Calendar Months"
+                                    value={data.term || ''}
+                                    onChange={(e) => handleActionDataChange('militaryAccess', 'term', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* REGIONS */}
+                            {actionId === 'regions' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Negotiating Power / Neighboring State :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of the Netherlands"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('regions', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Nature of Transaction :</label>
+                                    <select
+                                      value={data.nature || 'Cession to foreign sovereign'}
+                                      onChange={(e) => handleActionDataChange('regions', 'nature', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
+                                      <option value="Annexation to the Crown">Annexation to the Crown</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Demarcated Territory / Ceded Provinces :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Heligoland / Ionian Islands"
+                                    value={data.territory || ''}
+                                    onChange={(e) => handleActionDataChange('regions', 'territory', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* TECHNOLOGY */}
+                            {actionId === 'technology' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Recipient / Providing Power :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of Hanover"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('technology', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Transmission :</label>
+                                    <select
+                                      value={data.direction || 'Imported'}
+                                      onChange={(e) => handleActionDataChange('technology', 'direction', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Imported">Imported</option>
+                                      <option value="Imparted">Imparted</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Scientific Principles & Innovations :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Steam Packet Machinery / Percussion Cap Lock Metallurgy"
+                                    value={data.principles || ''}
+                                    onChange={(e) => handleActionDataChange('technology', 'principles', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* PAYMENT */}
+                            {actionId === 'payment' && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Transacting Power / Reciprocal State :</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Kingdom of Portugal"
+                                      value={data.power || ''}
+                                      onChange={(e) => handleActionDataChange('payment', 'power', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Settlement :</label>
+                                    <select
+                                      value={data.direction || 'Remittance to Foreign Treasury'}
+                                      onChange={(e) => handleActionDataChange('payment', 'direction', e.target.value)}
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    >
+                                      <option value="Remittance to Foreign Treasury">Remittance to Foreign Treasury</option>
+                                      <option value="Disbursement from State Vaults">Disbursement from State Vaults</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Quantum of Settlement / Principal Sum :</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. £120,000 Sterling Gold Specie"
+                                    value={data.quantum || ''}
+                                    onChange={(e) => handleActionDataChange('payment', 'quantum', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+              </div>
+            )}
+
+            {/* HOME OFFICE TAB */}
+            {activeTab === 'Home Office' && (
+              <div className="space-y-4">
+                {!isHomeOfficeScheduled ? (
+                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4 font-sans">
+                    <div className="text-3xl mb-2">📜🔒</div>
+                    <h3 className="text-lg font-bold text-slate-200">No Home Office Report Scheduled for Turn {currentTurn}</h3>
+                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                      Home Office reports are only delivered during their designated sitting turns on the Parliamentary Timetable (Scheduled turns: {peaceTurns.length > 0 ? peaceTurns.map(t => `Turn ${t}`).join(', ') : 'None'}).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-sm">WHITEHALL // SECRETARY OF STATE FOR THE HOME DEPARTMENT</div>
+                      <div className="text-[#E5C158] font-bold tracking-wide">REPORT ON THE STATE OF THE PUBLIC PEACE & DOMESTIC TRANQUILITY</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
+                        <div>
+                          <strong className="text-white">Date of Audit :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-white">Reporting Officer :</strong>
+                          <input
+                            type="text"
+                            value={homeOfficeForm.reportingOfficer}
+                            onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
+                            className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION I */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.publicOrder[region];
+                          const status = getPublicOrderStatusLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${status.color}`}>&gt; Status: {status.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Rating:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-xs font-bold font-sans">
+                        <span className="text-[#E5C158]">• NATIONAL STABILITY INDEX :</span>
+                        <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
+                          {avgPublicOrder}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* SECTION II */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        II. RADICAL SEDITION & REFORM WATCH<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.clamour[region];
+                          const clamour = getClamourLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${clamour.color}`}>&gt; Clamour Threat: {clamour.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Level:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('clamour', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* SECTION III */}
+                    <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        III. PROVINCIAL TRANQUILITY & MAGISTRACY RETURNS<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      {[
+                        { title: '[ GARRISONED FORCES (MILITARY REPRESSION) ]', key: 'garrisons' },
+                        { title: '[ CABINET & MAGISTRACY (GOVERNMENT REPRESSION) ]', key: 'ministers' },
+                        { title: '[ CIVIL INFRASTRUCTURE (CIVIC REPRESSION) ]', key: 'buildings' },
+                        { title: '[ CONSTITUTIONAL FRAMEWORK (GOVERNMENT TYPE REPRESSION) ]', key: 'govType' }
+                      ].map((category) => (
+                        <div key={category.key} className="border-t border-slate-800 pt-3">
+                          <div className="text-xs font-bold text-[#E5C158] mb-2">{category.title}</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                              <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
+                                <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
+                                <input
+                                  type="number"
+                                  value={homeOfficeForm[category.key][region]}
+                                  onChange={(e) => handleHomeOfficeChange(category.key, region, e.target.value)}
+                                  className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-emerald-400 p-0.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* SECTION IV */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="text-xs font-bold text-[#E5C158] mb-2">[ PUBLIC AMUSEMENTS & CIVIC SATISFACTION ]</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                          <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
+                            <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
+                            <input
+                              type="number"
+                              value={homeOfficeForm.culture[region]}
+                              onChange={(e) => handleHomeOfficeChange('culture', region, e.target.value)}
+                              className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-cyan-400 p-0.5 rounded focus:border-[#E5C158]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SECTION V */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        V. RADICALISATION OF RELIGION AND CULT<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
+                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                          const val = homeOfficeForm.religiousUnrest[region];
+                          const unrest = getReligiousUnrestLabel(val);
+                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+
+                          return (
+                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-white text-xs">• {regionName}</span>
+                                <div className={`text-[11px] ${unrest.color}`}>&gt; Religious Unrest: {unrest.label}</div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-mono">Level:</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
+                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* SECTION VI */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        VI. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="text-xs text-slate-300 font-bold">
+                          [+] DETECTED FOREIGN AGENTS REGISTER ({homeOfficeForm.foreignAgents.length}):
+                        </span>
+                        <button
+                          onClick={handleAddAgent}
+                          className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded text-xs hover:bg-yellow-400 transition-colors cursor-pointer"
+                        >
+                          + Add Agent
+                        </button>
+                      </div>
+
+                      {homeOfficeForm.foreignAgents.length === 0 ? (
+                        <div className="text-center text-slate-500 italic py-4 text-xs bg-[#0B192C] rounded border border-slate-800">
+                          No foreign agents currently logged under surveillance.
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {homeOfficeForm.foreignAgents.map((agent, index) => (
+                            <div key={index} className="bg-[#0B192C] p-3 rounded border border-slate-800 relative space-y-2">
+                              {homeOfficeForm.foreignAgents.length > 1 && (
+                                <button
+                                  onClick={() => handleRemoveAgent(index)}
+                                  className="absolute top-2 right-2 text-rose-400 hover:text-rose-200 text-xs font-bold px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
+                                  title="Remove Entry"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                              <div className="text-xs font-bold text-[#E5C158] font-mono">• ENTRY #{index + 1}:</div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Nation Origin</label>
+                                  <input
+                                    type="text"
+                                    value={agent.nation}
+                                    placeholder="e.g. Kingdom of France"
+                                    onChange={(e) => handleAgentChange(index, 'nation', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Agent Alias</label>
+                                  <input
+                                    type="text"
+                                    value={agent.name}
+                                    placeholder="e.g. Agent Dupris"
+                                    onChange={(e) => handleAgentChange(index, 'name', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Status</label>
+                                  <input
+                                    type="text"
+                                    value={agent.status}
+                                    placeholder="e.g. Under Surveillance / Intercepted / At Large"
+                                    onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 mb-0.5">Current Sector</label>
+                                  <input
+                                    type="text"
+                                    value={agent.location}
+                                    placeholder="e.g. London"
+                                    onChange={(e) => handleAgentChange(index, 'location', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECTION VII */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        VII. DOMESTIC SUMMARY & SECRETARY'S JUDGEMENT<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-slate-300">• Total Positive Factors (Order & Amusements) :</span>
+                          <span className="text-emerald-400 font-bold">+{totalPositiveEffects} Points</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-slate-300">• Total Negative Factors (Sedition & Discontent) :</span>
+                          <span className="text-rose-400 font-bold">-{totalNegativeEffects} Points</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
+                          <span className="text-white font-bold">Net Civil Peace Index :</span>
+                          <span className={`font-bold ${netDomesticBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {netDomesticBalance >= 0 ? `+${netDomesticBalance}` : netDomesticBalance} Points
+                          </span>
+                        </div>
+
+                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800 mt-2 space-y-1">
+                          <div className="text-[11px] font-bold text-[#E5C158] uppercase tracking-wider">
+                            OFFICIAL JUDGEMENT:
+                          </div>
+                          <div className={`text-xs leading-relaxed ${domesticJudgementColor}`}>
+                            {domesticJudgement}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* EXCHEQUER TAB */}
+            {activeTab === 'Exchequer' && (
+              <div className="space-y-4">
+                {/* SUB NAVIGATION WITH TURN LOCKING */}
+                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
+                    { key: 'GDI_ASSESSMENT', label: 'Consolidated Funds (GDI Growth Assessment)' },
+                    { key: 'FINANCIAL_STATEMENT', label: 'Financial Statement' }
+                  ].map((subTab) => {
+                    const unlocked = isExchequerSubTabUnlocked(subTab.key);
+                    const isActive = exchequerSubTab === subTab.key;
+
+                    return (
+                      <button
+                        key={subTab.key}
+                        disabled={!unlocked}
+                        onClick={() => unlocked && setExchequerSubTab(subTab.key)}
+                        className={`px-4 py-2 rounded font-bold transition-colors flex items-center gap-1.5 ${
+                          !unlocked
+                            ? 'opacity-40 cursor-not-allowed bg-slate-900 text-slate-500 border border-slate-800'
+                            : isActive
+                            ? 'bg-[#E5C158] text-[#0F223D] shadow cursor-pointer'
+                            : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
+                        }`}
+                      >
+                        <span>{subTab.label}</span>
+                        {!unlocked && <span className="text-[10px]">🔒</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* GUARD CLAUSE FOR LOCKED SUB-TABS */}
+                {!isExchequerSubTabUnlocked(exchequerSubTab) ? (
+                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4">
+                    <div className="text-3xl mb-2">📜🔒</div>
+                    <h3 className="text-lg font-bold text-slate-200">Parliament Not in Session</h3>
+                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                      This Exchequer section is currently locked. Advance turns to reach its scheduled session on the Parliamentary timeline to interact.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* SUBTAB 1: CONSOLIDATED FUNDS LEDGER */}
+                    {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
+                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                        <div className="text-center space-y-1">
+                          <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
+                          <div className="text-slate-400">=======================================================</div>
+                          <div className="text-white font-bold tracking-wider">HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND</div>
+                          <div className="text-slate-400">=======================================================</div>
+                          <div className="text-left pt-2 font-sans text-slate-300">
+                            <strong className="text-white">Date :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                          </div>
+                        </div>
+
+                        {/* INFLOWS SECTION */}
+                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
+                          <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
+                          
+                          <div className="space-y-3 font-sans">
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflow(s)</div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Domestic Tax Income</label>
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.domTax || ''}
+                                    onChange={(e) => handleCfChange('domTax', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Total Trade Income (Custom Duties Collected)</label>
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                                  <input
+                                    type="number"
+                                    value={cfForm.tradeIncome || ''}
+                                    onChange={(e) => handleCfChange('tradeIncome', e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border border-slate-800 p-3 rounded bg-[#0B192C]/50 space-y-2 ml-2">
+                              <div className="text-slate-300 font-semibold text-[11px]">Gross Commercial Port Traffic</div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400">Bristol</label>
+                                  <input
+                                    type="number"
+                                    value={cfForm.bristol || ''}
+                                    onChange={(e) => handleCfChange('bristol', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400">Chatham Docks</label>
+                                  <input
+                                    type="number"
+                                    value={cfForm.chatham || ''}
+                                    onChange={(e) => handleCfChange('chatham', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400">Liverpool</label>
+                                  <input
+                                    type="number"
+                                    value={cfForm.liverpool || ''}
+                                    onChange={(e) => handleCfChange('liverpool', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400">Waterford</label>
+                                  <input
+                                    type="number"
+                                    value={cfForm.waterford || ''}
+                                    onChange={(e) => handleCfChange('waterford', e.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono p-1 rounded text-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div className="text-right text-[11px] text-slate-300 font-mono pt-1">
+                                Total Commercial Capacity : <strong className="text-emerald-400">£{totalCapacity.toLocaleString()}</strong>
+                              </div>
+                            </div>
+
+                            <div className="pl-2">
+                              <label className="block text-[11px] text-slate-300 mb-1">Core Treasury Income</label>
+                              <div className="relative max-w-md">
+                                <span className="absolute left-2.5 top-1.5 text-slate-500">£</span>
+                                <input
+                                  type="number"
+                                  value={cfForm.coreTreasury || ''}
+                                  onChange={(e) => handleCfChange('coreTreasury', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono pl-6 p-1.5 rounded focus:border-[#E5C158] focus:outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Inflow(s)</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[10px] text-slate-400">Protectorate(s) Income</label>
+                                <input type="number" value={cfForm.protectorates || ''} onChange={(e) => handleCfChange('protectorates', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400">Allied Subsidies</label>
+                                <input type="number" value={cfForm.subsidies || ''} onChange={(e) => handleCfChange('subsidies', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400">Convention Contributions</label>
+                                <input type="number" value={cfForm.contributions || ''} onChange={(e) => handleCfChange('contributions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400">War Reparations</label>
+                                <input type="number" value={cfForm.reparations || ''} onChange={(e) => handleCfChange('reparations', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400">Admiralty Prize Grants</label>
+                                <input type="number" value={cfForm.prizeGrants || ''} onChange={(e) => handleCfChange('prizeGrants', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400">Exactions / Requisitions</label>
+                                <input type="number" value={cfForm.exactions || ''} onChange={(e) => handleCfChange('exactions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded text-xs" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-slate-400">———————————————————————————————————————</div>
+                          <div className="flex justify-between items-center text-sm font-bold text-emerald-400 font-mono">
+                            <span>Total Inflows :</span>
+                            <span>£{totalInflows.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* OUTFLOWS SECTION */}
+                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
+                          <div className="text-rose-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">OUTFLOWS:</div>
+                          
+                          <div className="space-y-3 font-sans">
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Outflow(s)</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pl-2">
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Land Forces Expenditure</label>
+                                <input type="number" value={cfForm.landForces || ''} onChange={(e) => handleCfChange('landForces', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Fleet Maintenance & Ordnance</label>
+                                <input type="number" value={cfForm.fleetMaint || ''} onChange={(e) => handleCfChange('fleetMaint', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Town Watch</label>
+                                <input type="number" value={cfForm.townWatch || ''} onChange={(e) => handleCfChange('townWatch', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Statutory Civil List</label>
+                                <input type="number" value={cfForm.civilList || ''} onChange={(e) => handleCfChange('civilList', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
+                              <div className="col-span-2">
+                                <label className="block text-[11px] text-slate-300 mb-1">Crown Civil Pensions & Retiring Allowances</label>
+                                <input type="number" value={cfForm.pensions || ''} onChange={(e) => handleCfChange('pensions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
+                            <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Outflow(s)</div>
+                            <div className="pl-2 max-w-md">
+                              <label className="block text-[11px] text-slate-300 mb-1">Diplomatic Service Expenditure</label>
+                              <input type="number" value={cfForm.diplomatic || ''} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
+                            </div>
+                          </div>
+
+                          <div className="text-slate-400">———————————————————————————————————————</div>
+                          <div className="flex justify-between items-center text-sm font-bold text-rose-400 font-mono">
+                            <span>Total Outflows :</span>
+                            <span>£{totalOutflows.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* SUMMARY STATEMENT */}
+                        <div className="space-y-2 bg-[#0F223D] p-4 rounded border border-[#E5C158]/50 text-sm font-mono">
+                          <div className="flex justify-between items-center text-slate-300">
+                            <span>Initial Liquidity Balance :</span>
+                            <span>£{cfForm.initialLiquidity.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-300">
+                            <span>Net Consolidated Yield (Inflows - Outflows) :</span>
+                            <span className={netYield >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                              {netYield >= 0 ? `+£${netYield.toLocaleString()}` : `-£${Math.abs(netYield).toLocaleString()}`}
+                            </span>
+                          </div>
+                          <div className="border-t border-slate-700 pt-2 flex justify-between items-center text-base font-bold text-[#E5C158]">
+                            <span>Final Available Treasury Balance :</span>
+                            <span>£{totalLiquidity.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center text-slate-500 text-[10px] pt-2">
+                          DOCUMENT CERTIFIED & SEALED BY HIS MAJESTY'S EXCHEQUER
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUBTAB 2: GDI GROWTH ASSESSMENT */}
+                    {exchequerSubTab === 'GDI_ASSESSMENT' && (
+                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                        <div className="text-center space-y-1">
+                          <div className="text-[#E5C158] font-bold text-base">📈 GROSS DOMESTIC INCOME (GDI) GROWTH ASSESSMENT</div>
+                          <div className="text-slate-400">=======================================================</div>
+                          <div className="text-white font-bold tracking-wider">HM TREASURY // REVENUE ESTIMATION MODEL</div>
+                          <div className="text-slate-400">=======================================================</div>
+                        </div>
+
+                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                          <p className="text-slate-300 text-xs leading-relaxed">
+                            Under Treasury standing rules, the annual compound growth rate ($g$) of Gross Domestic Income is derived from revenue recorded at Turn 3 and Turn 8:
+                          </p>
+                          <div className="bg-[#0B192C] p-3 rounded text-center text-amber-300 font-mono text-sm border border-slate-800">
+                            g = ( Revenue_T8 / Revenue_T3 )^(1/5) - 1
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                              <label className="block text-slate-300 text-xs font-bold mb-1">Turn 3 Recorded Revenue (£)</label>
+                              <input
+                                type="number"
+                                value={turn3Rev}
+                                onChange={(e) => setTurn3Rev(parseFloat(e.target.value) || 0)}
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded focus:border-[#E5C158]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-slate-300 text-xs font-bold mb-1">Turn 8 Recorded Revenue (£)</label>
+                              <input
+                                type="number"
+                                value={turn8Rev}
+                                onChange={(e) => setTurn8Rev(parseFloat(e.target.value) || 0)}
+                                className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-2 rounded focus:border-[#E5C158]"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={handleCalculateGrowth}
+                            className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-2 rounded hover:bg-yellow-400 transition-colors cursor-pointer mt-2"
+                          >
+                            Calculate Compound Growth Rate
+                          </button>
+
+                          {growthRate !== null && (
+                            <div className="mt-4 bg-[#0B192C] p-4 rounded border border-[#E5C158] font-mono text-center space-y-1">
+                              <div className="text-slate-400 text-xs">DERIVED COMPOUND GROWTH RATE (g):</div>
+                              <div className="text-2xl font-bold text-emerald-400">{(growthRate * 100).toFixed(2)}%</div>
+                              <div className="text-[10px] text-slate-400 pt-1">
+                                Applied to domestic economic projections for subsequent financial cycles.
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUBTAB 3: FINANCIAL STATEMENT */}
+                    {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
+                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                        <div className="text-center space-y-1">
+                          <div className="text-[#E5C158] font-bold text-base">📜 FINANCIAL STATEMENT — ANNUAL BUDGET (TURN 8)</div>
+                          <div className="text-slate-400">=======================================================</div>
+                          <div className="text-white font-bold tracking-wider">CHANCELLOR OF THE EXCHEQUER // ANNUAL BUDGET STATEMENT TO PARLIAMENT</div>
+                          <div className="text-slate-400">=======================================================</div>
+                        </div>
+
+                        <div className="space-y-4 bg-[#0F223D] p-5 rounded border border-slate-700 font-sans leading-relaxed text-xs text-slate-200">
+                          <h3 className="text-sm font-bold text-[#E5C158]">Ministerial Budget Presentation</h3>
+                          <p>
+                            The Chancellor of the Exchequer presents the annual financial balance sheet before the House of Commons. All national revenues, customs yields, and service appropriations are formally laid on the table.
+                          </p>
+                          <div className="border-t border-slate-800 pt-3 space-y-2 font-mono text-xs">
+                            <div className="flex justify-between text-slate-300">
+                              <span>Gross Estimated Domestic Revenue:</span>
+                              <span className="text-emerald-400">£{turn8Rev.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-300">
+                              <span>Total Consolidated Inflows (Turn 8):</span>
+                              <span className="text-emerald-400">£{totalInflows.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-300">
+                              <span>Total Consolidated Outflows (Turn 8):</span>
+                              <span className="text-rose-400">£{totalOutflows.toLocaleString()}</span>
+                            </div>
+                            <div className="border-t border-slate-700 pt-2 flex justify-between font-bold text-sm text-[#E5C158]">
+                              <span>Net Surplus / Deficit Position:</span>
+                              <span>£{netYield.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* DEFAULT TAB PLACEHOLDER */}
+            {['Parliamentary Timetable', 'General Election', 'Parliament', "Lord Chancellor's Department", 'Admiralty', 'War Office'].includes(activeTab) && (
+              <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-6 font-sans">
+                <div className="text-3xl mb-2">🏛️</div>
+                <h3 className="text-lg font-bold text-slate-200">{activeTab}</h3>
+                <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                  Departmental operations and records for {activeTab} are active for Turn {currentTurn}, {selectedYear}. Select Cabinet, Exchequer, Home Office, or Foreign Office to access detailed management tools.
                 </p>
               </div>
             )}
@@ -1298,7 +2380,8 @@
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
     root.render(<ParliamentaryEngine />);
   </script>
 </body>
