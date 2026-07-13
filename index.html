@@ -70,7 +70,7 @@
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
-      const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
+      const [activeTab, setActiveTab] = React.useState('Parliament');
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -550,7 +550,7 @@
             const parsed = JSON.parse(saved);
             setSelectedYear(parsed.selectedYear || 1820);
             setCurrentTurn(parsed.currentTurn || 1);
-            setActiveTab(parsed.activeTab || 'Parliamentary Timetable');
+            setActiveTab(parsed.activeTab || 'Parliament');
             setExchequerSubTab(parsed.exchequerSubTab || 'CONSOLIDATED_FUNDS');
             setJusticeTurns(parsed.justiceTurns || []);
             setPeaceTurns(parsed.peaceTurns || []);
@@ -796,7 +796,7 @@
               <span>{minister.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
             </button>
 
-            {/* Expanded Traits & Followers Drawer */}
+            {/* Expanded Traits & Followers Drawer (Reference: Screenshot 2026-07-13 at 13.44.35.jpg) */}
             {minister.isTraitsOpen && (
               <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
                 {/* CHARACTER TRAITS SECTION */}
@@ -833,7 +833,7 @@
                             </button>
                           </div>
 
-                          {/* Nested Trait Effects */}
+                          {/* Nested Trait Effects (Parent to Character Trait) */}
                           <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
                               <span>Trait Effects:</span>
@@ -904,7 +904,7 @@
                             </button>
                           </div>
 
-                          {/* Nested Follower Effects */}
+                          {/* Nested Follower Effects (Parent to Follower) */}
                           <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
                               <span>Follower Effects:</span>
@@ -993,24 +993,23 @@
         );
       }
 
-      const renderTimetableBuilderContent = () => {
+      if (gameState === 'TIMETABLE_BUILDER') {
         const optionWindowTurns = [4, 5, 7, 8, 9, 10, 11, 12];
         const secondHalfTurns = Array.from({ length: 12 }, (_, i) => i + 13).filter(t => !RECESS_TURNS[t]);
 
         return (
-          <div className="space-y-6">
-            <div className="border-2 border-[#E5C158] bg-[#0B192C] p-5 rounded-lg shadow-xl">
-              <div className="flex justify-between items-center mb-1">
-                <h2 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
-                  🗺️ Master Parliamentary Session Timeline (Turns 1–24)
-                </h2>
-                <span className="text-xs text-slate-400">Scroll horizontally to view full session timeline</span>
-              </div>
-              {renderMasterTimeline()}
-            </div>
+          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-6xl mx-auto">
+            <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block cursor-pointer">
+              ← Return to Menu
+            </button>
+            <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
+            <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
+            <p className="text-sm text-slate-300 mb-6">
+              Before Parliament convenes, order the sitting bi-weekly turns of {selectedYear}. Recess turns are excluded from scheduling options.
+            </p>
 
             {!isValid ? (
-              <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg shadow-xl">
+              <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg mb-8 shadow-xl">
                 <div className="flex items-center gap-2 mb-2 text-rose-300 font-bold text-base">
                   <span>⚠️</span> Timetable Requirements & Rules Pending
                 </div>
@@ -1024,12 +1023,22 @@
                 </div>
               </div>
             ) : (
-              <div className="bg-emerald-950/80 border-2 border-emerald-500 p-4 rounded-lg text-emerald-200 text-sm font-bold flex items-center gap-3">
+              <div className="bg-emerald-950/80 border-2 border-emerald-500 p-4 rounded-lg mb-8 text-emerald-200 text-sm font-bold flex items-center gap-3">
                 <span>✓</span> All timetable rules and requirements satisfied! You may begin the session below.
               </div>
             )}
 
-            <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded">
+            <div className="border-2 border-[#E5C158] bg-[#0B192C] p-5 rounded-lg mb-8 shadow-xl">
+              <div className="flex justify-between items-center mb-1">
+                <h2 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
+                  🗺️ Master Parliamentary Session Timeline (Turns 1–24)
+                </h2>
+                <span className="text-xs text-slate-400">Scroll horizontally to view full session timeline</span>
+              </div>
+              {renderMasterTimeline()}
+            </div>
+
+            <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
               <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed Orders & Recesses</h2>
               <div className="space-y-1.5 text-xs">
                 <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
@@ -1040,7 +1049,7 @@
               </div>
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg shadow-md">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns</span>
@@ -1048,7 +1057,7 @@
               {renderLucidTimeline(optionWindowTurns, justiceTurns, setJusticeTurns)}
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg shadow-md">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Home Office Report <span className="text-xs text-slate-400 font-normal">(State of Public Peace)</span></h3>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns</span>
@@ -1056,7 +1065,7 @@
               {renderLucidTimeline(optionWindowTurns, peaceTurns, setPeaceTurns)}
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg shadow-md">
+            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-white text-sm">Opposition Days</h3>
                 <span className={`text-xs px-2 py-0.5 rounded ${oppositionTurns.length === 2 ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'}`}>{oppositionTurns.length} of 2 set</span>
@@ -1064,7 +1073,7 @@
               {renderLucidTimeline(optionWindowTurns, oppositionTurns, setOppositionTurns)}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
                 <h3 className="font-bold text-white text-sm mb-1">War Office Annual Report</h3>
                 <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
@@ -1096,34 +1105,16 @@
               </div>
             </div>
 
-            {gameState === 'TIMETABLE_BUILDER' && (
-              <button
-                disabled={!isValid}
-                onClick={() => {
-                  setActiveTab('Parliament');
-                  setGameState('DASHBOARD');
-                }}
-                className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
-              >
-                {isValid ? 'Confirm & Start Year' : 'Resolve every rule above before session may begin'}
-              </button>
-            )}
-          </div>
-        );
-      };
-
-      if (gameState === 'TIMETABLE_BUILDER') {
-        return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-6xl mx-auto">
-            <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block cursor-pointer">
-              ← Return to Menu
+            <button
+              disabled={!isValid}
+              onClick={() => {
+                setActiveTab('Parliament');
+                setGameState('DASHBOARD');
+              }}
+              className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+            >
+              {isValid ? 'Confirm & Start Year' : 'Resolve every rule above before session may begin'}
             </button>
-            <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
-            <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
-            <p className="text-sm text-slate-300 mb-6">
-              Before Parliament convenes, order the sitting bi-weekly turns of {selectedYear}. Recess turns are excluded from scheduling options.
-            </p>
-            {renderTimetableBuilderContent()}
           </div>
         );
       }
@@ -1191,17 +1182,7 @@
               </button>
             </div>
 
-            {/* PARLIAMENTARY TIMETABLE TAB */}
-            {activeTab === 'Parliamentary Timetable' && (
-              <div className="space-y-4">
-                <p className="text-xs text-slate-300">
-                  Review and adjust the parliamentary schedule for {selectedYear}. You can dynamically reconfigure report schedules and opposition days mid-session below.
-                </p>
-                {renderTimetableBuilderContent()}
-              </div>
-            )}
-
-            {/* CABINET TAB */}
+            {/* CABINET TAB - UPDATED WITH NO. 10 DOWNING STREET CABINET PROFILE PANEL (Screenshot 2026-07-13 at 13.35.46.png & 13.44.35.jpg) */}
             {activeTab === 'Cabinet' && (
               <div className="space-y-8">
                 {/* CABINET HIERARCHY PANEL: NO. 10 DOWNING STREET */}
@@ -1322,7 +1303,7 @@
                         type="text"
                         value={foreignOfficeForm.reportingOfficer}
                         onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, reportingOfficer: e.target.value })}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158]"
+                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158] flex-1"
                       />
                     </div>
                     <div>
@@ -2231,90 +2212,230 @@
 
                           <div className="space-y-3 font-sans pt-2 border-t border-slate-800/80">
                             <div className="text-[#E5C158] font-bold text-xs">&gt; Foreign Outflow(s)</div>
-                            <div className="pl-2">
-                              <label className="block text-[11px] text-slate-300 mb-1">Foreign Diplomatic Subsidies & Secret Service Payments</label>
+                            <div className="pl-2 max-w-md">
+                              <label className="block text-[11px] text-slate-300 mb-1">Diplomatic Expenditures</label>
                               <input type="number" value={cfForm.diplomatic || ''} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158] focus:outline-none" />
                             </div>
                           </div>
 
                           <div className="text-slate-400">———————————————————————————————————————</div>
                           <div className="flex justify-between items-center text-sm font-bold text-rose-400 font-mono">
-                            <span>Total Outflows :</span>
+                            <span>Total Outflow Expenditure :</span>
                             <span>£{totalOutflows.toLocaleString()}</span>
                           </div>
                         </div>
 
-                        {/* BALANCES SUMMARY */}
-                        <div className="space-y-2 bg-[#0F223D] p-4 rounded border border-[#E5C158]/50 text-sm font-bold font-mono">
-                          <div className="flex justify-between items-center text-[#E5C158]">
-                            <span>Net Revenue Yield (Turn Inflows - Outflows) :</span>
-                            <span>£{netYield.toLocaleString()}</span>
+                        {/* NET AUDIT SUMMARY */}
+                        <div className="bg-[#0F223D] border-2 border-[#E5C158] p-4 rounded space-y-3 font-mono">
+                          <div className="text-slate-400 text-center">=======================================================</div>
+                          <div className="flex justify-between items-center text-sm font-bold">
+                            <span className="text-white">NET YIELD TO SPECIE VAULTS :</span>
+                            <span className={netYield >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                              £{netYield.toLocaleString()}
+                            </span>
                           </div>
-                          <div className="flex justify-between items-center text-white pt-2 border-t border-slate-700">
-                            <span>Total Treasury Specie Liquidity (Turn Net + Initial Vault Specie) :</span>
-                            <span className="text-emerald-400 text-base">£{totalLiquidity.toLocaleString()}</span>
+                          <div className="flex justify-between items-center text-sm font-bold border-t border-slate-800 pt-2">
+                            <span className="text-[#E5C158]">TOTAL TREASURY LIQUIDITY :</span>
+                            <span className="text-[#E5C158] text-base">£{totalLiquidity.toLocaleString()}</span>
+                          </div>
+                          <div className="text-slate-400 text-center">=======================================================</div>
+                          <div className="flex items-center gap-2 pt-1 font-sans text-[11px] text-slate-400">
+                            <span>Starting Vault Balance:</span>
+                            <input
+                              type="number"
+                              value={cfForm.initialLiquidity || ''}
+                              onChange={(e) => handleCfChange('initialLiquidity', e.target.value)}
+                              className="bg-[#0B192C] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs w-28"
+                            />
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* SUBTAB 2: GDI ASSESSMENT */}
+                    {/* SUBTAB 2: GDI GROWTH ASSESSMENT */}
                     {exchequerSubTab === 'GDI_ASSESSMENT' && (
-                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                        <div className="text-center space-y-1">
-                          <div className="text-white font-bold tracking-wider">HM TREASURY // GROSS DOMESTIC INCOME ASSESSMENT</div>
-                          <div className="text-[#E5C158]">Annual Growth Metric Calculator</div>
+                      <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-6">
+                        <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+                          <div>
+                            <h2 className="text-xl font-bold text-[#E5C158]">Treasury & Gross Revenue Calculator</h2>
+                            <p className="text-xs text-slate-400 mt-1">Consolidated Funds (Gross Domestic Income Growth Assessment)</p>
+                          </div>
+                          <span className="bg-[#E5C158]/10 text-[#E5C158] border border-[#E5C158]/30 text-[10px] font-bold px-3 py-1 rounded">
+                            HM Treasury Desk
+                          </span>
                         </div>
 
-                        <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-4 font-sans">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-slate-300 text-xs mb-1">Turn 3 Recorded GDI (£)</label>
+                        <div className="bg-[#0F223D] border-l-4 border-[#E5C158] p-4 rounded-r text-xs text-slate-300 space-y-3">
+                          <div className="font-bold text-[#E5C158] text-sm flex items-center gap-1.5">
+                            <span>🎮</span> Where to find these numbers in your game (Empire / Napoleon Total War):
+                          </div>
+                          
+                          <div className="bg-[#0B192C] p-3 rounded border border-slate-700/80 space-y-2">
+                            <p className="text-slate-200">
+                              Open your in-game <strong className="text-white">Government Menu</strong>:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-slate-300 pl-1">
+                              <li>Look at the middle panel titled <strong className="text-white">Projected Income</strong>.</li>
+                              <li>Find the left column subtotal line below Tax, Trade, and Other income (e.g. <strong className="text-emerald-400 font-mono">+9154</strong>).</li>
+                              <li><strong className="text-amber-300">Do not</strong> use "Income next turn" (which deducts military upkeep)—use the <strong className="text-white">Gross Revenue Total</strong>.</li>
+                            </ul>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                            <div className="bg-[#0B192C] p-2.5 rounded border border-slate-700">
+                              <span className="text-[#E5C158] font-bold block mb-1">1. Turn 3 Value</span>
+                              On Turn 3, open the Government screen, copy the Gross Income total, and enter it into the <strong className="text-white">Turn 3</strong> box below.
+                            </div>
+                            <div className="bg-[#0B192C] p-2.5 rounded border border-slate-700">
+                              <span className="text-[#E5C158] font-bold block mb-1">2. Turn 8 Value</span>
+                              On Turn 8, open the Government screen, copy the new Gross Income total, and enter it into the <strong className="text-white">Turn 8</strong> box below.
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Turn 3 Gross Revenue (£)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2.5 text-slate-500 text-xs">£</span>
                               <input
                                 type="number"
                                 value={turn3Rev}
                                 onChange={(e) => setTurn3Rev(parseFloat(e.target.value) || 0)}
-                                className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs"
+                                placeholder="e.g. 9154"
+                                className="w-full bg-[#0F223D] border border-slate-700 text-white pl-7 p-2.5 rounded text-xs focus:border-[#E5C158] focus:outline-none font-mono"
                               />
                             </div>
-                            <div>
-                              <label className="block text-slate-300 text-xs mb-1">Turn 8 Recorded GDI (£)</label>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Turn 8 Gross Revenue (£)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2.5 text-slate-500 text-xs">£</span>
                               <input
                                 type="number"
                                 value={turn8Rev}
                                 onChange={(e) => setTurn8Rev(parseFloat(e.target.value) || 0)}
-                                className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-2 rounded text-xs"
+                                placeholder="e.g. 12500"
+                                className="w-full bg-[#0F223D] border border-slate-700 text-white pl-7 p-2.5 rounded text-xs focus:border-[#E5C158] focus:outline-none font-mono"
                               />
                             </div>
                           </div>
-
-                          <button
-                            onClick={handleCalculateGrowth}
-                            className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-2 rounded hover:bg-yellow-400 transition-colors"
-                          >
-                            Calculate Projected GDI Growth Rate
-                          </button>
-
-                          {growthRate !== null && (
-                            <div className="p-3 bg-[#0B192C] border border-emerald-500 rounded text-center">
-                              <span className="text-slate-300 text-xs">Calculated Annualized Growth Rate: </span>
-                              <strong className="text-emerald-400 text-sm font-mono font-bold">
-                                {(growthRate * 100).toFixed(2)}%
-                              </strong>
-                            </div>
-                          )}
                         </div>
+
+                        <button 
+                          onClick={handleCalculateGrowth} 
+                          className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-2.5 rounded text-xs hover:bg-yellow-400 cursor-pointer transition-colors shadow"
+                        >
+                          Calculate Compound Growth Rate (g)
+                        </button>
+
+                        {growthRate !== null && (
+                          <div className="border border-[#E5C158]/40 p-4 rounded bg-[#0F223D] space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="text-xs text-slate-300">Calculated Growth Rate (g):</div>
+                                <div className="text-2xl font-bold text-[#E5C158]">{(growthRate * 100).toFixed(2)}% per turn</div>
+                              </div>
+                              <div className="text-right text-[11px] text-slate-400">
+                                Status: <span className="text-emerald-400 font-bold">Forecast Active</span>
+                              </div>
+                            </div>
+
+                            <h3 className="text-xs font-bold text-white pt-2 border-t border-slate-800">24-Turn Revenue Schedule Projections</h3>
+                            <div className="max-h-52 overflow-y-auto border border-slate-800 rounded">
+                              <table className="w-full text-left text-xs">
+                                <thead className="bg-slate-800 text-[#E5C158] sticky top-0">
+                                  <tr>
+                                    <th className="p-2">Turn</th>
+                                    <th className="p-2">Projected Revenue (£)</th>
+                                    <th className="p-2">Session Notes</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
+                                    const proj = turn3Rev * Math.pow(1 + growthRate, t - 3);
+                                    return (
+                                      <tr key={t} className="border-t border-slate-800 hover:bg-[#0B192C]">
+                                        <td className="p-2 font-bold">Turn {t} ({MONTH_NAMES[t - 1]})</td>
+                                        <td className="p-2 font-mono text-emerald-400">£{proj.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                                        <td className="p-2 text-slate-400 text-[10px]">
+                                          {t === 8 ? 'Annual Budget Statement' : t === 1 ? 'Opening Address' : 'Consolidated Fund'}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* SUBTAB 3: FINANCIAL STATEMENT */}
                     {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
-                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded text-center font-mono space-y-3">
-                        <div className="text-[#E5C158] font-bold text-base">🏛️ ANNUAL FINANCIAL STATEMENT (BUDGET)</div>
-                        <div className="text-xs text-slate-300">Turn 8 Official Parliamentary Budgetary Address</div>
-                        <p className="text-xs text-slate-400 pt-4 font-sans">
-                          The Chancellor of the Exchequer presents the official Annual Supply Bill and Ways & Means Appropriations before the House of Commons.
-                        </p>
+                      <div className="bg-[#0B192C] border border-slate-800 p-6 rounded space-y-6">
+                        <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+                          <div>
+                            <h2 className="text-xl font-bold text-[#E5C158]">Annual Financial Statement (Budget)</h2>
+                            <p className="text-xs text-slate-400 mt-1">Chancellery Appropriations & Estimates · Delivered Turn 8</p>
+                          </div>
+                          <span className="bg-amber-900/50 text-amber-300 border border-amber-700 text-[10px] font-bold px-3 py-1 rounded">
+                            Scheduled: Turn 8
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-3">
+                            <h3 className="font-bold text-white text-sm border-b border-slate-800 pb-2">Revenue Estimates (£)</h3>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">Customs & Excise:</span>
+                              <span className="font-mono text-emerald-400">£6,400</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">Land & Assessed Taxes:</span>
+                              <span className="font-mono text-emerald-400">£3,800</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">Stamp Duties & Post Office:</span>
+                              <span className="font-mono text-emerald-400">£2,300</span>
+                            </div>
+                            <div className="flex justify-between text-xs font-bold border-t border-slate-800 pt-2 text-[#E5C158]">
+                              <span>Gross Estimated Income:</span>
+                              <span className="font-mono">£12,500</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-3">
+                            <h3 className="font-bold text-white text-sm border-b border-slate-800 pb-2">Proposed Expenditures (£)</h3>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">War Office Appropriations:</span>
+                              <span className="font-mono text-rose-400">£4,200</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">Admiralty Estimates:</span>
+                              <span className="font-mono text-rose-400">£3,500</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">Civil List & Justice Administration:</span>
+                              <span className="font-mono text-rose-400">£2,100</span>
+                            </div>
+                            <div className="flex justify-between text-xs font-bold border-t border-slate-800 pt-2 text-[#E5C158]">
+                              <span>Total Proposed Budget:</span>
+                              <span className="font-mono">£9,800</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0F223D] p-4 rounded border border-emerald-500/30 flex justify-between items-center">
+                          <div>
+                            <div className="text-xs text-slate-300">Projected Budgetary Status</div>
+                            <div className="text-lg font-bold text-emerald-400">SURPLUS: £2,700</div>
+                          </div>
+                          <span className="text-xs bg-emerald-950 text-emerald-300 px-3 py-1 rounded border border-emerald-800">
+                            Fiscal Year Solvent
+                          </span>
+                        </div>
                       </div>
                     )}
                   </>
@@ -2322,14 +2443,51 @@
               </div>
             )}
 
-            {/* PLACEHOLDER FOR OTHER TABS */}
-            {!['Parliamentary Timetable', 'Cabinet', 'Foreign Office', 'Home Office', 'Exchequer'].includes(activeTab) && (
-              <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4 font-sans">
-                <div className="text-3xl mb-2">📜</div>
-                <h3 className="text-lg font-bold text-slate-200">{activeTab} Department</h3>
-                <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                  Departmental records and administrative registers for {activeTab} during Turn {currentTurn} ({MONTH_NAMES[currentTurn - 1]}).
-                </p>
+            {activeTab === 'Parliamentary Timetable' && (
+              <div className="bg-[#0B192C] border border-slate-800 p-6 rounded">
+                <h2 className="text-lg font-bold text-white mb-4">Active Parliamentary Schedule ({selectedYear})</h2>
+                <div className="space-y-2">
+                  {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
+                    const recessName = RECESS_TURNS[t];
+                    const primaryLabel = getTurnPrimaryLabel(t);
+
+                    return (
+                      <div key={t} className={`p-3 rounded border flex justify-between items-center text-xs ${recessName ? 'border-slate-800 bg-[#0F223D]/40 opacity-70' : t === currentTurn ? 'border-[#E5C158] bg-[#0F223D]' : 'border-slate-800 bg-[#0B192C]'}`}>
+                        <div>
+                          <span className="font-bold text-[#E5C158] mr-3">TURN {t} ({MONTH_NAMES[t - 1]})</span>
+                          {recessName ? (
+                            <span className="text-slate-400 font-semibold">🌴 PARLIAMENTARY RECESS ({recessName})</span>
+                          ) : (
+                            <>
+                              <span>{primaryLabel}</span>
+                              {justiceTurns.includes(t) && <span className="ml-2 text-blue-300">| Lord Chancellor Report</span>}
+                              {peaceTurns.includes(t) && <span className="ml-2 text-purple-300">| Home Office Report</span>}
+                              {oppositionTurns.includes(t) && <span className="ml-2 text-rose-300">| Opposition Day</span>}
+                              {warOfficeTurn === t && <span className="ml-2 text-amber-300">| War Office Report</span>}
+                              {admiraltyTurn === t && <span className="ml-2 text-cyan-300">| Admiralty Report</span>}
+                            </>
+                          )}
+                        </div>
+                        {recessName ? (
+                          <span className="text-slate-500 italic">No Sitting</span>
+                        ) : t < currentTurn ? (
+                          <span className="text-emerald-400 font-bold">✓ Completed</span>
+                        ) : t === currentTurn ? (
+                          <span className="text-[#E5C158] font-bold">● Active Turn</span>
+                        ) : (
+                          <span className="text-slate-500">Upcoming</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab !== 'Cabinet' && activeTab !== 'Exchequer' && activeTab !== 'Home Office' && activeTab !== 'Foreign Office' && activeTab !== 'Parliamentary Timetable' && (
+              <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center">
+                <h2 className="text-lg font-bold text-[#E5C158] mb-2">{activeTab} Department</h2>
+                <p className="text-xs text-slate-400">Department administrative controls under active development.</p>
               </div>
             )}
           </main>
@@ -2337,9 +2495,7 @@
       );
     }
 
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(<ParliamentaryEngine />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<ParliamentaryEngine />);
   </script>
 </body>
 </html>
