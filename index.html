@@ -10,7 +10,6 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-[#0F223D] text-[#E2E8F0]">
-  <!-- References: image_5286a5.jpg, image_528a49.png -->
   <div id="root"></div>
 
   <script type="text/babel">
@@ -691,12 +690,9 @@
                         : 'border-slate-600 bg-[#0B192C] text-slate-200 hover:border-[#E5C158] hover:bg-[#0F223D] cursor-pointer'
                     }`}
                   >
-                    <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none mb-1">
-                      {monthLabel}
-                    </div>
-                    <div className="text-xs font-bold leading-none">
-                      Turn {t}
-                    </div>
+                    <div className="text-[10px] font-bold tracking-wider uppercase">{monthLabel}</div>
+                    <div className="text-xs font-serif font-semibold">Turn {t}</div>
+                    {isRecess && <div className="text-[9px] text-amber-500/80 font-sans mt-0.5 font-bold">RECESS</div>}
                   </button>
                 </div>
               );
@@ -705,1723 +701,622 @@
         </div>
       );
 
-      const renderMasterTimeline = () => {
-        const allTurns = Array.from({ length: 24 }, (_, i) => i + 1);
-
-        return (
-          <div className="relative pt-6 pb-4 my-2 overflow-x-auto">
-            <div className="min-w-[1500px] relative z-10 px-2">
-              <div className="absolute top-3 left-6 right-6 h-[3px] bg-[#E5C158] shadow-[0_0_10px_rgba(229,193,88,0.5)] z-0" />
-              
-              <div className="flex justify-between relative z-10 gap-2">
-                {allTurns.map((t) => {
-                  const recessName = RECESS_TURNS[t];
-                  const monthLabel = MONTH_NAMES[t - 1];
-                  
-                  const isJustice = justiceTurns.includes(t);
-                  const isPeace = peaceTurns.includes(t);
-                  const isOpp = oppositionTurns.includes(t);
-                  const isWar = warOfficeTurn === t;
-                  const isAdm = admiraltyTurn === t;
-                  const isBudget = t === 8;
-
-                  const hasScheduledEvent = isJustice || isPeace || isOpp || isWar || isAdm || isBudget;
-
-                  return (
-                    <div key={t} className="flex flex-col items-center flex-1 min-w-[55px] relative z-10">
-                      <div className={`w-[2px] h-3 mb-1 ${recessName ? 'bg-slate-700' : hasScheduledEvent ? 'bg-[#E5C158]' : 'bg-[#E5C158]/50'}`}></div>
-                      <div className={`w-full p-1.5 rounded border text-center transition-all min-h-[72px] flex flex-col justify-between ${
-                        recessName
-                          ? 'border-slate-800 bg-slate-900/60 text-slate-500'
-                          : hasScheduledEvent
-                          ? 'border-[#E5C158] bg-[#0F223D] text-white shadow-lg'
-                          : 'border-slate-700 bg-[#0B192C] text-slate-300'
-                      }`}>
-                        <div>
-                          <div className="text-[9px] uppercase tracking-wider opacity-75 font-semibold">
-                            {monthLabel}
-                          </div>
-                          <div className="text-xs font-bold text-[#E5C158]">
-                            T{t}
-                          </div>
-                        </div>
-
-                        <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
-                          {recessName && <span className="text-slate-500 italic block">Recess</span>}
-                          {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
-                          {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
-                          {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
-                          {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
-                          {isWar && <span className="bg-amber-600 text-white px-1 rounded block font-bold">War</span>}
-                          {isAdm && <span className="bg-cyan-600 text-white px-1 rounded block font-bold">Admiralty</span>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const getTurnPrimaryLabel = (t) => {
-        const gdiTurns = [1, 2, 3, 4, 5, 7];
-        const cfTurns = [9, 10, 11, 12, 17, 19, 20, 21, 22, 23];
-
-        if (t === 1) return "Opening Address | Consolidated Funds (Gross Domestic Income Growth Assessment)";
-        if (gdiTurns.includes(t)) return "Consolidated Funds (Gross Domestic Income Growth Assessment)";
-        if (t === 8) return "Financial Statement (Annual Budget)";
-        if (cfTurns.includes(t)) return "Consolidated Funds";
-        return "";
-      };
-
-      // Helper Component to Render Minister Profile Badge
-      const renderMinisterProfile = (ministerKey) => {
-        const minister = cabinetMinisters[ministerKey];
-        if (!minister) return null;
-
-        return (
-          <div className="flex flex-col items-center text-center w-40 font-sans">
-            {/* Oval Frame with 19th Century Portrait */}
-            <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
-              <img 
-                src={minister.img} 
-                alt={minister.role} 
-                className="w-full h-full object-cover" 
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-              {/* Silhouette Fallback */}
-              <div className="absolute inset-0 bg-[#0F223D] flex items-center justify-center text-[#E5C158] font-bold text-2xl -z-10">
-                👤
-              </div>
-            </div>
-
-            {/* Title / Role Pill */}
-            <div className="bg-white text-slate-800 font-bold px-3 py-1 rounded-full text-[11px] shadow border border-slate-300 w-full mb-1 truncate">
-              {minister.role}
-            </div>
-
-            {/* Name Input Pill */}
-            <input
-              type="text"
-              value={minister.name}
-              onChange={(e) => handleMinisterFieldChange(ministerKey, 'name', e.target.value)}
-              className="bg-white text-slate-700 font-semibold px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-1 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
-              placeholder="Name (Editable)"
-            />
-
-            {/* Historical Title Input Pill */}
-            <input
-              type="text"
-              value={minister.title}
-              onChange={(e) => handleMinisterFieldChange(ministerKey, 'title', e.target.value)}
-              className="bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
-              placeholder="Title"
-            />
-
-            {/* Collapsible Traits Button */}
-            <button
-              onClick={() => toggleMinisterTraitsOpen(ministerKey)}
-              className="bg-white text-slate-800 hover:bg-amber-100 border border-slate-300 px-3 py-0.5 rounded-full text-[10px] font-bold shadow flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              <span>{minister.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
-            </button>
-
-            {/* Expanded Traits & Followers Drawer */}
-            {minister.isTraitsOpen && (
-              <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
-                {/* DETAILS SECTION */}
-                <div className="border-b border-slate-700 pb-2">
-                  <div className="text-[11px] font-bold text-[#E5C158] mb-1.5 flex items-center gap-1">
-                    📌 Details
-                  </div>
-                  <div className="space-y-2 text-[10px]">
-                    <div>
-                      <label className="block text-slate-300 font-semibold mb-0.5">
-                        Management Skills :
-                      </label>
-                      <input
-                        type="text"
-                        value={minister.managementSkills || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\**$/.test(val)) {
-                            handleMinisterFieldChange(ministerKey, 'managementSkills', val);
-                          }
-                        }}
-                        className="bg-[#0F223D] border border-slate-700 text-[#E5C158] font-bold px-2 py-1 rounded w-full text-[10px] focus:outline-none focus:border-[#E5C158]"
-                        placeholder='Users can only input with "*"'
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-300 font-semibold mb-0.5">
-                        Age :
-                      </label>
-                      <input
-                        type="text"
-                        value={minister.age || ''}
-                        onChange={(e) => handleMinisterFieldChange(ministerKey, 'age', e.target.value)}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-bold px-2 py-1 rounded w-full text-[10px] focus:outline-none focus:border-[#E5C158]"
-                        placeholder="Age"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* CHARACTER TRAITS SECTION */}
-                <div className="border-b border-slate-700 pb-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] font-bold text-[#E5C158]">📜 Character Traits</span>
-                    <button
-                      onClick={() => addTraitToMinister(ministerKey)}
-                      className="text-[9px] bg-[#E5C158] text-[#0F223D] px-1.5 py-0.5 rounded font-bold hover:bg-yellow-400 cursor-pointer"
-                    >
-                      + Trait
-                    </button>
-                  </div>
-
-                  {minister.traits.length === 0 ? (
-                    <div className="text-[10px] text-slate-500 italic">No character traits added.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {minister.traits.map((trait) => (
-                        <div key={trait.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
-                          <div className="flex justify-between items-center mb-1">
-                            <input
-                              type="text"
-                              value={trait.name}
-                              onChange={(e) => updateTraitName(ministerKey, trait.id, e.target.value)}
-                              className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
-                            />
-                            <button
-                              onClick={() => removeTraitFromMinister(ministerKey, trait.id)}
-                              className="text-rose-400 hover:text-rose-200 font-bold px-1"
-                              title="Delete Trait"
-                            >
-                              ✕
-                            </button>
-                          </div>
-
-                          {/* Nested Trait Effects */}
-                          <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
-                            <div className="flex justify-between items-center text-[9px] text-slate-400">
-                              <span>Trait Effects:</span>
-                              <button
-                                onClick={() => addEffectToTrait(ministerKey, trait.id)}
-                                className="text-[#E5C158] hover:underline"
-                              >
-                                + Effect
-                              </button>
-                            </div>
-                            {trait.effects.map((eff) => (
-                              <div key={eff.id} className="flex items-center gap-1">
-                                <span className="text-[#E5C158]">›</span>
-                                <input
-                                  type="text"
-                                  value={eff.text}
-                                  onChange={(e) => updateTraitEffectText(ministerKey, trait.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 text-[9px]"
-                                />
-                                {trait.effects.length > 1 && (
-                                  <button
-                                    onClick={() => removeEffectFromTrait(ministerKey, trait.id, eff.id)}
-                                    className="text-slate-500 hover:text-rose-400 text-[9px]"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* FOLLOWERS SECTION */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] font-bold text-cyan-300">👥 Followers</span>
-                    <button
-                      onClick={() => addFollowerToMinister(ministerKey)}
-                      className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded font-bold hover:bg-cyan-500 cursor-pointer"
-                    >
-                      + Follower
-                    </button>
-                  </div>
-
-                  {minister.followers.length === 0 ? (
-                    <div className="text-[10px] text-slate-500 italic">No followers assigned.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {minister.followers.map((follower) => (
-                        <div key={follower.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
-                          <div className="flex justify-between items-center mb-1">
-                            <input
-                              type="text"
-                              value={follower.name}
-                              onChange={(e) => updateFollowerName(ministerKey, follower.id, e.target.value)}
-                              className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
-                            />
-                            <button
-                              onClick={() => removeFollowerFromMinister(ministerKey, follower.id)}
-                              className="text-rose-400 hover:text-rose-200 font-bold px-1"
-                              title="Delete Follower"
-                            >
-                              ✕
-                            </button>
-                          </div>
-
-                          {/* Nested Follower Effects */}
-                          <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
-                            <div className="flex justify-between items-center text-[9px] text-slate-400">
-                              <span>Follower Effects:</span>
-                              <button
-                                onClick={() => addEffectToFollower(ministerKey, follower.id)}
-                                className="text-cyan-300 hover:underline"
-                              >
-                                + Effect
-                              </button>
-                            </div>
-                            {follower.effects.map((eff) => (
-                              <div key={eff.id} className="flex items-center gap-1">
-                                <span className="text-cyan-300">›</span>
-                                <input
-                                  type="text"
-                                  value={eff.text}
-                                  onChange={(e) => updateFollowerEffectText(ministerKey, follower.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 text-[9px]"
-                                />
-                                {follower.effects.length > 1 && (
-                                  <button
-                                    onClick={() => removeEffectFromFollower(ministerKey, follower.id, eff.id)}
-                                    className="text-slate-500 hover:text-rose-400 text-[9px]"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      };
-
-      if (gameState === 'MAIN_MENU') {
-        return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] flex flex-col items-center justify-center p-6 font-serif">
-            <div className="border-4 border-[#E5C158] p-8 rounded-lg max-w-md w-full text-center bg-[#0B192C] shadow-2xl">
-              <h1 className="text-3xl font-bold text-[#E5C158] mb-2 tracking-wide">PARLIAMENTARY ENGINE</h1>
-              <p className="text-sm italic text-slate-400 mb-8">British Political Strategy Simulation · 1800s</p>
-              <div className="space-y-4">
-                <button
-                  onClick={() => setGameState('YEAR_INPUT')}
-                  className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-3 px-6 rounded hover:bg-yellow-400 transition-colors cursor-pointer"
-                >
-                  NEW GAME
-                </button>
-                <button
-                  onClick={handleLoadGame}
-                  className="w-full border border-[#E5C158] text-[#E5C158] font-bold py-3 px-6 rounded hover:bg-[#E5C158] hover:text-[#0F223D] transition-colors cursor-pointer"
-                >
-                  LOAD GAME
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      if (gameState === 'YEAR_INPUT') {
-        return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] flex flex-col items-center justify-center p-6 font-serif">
-            <div className="border-2 border-[#E5C158] p-8 rounded-lg max-w-sm w-full bg-[#0B192C]">
-              <h2 className="text-2xl font-bold text-[#E5C158] mb-4 text-center">Select Starting Year</h2>
-              <input
-                type="number"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value) || 1820)}
-                className="w-full bg-[#0F223D] border border-[#E5C158] text-white p-3 rounded mb-6 text-center text-xl font-bold"
-              />
-              <button
-                onClick={() => setGameState('TIMETABLE_BUILDER')}
-                className="w-full bg-[#E5C158] text-[#0F223D] font-bold py-3 rounded hover:bg-yellow-400 transition-colors cursor-pointer"
-              >
-                PROCEED TO TIMETABLE
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      if (gameState === 'TIMETABLE_BUILDER') {
-        const optionWindowTurns = [4, 5, 7, 8, 9, 10, 11, 12];
-        const secondHalfTurns = Array.from({ length: 12 }, (_, i) => i + 13).filter(t => !RECESS_TURNS[t]);
-
-        return (
-          <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] p-6 font-serif max-w-6xl mx-auto">
-            <button onClick={() => setGameState('MAIN_MENU')} className="text-xs text-slate-400 hover:text-white mb-4 block cursor-pointer">
-              ← Return to Menu
-            </button>
-            <span className="text-xs uppercase tracking-widest text-[#E5C158]">PRE-SESSION · CLERK OF THE HOUSE</span>
-            <h1 className="text-3xl font-bold text-white mb-2">Design the Timetable · {selectedYear}</h1>
-            <p className="text-sm text-slate-300 mb-6">
-              Before Parliament convenes, order the sitting bi-weekly turns of {selectedYear}. Recess turns are excluded from scheduling options.
-            </p>
-
-            {!isValid ? (
-              <div className="bg-rose-950/80 border-2 border-rose-600 p-5 rounded-lg mb-8 shadow-xl">
-                <div className="flex items-center gap-2 mb-2 text-rose-300 font-bold text-base">
-                  <span>⚠️</span> Timetable Requirements & Rules Pending
-                </div>
-                <div className="space-y-2 text-sm text-rose-200">
-                  {validationErrors.map((err, idx) => (
-                    <div key={idx} className="flex items-start gap-2 bg-rose-900/40 p-2 rounded border border-rose-800/60">
-                      <span className="font-bold">•</span>
-                      <span>{err}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-emerald-950/80 border-2 border-emerald-500 p-4 rounded-lg mb-8 text-emerald-200 text-sm font-bold flex items-center gap-3">
-                <span>✓</span> All timetable rules and requirements satisfied! You may begin the session below.
-              </div>
-            )}
-
-            <div className="border-2 border-[#E5C158] bg-[#0B192C] p-5 rounded-lg mb-8 shadow-xl">
-              <div className="flex justify-between items-center mb-1">
-                <h2 className="text-sm font-bold text-[#E5C158] flex items-center gap-2">
-                  🗺️ Master Parliamentary Session Timeline (Turns 1–24)
-                </h2>
-                <span className="text-xs text-slate-400">Scroll horizontally to view full session timeline</span>
-              </div>
-              {renderMasterTimeline()}
-            </div>
-
-            <div className="border border-[#E5C158]/40 bg-[#0B192C] p-4 rounded mb-6">
-              <h2 className="text-sm font-bold text-[#E5C158] mb-2 flex items-center gap-2">🔒 Fixed Orders & Recesses</h2>
-              <div className="space-y-1.5 text-xs">
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURN 1</span> Opening Address to Parliament & Session Convening.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURNS 1, 2, 3, 4, 5, 7</span> Consolidated Funds (Gross Domestic Income Growth Assessment).</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURN 8</span> Financial Statement — Annual Budget.</div>
-                <div><span className="bg-[#E5C158]/20 text-[#E5C158] px-2 py-0.5 rounded font-bold mr-2">TURNS 9–12, 17, 19–23</span> Consolidated Funds.</div>
-                <div><span className="bg-slate-700/60 text-slate-300 px-2 py-0.5 rounded font-bold mr-2">RECESSES</span> Easter (T6), Summer (T13–16), Conference (T18), Christmas (T24).</div>
-              </div>
-            </div>
-
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns</span>
-              </div>
-              {renderLucidTimeline(optionWindowTurns, justiceTurns, setJusticeTurns)}
-            </div>
-
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-white text-sm">Home Office Report <span className="text-xs text-slate-400 font-normal">(State of Public Peace)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 4 turns</span>
-              </div>
-              {renderLucidTimeline(optionWindowTurns, peaceTurns, setPeaceTurns)}
-            </div>
-
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-white text-sm">Opposition Days</h3>
-                <span className={`text-xs px-2 py-0.5 rounded ${oppositionTurns.length === 2 ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'}`}>{oppositionTurns.length} of 2 set</span>
-              </div>
-              {renderLucidTimeline(optionWindowTurns, oppositionTurns, setOppositionTurns)}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-white text-sm mb-1">War Office Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
-                <select
-                  value={warOfficeTurn || ''}
-                  onChange={(e) => setWarOfficeTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
-                >
-                  <option value="">-- Choose Sitting Turn --</option>
-                  {secondHalfTurns.map((t) => (
-                    <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="border border-slate-700 bg-[#0B192C] p-4 rounded">
-                <h3 className="font-bold text-white text-sm mb-1">Admiralty Annual Report</h3>
-                <p className="text-xs text-slate-400 mb-2">Sitting Turns 17–23</p>
-                <select
-                  value={admiraltyTurn || ''}
-                  onChange={(e) => setAdmiraltyTurn(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-[#0F223D] border border-slate-700 text-xs p-2 rounded text-white"
-                >
-                  <option value="">-- Choose Sitting Turn --</option>
-                  {secondHalfTurns.map((t) => (
-                    <option key={t} value={t}>Turn {t} ({MONTH_NAMES[t - 1]})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <button
-              disabled={!isValid}
-              onClick={() => {
-                setActiveTab('Parliamentary Timetable');
-                setGameState('DASHBOARD');
-              }}
-              className={`w-full py-3.5 rounded-lg font-bold text-base transition-colors mb-8 ${isValid ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 cursor-pointer shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
-            >
-              {isValid ? 'Confirm & Start Year' : 'Resolve every rule above before session may begin'}
-            </button>
-          </div>
-        );
-      }
-
-      const tabs = [
-        'Parliamentary Timetable', 'General Election', 'Parliament', 
-        'Cabinet', "Lord Chancellor's Department", 
-        'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office'
-      ];
-
-      const isHomeOfficeScheduled = peaceTurns.includes(currentTurn);
+      const currentDateString = `${MONTH_NAMES[currentTurn - 1]} ${selectedYear}`;
 
       return (
-        <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-serif flex flex-col relative">
-          <header className="border-b border-[#E5C158] bg-[#0B192C] px-4 py-3 flex items-center gap-4">
-            <div className="relative">
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="border border-[#E5C158] text-[#E5C158] p-1.5 rounded hover:bg-[#E5C158]/10 cursor-pointer"
-              >
-                ☰
-              </button>
-
-              {isMenuOpen && (
-                <div className="absolute top-10 left-0 w-48 bg-[#0B192C] border border-[#E5C158] rounded shadow-2xl z-50 py-1 font-sans text-xs">
-                  <button
-                    onClick={handleSaveGame}
-                    className="w-full text-left px-4 py-2 hover:bg-[#E5C158]/20 text-[#E2E8F0] flex items-center gap-2 cursor-pointer"
-                  >
-                    💾 Save Game
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setGameState('MAIN_MENU');
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-300 flex items-center gap-2 cursor-pointer border-t border-slate-800"
-                  >
-                    🚪 Exit to Menu
-                  </button>
-                </div>
-              )}
+        <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] font-sans pb-12">
+          {/* Header */}
+          <header className="bg-[#0B192C] border-b border-slate-800 px-6 py-4 flex justify-between items-center relative shadow-md">
+            <div>
+              <h1 className="text-xl font-serif font-bold text-[#E5C158] tracking-wide">
+                1800s British Parliamentary Strategy Engine
+              </h1>
+              <p className="text-xs text-slate-400">
+                HM Government Session Planning & Executive Dashboard
+              </p>
             </div>
 
-            <div className="text-sm font-bold text-[#E5C158] whitespace-nowrap">Year {selectedYear} · Turn {currentTurn} of 24</div>
-            
-            <nav className="flex gap-2 overflow-x-auto py-1">
-              {tabs.map((tab) => (
+            {/* Turn & Year Status Banner */}
+            <div className="flex items-center space-x-6">
+              <div className="bg-[#132A4A] border border-slate-700 rounded px-4 py-2 text-right">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                  Session & Date
+                </div>
+                <div className="text-sm font-bold text-[#E5C158] font-mono">
+                  {selectedYear} — Turn {currentTurn} ({MONTH_NAMES[currentTurn - 1]})
+                </div>
+              </div>
+
+              {/* Hamburger Menu Toggle */}
+              <div className="relative">
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-xs whitespace-nowrap px-3 py-1.5 rounded cursor-pointer ${activeTab === tab ? 'bg-[#E5C158] text-[#0F223D] font-bold' : 'text-slate-300 hover:text-white'}`}
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="bg-[#132A4A] hover:bg-[#1E3A8A] border border-slate-700 text-[#E5C158] p-2 rounded focus:outline-none transition"
+                  title="Menu"
                 >
-                  {tab}
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                 </button>
-              ))}
-            </nav>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#0B192C] border border-slate-700 rounded shadow-xl z-50 py-1">
+                    <button
+                      onClick={handleSaveGame}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-[#132A4A] hover:text-[#E5C158] flex items-center space-x-2"
+                    >
+                      <span>💾</span>
+                      <span>Save Game</span>
+                    </button>
+                    <button
+                      onClick={handleLoadGame}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-[#132A4A] hover:text-[#E5C158] flex items-center space-x-2"
+                    >
+                      <span>📂</span>
+                      <span>Load Game</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </header>
 
-          <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-[#E5C158]">{activeTab}</h1>
-              <button onClick={handleNextTurn} className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded text-xs hover:bg-yellow-400 cursor-pointer">
-                Advance to Next Turn →
+          {/* Navigation Bar for Dashboard State */}
+          {gameState === 'DASHBOARD' && (
+            <div className="bg-[#0B192C] border-b border-slate-800 px-6 py-2 flex justify-between items-center">
+              <nav className="flex space-x-2">
+                {[
+                  'Parliamentary Timetable',
+                  'Cabinet Office',
+                  'Home Office',
+                  'Exchequer',
+                  'Foreign Office'
+                ].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 rounded-t text-xs font-bold uppercase tracking-wider transition ${
+                      activeTab === tab
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'bg-[#132A4A] text-slate-300 hover:bg-[#1E3A8A] hover:text-white'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </nav>
+
+              <button
+                onClick={handleNextTurn}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded font-bold text-xs uppercase tracking-wider shadow transition"
+              >
+                Advance Turn &rarr;
               </button>
             </div>
+          )}
 
-            {/* PARLIAMENTARY TIMETABLE TAB */}
-            {activeTab === 'Parliamentary Timetable' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6">
-                <div className="flex justify-between items-center border-b border-[#E5C158]/30 pb-4">
+          {/* Main Content Area */}
+          <main className="p-6 max-w-7xl mx-auto">
+            {gameState === 'TIMETABLE_BUILDER' && (
+              <div className="space-y-6 bg-[#132A4A] border border-slate-700 p-6 rounded-lg shadow-xl">
+                <div className="border-b border-slate-700 pb-4">
+                  <h2 className="text-lg font-serif font-bold text-[#E5C158]">
+                    Session Timetable Builder ({selectedYear})
+                  </h2>
+                  <p className="text-xs text-slate-300">
+                    Designate Parliamentary reporting schedules and business days for the upcoming 24-turn session.
+                  </p>
+                </div>
+
+                {/* Timetable Controls */}
+                <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold text-[#E5C158]">Parliamentary Calendar & Order of Business</h2>
-                    <p className="text-xs text-slate-400">Current Turn Active Status & Full Annual Schedule for Year {selectedYear}</p>
+                    <h3 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                      1. Lord Chancellor Administration of Justice Reports (2 Turns, exactly 8 turns apart)
+                    </h3>
+                    {renderLucidTimeline(Array.from({ length: 24 }, (_, i) => i + 1), justiceTurns, setJusticeTurns)}
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-mono bg-[#E5C158]/20 text-[#E5C158] px-3 py-1 rounded font-bold border border-[#E5C158]/40">
-                      Active: Turn {currentTurn} ({MONTH_NAMES[currentTurn - 1]})
-                    </span>
+
+                  <div>
+                    <h3 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                      2. Home Office Peace of the Realm Reports (2 Turns, exactly 4 turns apart)
+                    </h3>
+                    {renderLucidTimeline(Array.from({ length: 24 }, (_, i) => i + 1), peaceTurns, setPeaceTurns)}
+                  </div>
+
+                  <div>
+                    <h3 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                      3. Opposition Days (Exactly 2 Turns between Turn 4 and Turn 12)
+                    </h3>
+                    {renderLucidTimeline([4, 5, 7, 8, 9, 10, 11, 12], oppositionTurns, setOppositionTurns)}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-[#0B192C] border border-slate-700 p-4 rounded">
+                      <h4 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                        4. War Office Annual Report (Turns 13–24)
+                      </h4>
+                      <select
+                        value={warOfficeTurn || ''}
+                        onChange={(e) => setWarOfficeTurn(e.target.value ? parseInt(e.target.value) : null)}
+                        className="w-full bg-[#132A4A] border border-slate-700 text-white text-xs p-2 rounded"
+                      >
+                        <option value="">-- Select Turn --</option>
+                        {[17, 19, 20, 21, 22, 23].map((t) => (
+                          <option key={t} value={t}>
+                            Turn {t} ({MONTH_NAMES[t - 1]})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="bg-[#0B192C] border border-slate-700 p-4 rounded">
+                      <h4 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                        5. Admiralty Annual Report (Turns 13–24)
+                      </h4>
+                      <select
+                        value={admiraltyTurn || ''}
+                        onChange={(e) => setAdmiraltyTurn(e.target.value ? parseInt(e.target.value) : null)}
+                        className="w-full bg-[#132A4A] border border-slate-700 text-white text-xs p-2 rounded"
+                      >
+                        <option value="">-- Select Turn --</option>
+                        {[17, 19, 20, 21, 22, 23].map((t) => (
+                          <option key={t} value={t}>
+                            Turn {t} ({MONTH_NAMES[t - 1]})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                {/* CURRENT TURN AGENDA HIGHLIGHT BOX */}
-                <div className="bg-[#0F223D] border-2 border-[#E5C158] p-4 rounded-lg shadow-lg">
-                  <div className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
-                    📍 Current Active Turn Agenda (Turn {currentTurn} - {MONTH_NAMES[currentTurn - 1]})
+                {/* Validation Warnings */}
+                {validationErrors.length > 0 && (
+                  <div className="bg-rose-950/40 border border-rose-800 p-4 rounded text-xs text-rose-300 space-y-1">
+                    <div className="font-bold uppercase tracking-wider mb-1">Schedule Requirements Not Met:</div>
+                    {validationErrors.map((err, idx) => (
+                      <div key={idx}>• {err}</div>
+                    ))}
                   </div>
-                  <div className="space-y-1.5 text-xs text-slate-200 font-sans">
-                    {RECESS_TURNS[currentTurn] ? (
-                      <div className="text-rose-400 font-bold text-sm italic">
-                        🚫 {RECESS_TURNS[currentTurn]} — Parliament is not in session.
-                      </div>
-                    ) : (
-                      <>
-                        {getTurnPrimaryLabel(currentTurn) && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#E5C158]">▸</span>
-                            <span className="font-bold text-amber-300">{getTurnPrimaryLabel(currentTurn)}</span>
-                          </div>
-                        )}
-                        {justiceTurns.includes(currentTurn) && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-blue-400">▸</span>
-                            <span className="font-bold text-blue-300">Lord Chancellor's Report (Administration of Justice)</span>
-                          </div>
-                        )}
-                        {peaceTurns.includes(currentTurn) && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-purple-400">▸</span>
-                            <span className="font-bold text-purple-300">Home Office Report (State of Public Peace)</span>
-                          </div>
-                        )}
-                        {oppositionTurns.includes(currentTurn) && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-rose-400">▸</span>
-                            <span className="font-bold text-rose-300">Opposition Day</span>
-                          </div>
-                        )}
-                        {warOfficeTurn === currentTurn && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-amber-500">▸</span>
-                            <span className="font-bold text-amber-300">War Office Annual Report</span>
-                          </div>
-                        )}
-                        {admiraltyTurn === currentTurn && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-cyan-400">▸</span>
-                            <span className="font-bold text-cyan-300">Admiralty Annual Report</span>
-                          </div>
-                        )}
-                        {!getTurnPrimaryLabel(currentTurn) && !justiceTurns.includes(currentTurn) && !peaceTurns.includes(currentTurn) && !oppositionTurns.includes(currentTurn) && warOfficeTurn !== currentTurn && admiraltyTurn !== currentTurn && (
-                          <div className="text-slate-400 italic">Standard Parliamentary Sitting & Debates.</div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
+                )}
 
-                {/* FULL ANNUAL TIMETABLE GRID TABLE */}
-                <div className="border border-slate-700 rounded overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#0F223D] text-[#E5C158] font-bold border-b border-slate-700">
-                      <tr>
-                        <th className="p-3 w-16 text-center border-r border-slate-700">Turn</th>
-                        <th className="p-3 w-28 border-r border-slate-700">Period</th>
-                        <th className="p-3 border-r border-slate-700">Scheduled Business & Reports</th>
-                        <th className="p-3 w-28 text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
-                        const isCurrent = t === currentTurn;
-                        const recessName = RECESS_TURNS[t];
-                        const monthLabel = MONTH_NAMES[t - 1];
-                        
-                        const isJustice = justiceTurns.includes(t);
-                        const isPeace = peaceTurns.includes(t);
-                        const isOpp = oppositionTurns.includes(t);
-                        const isWar = warOfficeTurn === t;
-                        const isAdm = admiraltyTurn === t;
-                        const primaryLabel = getTurnPrimaryLabel(t);
-
-                        return (
-                          <tr 
-                            key={t} 
-                            className={`transition-colors ${
-                              isCurrent 
-                                ? 'bg-[#E5C158]/15 border-l-4 border-l-[#E5C158]' 
-                                : recessName 
-                                ? 'bg-slate-900/40 text-slate-500' 
-                                : 'hover:bg-[#0F223D]/50 text-slate-200'
-                            }`}
-                          >
-                            <td className="p-2.5 text-center font-bold font-mono border-r border-slate-800">
-                              Turn {t}
-                            </td>
-                            <td className="p-2.5 font-semibold border-r border-slate-800 text-slate-300">
-                              {monthLabel}
-                            </td>
-                            <td className="p-2.5 border-r border-slate-800">
-                              {recessName ? (
-                                <span className="text-slate-500 italic font-medium">-- {recessName} --</span>
-                              ) : (
-                                <div className="space-y-1">
-                                  {primaryLabel && (
-                                    <div className="text-amber-300 font-medium">{primaryLabel}</div>
-                                  )}
-                                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                    {isJustice && (
-                                      <span className="bg-blue-900/80 text-blue-200 border border-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        Lord Chancellor's Report
-                                      </span>
-                                    )}
-                                    {isPeace && (
-                                      <span className="bg-purple-900/80 text-purple-200 border border-purple-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        Home Office Report
-                                      </span>
-                                    )}
-                                    {isOpp && (
-                                      <span className="bg-rose-900/80 text-rose-200 border border-rose-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        Opposition Day
-                                      </span>
-                                    )}
-                                    {isWar && (
-                                      <span className="bg-amber-900/80 text-amber-200 border border-amber-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        War Office Report
-                                      </span>
-                                    )}
-                                    {isAdm && (
-                                      <span className="bg-cyan-900/80 text-cyan-200 border border-cyan-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        Admiralty Report
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </td>
-                            <td className="p-2.5 text-center font-bold">
-                              {isCurrent ? (
-                                <span className="bg-[#E5C158] text-[#0F223D] px-2 py-0.5 rounded text-[10px] uppercase font-bold shadow">
-                                  CURRENT
-                                </span>
-                              ) : t < currentTurn ? (
-                                <span className="text-slate-500 text-[11px]">Completed</span>
-                              ) : (
-                                <span className="text-slate-400 text-[11px]">Upcoming</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="pt-4 border-t border-slate-700 flex justify-end">
+                  <button
+                    disabled={!isValid}
+                    onClick={() => setGameState('DASHBOARD')}
+                    className={`px-6 py-2 rounded font-bold text-xs uppercase tracking-wider transition ${
+                      isValid
+                        ? 'bg-[#E5C158] text-[#0F223D] hover:bg-yellow-400 shadow-lg cursor-pointer'
+                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    }`}
+                  >
+                    Confirm Timetable & Open Parliament &rarr;
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* CABINET TAB */}
-            {activeTab === 'Cabinet' && (
-              <div className="space-y-6">
-                {/* CABINET SUB NAVIGATION BUTTONS */}
-                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
-                  {[
-                    { key: 'NO_10_DOWNING_STREET', label: 'No. 10 Downing Street' },
-                    { key: 'CABINET_MEETING', label: 'Cabinet Meeting' },
-                    { key: 'PATRONAGE', label: 'Patronage' }
-                  ].map((subTab) => (
-                    <button
-                      key={subTab.key}
-                      onClick={() => setCabinetSubTab(subTab.key)}
-                      className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
-                        cabinetSubTab === subTab.key
-                          ? 'bg-[#E5C158] text-[#0F223D] shadow'
-                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {subTab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* SUBTAB 1: NO. 10 DOWNING STREET */}
-                {cabinetSubTab === 'NO_10_DOWNING_STREET' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
-                    <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
-                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🏛️ No. 10 Downing Street</h2>
-                      <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
+            {gameState === 'DASHBOARD' && (
+              <div>
+                {/* Parliamentary Timetable Tab */}
+                {activeTab === 'Parliamentary Timetable' && (
+                  <div className="space-y-6 bg-[#132A4A] border border-slate-700 p-6 rounded-lg">
+                    <div className="border-b border-slate-700 pb-2">
+                      <h2 className="text-lg font-serif font-bold text-[#E5C158]">
+                        Parliamentary Calendar ({selectedYear})
+                      </h2>
+                      <p className="text-xs text-slate-300">
+                        Overview of statutory sitting days and scheduled cabinet reports.
+                      </p>
                     </div>
 
-                    {/* PRIME MINISTER & MONARCH (TOP LEVEL SIDE BY SIDE) */}
-                    <div className="flex justify-center gap-12 mb-12">
-                      {renderMinisterProfile('pm')}
-                      {renderMinisterProfile('monarch')}
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+                      {Array.from({ length: 24 }, (_, i) => i + 1).map((t) => {
+                        const isRecess = !!RECESS_TURNS[t];
+                        const isCurrent = t === currentTurn;
 
-                    {/* MINISTERS (ROW OF 6) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center pt-4 border-t border-slate-800">
-                      {renderMinisterProfile('lordChancellor')}
-                      {renderMinisterProfile('exchequer')}
-                      {renderMinisterProfile('foreign')}
-                      {renderMinisterProfile('home')}
-                      {renderMinisterProfile('admiralty')}
-                      {renderMinisterProfile('war')}
+                        return (
+                          <div
+                            key={t}
+                            className={`p-3 rounded border ${
+                              isCurrent
+                                ? 'bg-[#0B192C] border-[#E5C158] ring-1 ring-[#E5C158]'
+                                : isRecess
+                                ? 'bg-slate-900/50 border-slate-800 text-slate-500'
+                                : 'bg-[#0B192C] border-slate-700 text-slate-200'
+                            }`}
+                          >
+                            <div className="flex justify-between items-center mb-1 font-bold">
+                              <span>Turn {t}: {MONTH_NAMES[t - 1]}</span>
+                              {isCurrent && <span className="text-[#E5C158] text-[10px] uppercase">Active</span>}
+                            </div>
+                            {isRecess ? (
+                              <div className="text-amber-500 font-sans italic">{RECESS_TURNS[t]}</div>
+                            ) : (
+                              <div className="space-y-0.5 text-[11px] font-sans">
+                                {justiceTurns.includes(t) && <div className="text-blue-300">• Lord Chancellor Report</div>}
+                                {peaceTurns.includes(t) && <div className="text-emerald-300">• Home Office Report</div>}
+                                {oppositionTurns.includes(t) && <div className="text-rose-300">• Opposition Day</div>}
+                                {warOfficeTurn === t && <div className="text-amber-300">• War Office Report</div>}
+                                {admiraltyTurn === t && <div className="text-cyan-300">• Admiralty Report</div>}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* SUBTAB 2: CABINET MEETING PANEL */}
-                {cabinetSubTab === 'CABINET_MEETING' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
-                    <div className="border-b border-[#E5C158]/40 pb-4 flex justify-between items-center">
-                      <div>
-                        <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🤝 Cabinet Meeting</h2>
-                        <p className="text-xs text-slate-400 italic">Executive Priorities, Directives & Ministerial Deliberations</p>
-                      </div>
-                      <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-3 py-1 rounded font-mono font-bold border border-[#E5C158]/40">
-                        Turn {currentTurn} · {selectedYear}
-                      </span>
+                {/* Cabinet Office Tab */}
+                {activeTab === 'Cabinet Office' && (
+                  <div className="space-y-6">
+                    <div className="flex border-b border-slate-700 bg-[#0B192C] p-2 rounded-t-lg">
+                      {['NO_10_DOWNING_STREET', 'MINISTERS_TRAITS'].map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => setCabinetSubTab(sub)}
+                          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-t transition ${
+                            cabinetSubTab === sub
+                              ? 'bg-[#E5C158] text-[#0F223D]'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {sub.replace(/_/g, ' ')}
+                        </button>
+                      ))}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* SECTION 1: EXECUTIVE PRIORITIES */}
-                      <div className="bg-[#0F223D] border border-slate-700 p-5 rounded space-y-4">
-                        <div className="border-b border-slate-700 pb-2">
-                          <h3 className="text-base font-bold text-[#E5C158]">📜 Executive Priorities</h3>
-                          <p className="text-xs text-slate-400">First Lord of the Treasury & Executive Directives</p>
-                        </div>
-
-                        <div className="space-y-4 text-xs">
+                    {cabinetSubTab === 'NO_10_DOWNING_STREET' && (
+                      <div className="bg-[#132A4A] border border-slate-700 p-6 rounded-b-lg space-y-4">
+                        <h3 className="text-sm font-bold text-[#E5C158] uppercase tracking-wider border-b border-slate-700 pb-2">
+                          10 Downing Street Cabinet Directives
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                           <div>
-                            <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
+                            <label className="block text-slate-400 mb-1 font-bold">Prime Minister Notes</label>
                             <textarea
                               rows={4}
                               value={cabinetForm.pmNotes}
                               onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                              placeholder="Enter executive priorities and party political notes..."
+                              className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded"
                             />
                           </div>
-
                           <div>
-                            <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
+                            <label className="block text-slate-400 mb-1 font-bold">Key Executive Directives</label>
                             <textarea
                               rows={4}
                               value={cabinetForm.keyDirectives}
                               onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                              placeholder="Enter strategic goals for the current session..."
+                              className="w-full bg-[#0B192C] border border-slate-700 text-white p-2 rounded"
                             />
                           </div>
                         </div>
                       </div>
+                    )}
 
-                      {/* SECTION 2: CABINET DELIBERATIONS */}
-                      <div className="bg-[#0F223D] border border-slate-700 p-5 rounded space-y-4">
-                        <div className="border-b border-slate-700 pb-2">
-                          <h3 className="text-base font-bold text-[#E5C158]">🏛️ Cabinet Deliberations</h3>
-                          <p className="text-xs text-slate-400">Confidential Servants & Agenda Discussions</p>
-                        </div>
-
-                        <div className="space-y-4 text-xs">
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.cabinetAgenda}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                              placeholder="Detail items for Cabinet discussion..."
-                            />
+                    {cabinetSubTab === 'MINISTERS_TRAITS' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(cabinetMinisters).map(([key, min]) => (
+                          <div key={key} className="bg-[#0B192C] border border-slate-700 p-4 rounded-lg flex space-x-4">
+                            <img src={min.img} alt={min.name} className="w-20 h-28 object-cover rounded border border-slate-700" />
+                            <div className="flex-1 text-xs space-y-1">
+                              <div className="font-bold text-[#E5C158] text-sm">{min.role}</div>
+                              <div className="text-white font-semibold">{min.name} ({min.title})</div>
+                              <div className="text-slate-400">Management Skills: {min.managementSkills} | Age: {min.age}</div>
+                              <div className="pt-2">
+                                <span className="font-bold text-slate-300">Traits: </span>
+                                {min.traits.map(t => t.name).join(', ')}
+                              </div>
+                            </div>
                           </div>
-
-                          <div>
-                            <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
-                            <textarea
-                              rows={4}
-                              value={cabinetForm.cabinetMinutes}
-                              onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
-                              className="w-full bg-[#0B192C] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                              placeholder="Record Cabinet decisions and ministerial consensus..."
-                            />
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {/* SUBTAB 3: PATRONAGE PANEL */}
-                {cabinetSubTab === 'PATRONAGE' && (
-                  <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
-                    <div className="border-b border-[#E5C158]/40 pb-4">
-                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">👑 Patronage & Crown Offices</h2>
-                      <p className="text-xs text-slate-400 italic">Royal Favor, Ministerial Appointments, Sinecures & Crown Preferment</p>
-                    </div>
-
-                    <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 text-xs">
-                      <div className="text-[#E5C158] font-bold text-sm">Crown Preferments & Executive Appointments</div>
-                      <p className="text-slate-300 leading-relaxed">
-                        Manage crown sinecures, government appointments, colonial governorships, and judicial commissions to preserve party loyalty and secure parliamentary support.
+                {/* Home Office Tab */}
+                {activeTab === 'Home Office' && (
+                  <div className="bg-[#132A4A] border border-slate-700 p-6 rounded-lg space-y-6">
+                    <div className="border-b border-slate-700 pb-2">
+                      <h2 className="text-lg font-serif font-bold text-[#E5C158]">
+                        Home Office & Internal Tranquility Audit
+                      </h2>
+                      <p className="text-xs text-slate-300">
+                        Reporting Officer: <span className="text-white font-bold">{homeOfficeForm.reportingOfficer}</span>
                       </p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">🏛️ Treasury Sinecures</div>
-                          <div className="text-slate-400 text-[11px]">3 Offices Available for Distribution</div>
-                        </div>
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">🌍 Colonial Governorships</div>
-                          <div className="text-slate-400 text-[11px]">2 Key Posts Open for Nomination</div>
-                        </div>
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">⚖️ Church & Judicial Preferments</div>
-                          <div className="text-slate-400 text-[11px]">1 Crown Bishopric Vacant</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* FOREIGN OFFICE TAB */}
-            {activeTab === 'Foreign Office' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                <div className="text-center space-y-1">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">LEGAL & CONSTITUTIONAL AUDIT — MID-JULY 1819</div>
-                  <div className="text-slate-400">========================================================================================</div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
-                    <div className="flex items-center gap-2">
-                      <strong className="text-white">Reporting Officer :</strong>
-                      <input
-                        type="text"
-                        value={foreignOfficeForm.reportingOfficer}
-                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, reportingOfficer: e.target.value })}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158]"
-                      />
-                    </div>
-                    <div>
-                      <strong className="text-white">Authority :</strong> The Foreign Department
-                    </div>
-                  </div>
-                </div>
-
-                {/* TREATY HEADER METADATA */}
-                <div className="bg-[#0F223D] p-4 rounded border border-slate-700 space-y-3 font-sans">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Name :</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Treaty of Vienna / Quadruple Protocol"
-                        value={foreignOfficeForm.treatyName}
-                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyName: e.target.value })}
-                        className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-bold text-[#E5C158] mb-1">Treaty Nature :</label>
-                      <select
-                        value={foreignOfficeForm.treatyNature}
-                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyNature: e.target.value })}
-                        className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                      >
-                        <option value="Coalition Accord">Coalition Accord</option>
-                        <option value="Commercial Treaty">Commercial Treaty</option>
-                        <option value="Transit Treaty">Transit Treaty</option>
-                        <option value="Cession Accord">Cession Accord</option>
-                        <option value="Manifesto of War">Manifesto of War</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* DIPLOMATIC ACTIONS SELECTION CHECKBOXES */}
-                  <div className="pt-2 border-t border-slate-800">
-                    <label className="block font-bold text-[#E5C158] mb-2">
-                      Diplomatic Action(s) (Able to choose more than 1, if chosen "CORE DIPLOMATIC ACTIONS" from below would pop up) :
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {DIPLOMATIC_ACTION_TYPES.map((action) => {
-                        const isChecked = foreignOfficeForm.selectedActions.includes(action.id);
-                        return (
-                          <label
-                            key={action.id}
-                            className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer transition-colors ${
-                              isChecked
-                                ? 'bg-[#E5C158]/20 border-[#E5C158] text-white font-bold'
-                                : 'bg-[#0B192C] border-slate-800 text-slate-400 hover:border-slate-600'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleDiplomaticAction(action.id)}
-                              className="accent-[#E5C158]"
-                            />
-                            <span>{action.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* DYNAMICALLY GENERATED CORE DIPLOMATIC ACTIONS WITH SEQUENTIAL ROMAN NUMERALS */}
-                {foreignOfficeForm.selectedActions.length === 0 ? (
-                  <div className="text-center text-slate-500 italic py-8 bg-[#0F223D] rounded border border-slate-800">
-                    No Core Diplomatic Actions selected above. Check one or more actions to open foreign dispatch panels.
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {foreignOfficeForm.selectedActions.map((actionId, index) => {
-                      const romanIndex = toRoman(index + 1);
-                      const actionDef = DIPLOMATIC_ACTION_TYPES.find((a) => a.id === actionId);
-                      const data = foreignOfficeForm.actionData[actionId] || {};
-
-                      return (
-                        <div key={actionId} className="space-y-3 bg-[#0F223D] p-4 rounded border border-[#E5C158]/40 font-sans">
-                          <div className="text-[#E5C158] font-bold text-xs font-mono">
-                            ----------------------------------------------------------------------------------------<br />
-                            {romanIndex}. CORE DIPLOMATIC ACTION : {actionDef.coreTitle}<br />
-                            ----------------------------------------------------------------------------------------
-                          </div>
-
-                          <div className="pt-1">
-                            {/* ALLIANCE */}
-                            {actionId === 'alliance' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">High Contracting Sovereign / Power :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Empire of Russia"
-                                  value={data.power || ''}
-                                  onChange={(e) => handleActionDataChange('alliance', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* TRADE AGREEMENT */}
-                            {actionId === 'trade' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Signatory State / Partner Power :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Kingdom of Prussia"
-                                  value={data.power || ''}
-                                  onChange={(e) => handleActionDataChange('trade', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* PRESENT STATE GIFT / BRIBES */}
-                            {actionId === 'bribes' && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Recipient Court / Beneficiary State :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Regency of Algiers"
-                                    value={data.court || ''}
-                                    onChange={(e) => handleActionDataChange('bribes', 'court', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Stipulated Sum / Discretionary Allowance :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. £50,000 Secret Service Specie"
-                                    value={data.sum || ''}
-                                    onChange={(e) => handleActionDataChange('bribes', 'sum', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* DECLARATION OF WAR */}
-                            {actionId === 'war' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Adversary Power / Target State :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Sublime Ottoman Porte"
-                                  value={data.adversary || ''}
-                                  onChange={(e) => handleActionDataChange('war', 'adversary', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-bold font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* JOINING WARS */}
-                            {actionId === 'joinWar' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Target State / Hostile Power :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Kingdom of Spain"
-                                  value={data.target || ''}
-                                  onChange={(e) => handleActionDataChange('joinWar', 'target', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* TRADE EMBARGOES */}
-                            {actionId === 'embargo' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Proscribed Power / Interdicted State :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. United States of America"
-                                  value={data.power || ''}
-                                  onChange={(e) => handleActionDataChange('embargo', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* BREAKING ALLIANCES */}
-                            {actionId === 'breakAlliance' && (
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Former Allied Power / Severed Party :</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Austrian Empire"
-                                  value={data.power || ''}
-                                  onChange={(e) => handleActionDataChange('breakAlliance', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-slate-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            )}
-
-                            {/* MILITARY ACCESS */}
-                            {actionId === 'militaryAccess' && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Granting Court / Transit Sovereign :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Kingdom of the Two Sicilies"
-                                    value={data.court || ''}
-                                    onChange={(e) => handleActionDataChange('militaryAccess', 'court', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Term of Transit / Period of Right :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. 12 Calendar Months"
-                                    value={data.term || ''}
-                                    onChange={(e) => handleActionDataChange('militaryAccess', 'term', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* REGIONS */}
-                            {actionId === 'regions' && (
-                              <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Negotiating Power / Neighboring State :</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. Kingdom of the Netherlands"
-                                      value={data.power || ''}
-                                      onChange={(e) => handleActionDataChange('regions', 'power', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Nature of Transaction :</label>
-                                    <select
-                                      value={data.nature || 'Cession to foreign sovereign'}
-                                      onChange={(e) => handleActionDataChange('regions', 'nature', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    >
-                                      <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
-                                      <option value="Annexation to the Crown">Annexation to the Crown</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Demarcated Territory / Ceded Provinces :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Heligoland / Ionian Islands"
-                                    value={data.territory || ''}
-                                    onChange={(e) => handleActionDataChange('regions', 'territory', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* TECHNOLOGY */}
-                            {actionId === 'technology' && (
-                              <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Recipient / Providing Power :</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. Kingdom of Hanover"
-                                      value={data.power || ''}
-                                      onChange={(e) => handleActionDataChange('technology', 'power', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Transmission :</label>
-                                    <select
-                                      value={data.direction || 'Imported'}
-                                      onChange={(e) => handleActionDataChange('technology', 'direction', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    >
-                                      <option value="Imported">Imported</option>
-                                      <option value="Imparted">Imparted</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Scientific Principles & Innovations :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Steam Packet Machinery / Percussion Cap Lock Metallurgy"
-                                    value={data.principles || ''}
-                                    onChange={(e) => handleActionDataChange('technology', 'principles', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* PAYMENT */}
-                            {actionId === 'payment' && (
-                              <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Transacting Power / Reciprocal State :</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. Kingdom of Portugal"
-                                      value={data.power || ''}
-                                      onChange={(e) => handleActionDataChange('payment', 'power', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Settlement :</label>
-                                    <select
-                                      value={data.direction || 'Remittance to Foreign Treasury'}
-                                      onChange={(e) => handleActionDataChange('payment', 'direction', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                    >
-                                      <option value="Remittance to Foreign Treasury">Remittance to Foreign Treasury</option>
-                                      <option value="Disbursement from State Vaults">Disbursement from State Vaults</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Quantum of Settlement / Principal Sum :</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. £120,000 Sterling Gold Specie"
-                                    value={data.quantum || ''}
-                                    onChange={(e) => handleActionDataChange('payment', 'quantum', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div className="text-center space-y-1 pt-4 border-t border-slate-800">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
-                  <div className="text-slate-400">========================================================================================</div>
-                </div>
-              </div>
-            )}
-
-            {/* HOME OFFICE TAB */}
-            {activeTab === 'Home Office' && (
-              <div className="space-y-4">
-                {!isHomeOfficeScheduled ? (
-                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4 font-sans">
-                    <div className="text-3xl mb-2">📜🔒</div>
-                    <h3 className="text-lg font-bold text-slate-200">No Home Office Report Scheduled for Turn {currentTurn}</h3>
-                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                      Home Office reports are only delivered during their designated sitting turns on the Parliamentary Timetable (Scheduled turns: {peaceTurns.length > 0 ? peaceTurns.map(t => `Turn ${t}`).join(', ') : 'None'}).
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                    <div className="text-center space-y-1">
-                      <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-white font-bold tracking-wider text-sm">WHITEHALL // SECRETARY OF STATE FOR THE HOME DEPARTMENT</div>
-                      <div className="text-[#E5C158] font-bold tracking-wide">REPORT ON THE STATE OF THE PUBLIC PEACE & DOMESTIC TRANQUILITY</div>
-                      <div className="text-slate-400">========================================================================================</div>
-                      <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
-                        <div>
-                          <strong className="text-white">Date of Audit :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <strong className="text-white">Reporting Officer :</strong>
-                          <input
-                            type="text"
-                            value={homeOfficeForm.reportingOfficer}
-                            onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
-                            className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
-                          />
-                        </div>
-                      </div>
                     </div>
 
-                    {/* SECTION I */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
-                      <div className="text-[#E5C158] font-bold text-xs">
-                        ----------------------------------------------------------------------------------------<br />
-                        I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
-                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const val = homeOfficeForm.publicOrder[region];
-                          const status = getPublicOrderStatusLabel(val);
-                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
-
-                          return (
-                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
-                              <div>
-                                <span className="font-bold text-white text-xs">• {regionName}</span>
-                                <div className={`text-[11px] ${status.color}`}>&gt; Status: {status.label}</div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400 font-mono">Rating:</span>
-                                <input
-                                  type="number"
-                                  value={val}
-                                  onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
-                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-xs font-bold font-sans">
-                        <span className="text-[#E5C158]">• NATIONAL STABILITY INDEX :</span>
-                        <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
-                          {avgPublicOrder}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* SECTION II */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
-                      <div className="text-[#E5C158] font-bold text-xs">
-                        ----------------------------------------------------------------------------------------<br />
-                        II. RADICAL SEDITION & REFORM WATCH<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
-                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const val = homeOfficeForm.clamour[region];
-                          const clamour = getClamourLabel(val);
-                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
-
-                          return (
-                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
-                              <div>
-                                <span className="font-bold text-white text-xs">• {regionName}</span>
-                                <div className={`text-[11px] ${clamour.color}`}>&gt; Clamour Threat: {clamour.label}</div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400 font-mono">Level:</span>
-                                <input
-                                  type="number"
-                                  value={val}
-                                  onChange={(e) => handleHomeOfficeChange('clamour', region, e.target.value)}
-                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* SECTION III */}
-                    <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                      <div className="text-[#E5C158] font-bold text-xs font-mono">
-                        ----------------------------------------------------------------------------------------<br />
-                        III. PROVINCIAL TRANQUILITY & MAGISTRACY RETURNS<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-
-                      {[
-                        { title: '[ GARRISONED FORCES (MILITARY REPRESSION) ]', key: 'garrisons' },
-                        { title: '[ CABINET & MAGISTRACY (GOVERNMENT REPRESSION) ]', key: 'ministers' },
-                        { title: '[ CIVIL INFRASTRUCTURE (CIVIC REPRESSION) ]', key: 'buildings' },
-                        { title: '[ CONSTITUTIONAL FRAMEWORK (GOVERNMENT TYPE REPRESSION) ]', key: 'govType' }
-                      ].map((category) => (
-                        <div key={category.key} className="border-t border-slate-800 pt-3">
-                          <div className="text-xs font-bold text-[#E5C158] mb-2">{category.title}</div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {['london', 'wales', 'scotland', 'ireland'].map((region) => (
-                              <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
-                                <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
-                                <input
-                                  type="number"
-                                  value={homeOfficeForm[category.key][region]}
-                                  onChange={(e) => handleHomeOfficeChange(category.key, region, e.target.value)}
-                                  className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-emerald-400 p-0.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* SECTION IV */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                      <div className="text-[#E5C158] font-bold text-xs font-mono">
-                        ----------------------------------------------------------------------------------------<br />
-                        IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-                      <div className="text-xs font-bold text-[#E5C158] mb-2">[ PUBLIC AMUSEMENTS & CIVIC SATISFACTION ]</div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-[#0B192C] border border-slate-700 p-4 rounded">
+                      <h3 className="text-xs font-bold text-[#E5C158] uppercase tracking-wider mb-2">
+                        Provincial Public Order & Garrisons
+                      </h3>
+                      <div className="grid grid-cols-4 gap-2 text-center text-xs">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => (
-                          <div key={region} className="bg-[#0B192C] p-2 rounded border border-slate-800 flex justify-between items-center">
-                            <span className="text-[11px] text-slate-300 uppercase">• {region}:</span>
-                            <input
-                              type="number"
-                              value={homeOfficeForm.culture[region]}
-                              onChange={(e) => handleHomeOfficeChange('culture', region, e.target.value)}
-                              className="w-12 bg-[#0F223D] border border-slate-700 text-center font-mono text-xs text-cyan-400 p-0.5 rounded focus:border-[#E5C158]"
-                            />
+                          <div key={region} className="p-2 border border-slate-800 rounded bg-[#132A4A]">
+                            <div className="font-bold uppercase text-slate-300">{region}</div>
+                            <div className="text-lg font-mono font-bold text-[#E5C158]">
+                              {homeOfficeForm.publicOrder[region]}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Status: {getPublicOrderStatusLabel(homeOfficeForm.publicOrder[region]).label}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* SECTION V */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
-                      <div className="text-[#E5C158] font-bold text-xs">
-                        ----------------------------------------------------------------------------------------<br />
-                        V. RADICALISATION OF RELIGION AND CULT<br />
-                        ----------------------------------------------------------------------------------------
+                    <div className="p-4 rounded border border-slate-700 bg-[#0B192C]">
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#E5C158] mb-1">
+                        Domestic Order Assessment
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
-                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const val = homeOfficeForm.religiousUnrest[region];
-                          const unrest = getReligiousUnrestLabel(val);
-                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
-
-                          return (
-                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
-                              <div>
-                                <span className="font-bold text-white text-xs">• {regionName}</span>
-                                <div className={`text-[11px] ${unrest.color}`}>&gt; Religious Unrest: {unrest.label}</div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400 font-mono">Level:</span>
-                                <input
-                                  type="number"
-                                  value={val}
-                                  onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
-                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className={`text-xs ${domesticJudgementColor}`}>
+                        {domesticJudgement}
                       </div>
-                    </div>
-
-                    {/* SECTION VI */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                      <div className="text-[#E5C158] font-bold text-xs font-mono">
-                        ----------------------------------------------------------------------------------------<br />
-                        VI. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-
-                      <div className="flex justify-between items-center pt-1">
-                        <span className="text-xs text-slate-300 font-bold">
-                          [+] DETECTED FOREIGN AGENTS REGISTER ({homeOfficeForm.foreignAgents.length}):
-                        </span>
-                        <button
-                          onClick={handleAddAgent}
-                          className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded text-xs hover:bg-yellow-400 transition-colors cursor-pointer"
-                        >
-                          + Add Agent
-                        </button>
-                      </div>
-
-                      {homeOfficeForm.foreignAgents.length === 0 ? (
-                        <div className="text-center text-slate-500 italic py-4 text-xs bg-[#0B192C] rounded border border-slate-800">
-                          No foreign agents currently logged under surveillance.
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {homeOfficeForm.foreignAgents.map((agent, index) => (
-                            <div key={index} className="bg-[#0B192C] p-3 rounded border border-slate-800 relative space-y-2">
-                              {homeOfficeForm.foreignAgents.length > 1 && (
-                                <button
-                                  onClick={() => handleRemoveAgent(index)}
-                                  className="absolute top-2 right-2 text-rose-400 hover:text-rose-200 text-xs font-bold px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-800 cursor-pointer"
-                                  title="Remove Entry"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                              <div className="text-xs font-bold text-[#E5C158] font-mono">• ENTRY #{index + 1}:</div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Nation Origin</label>
-                                  <input
-                                    type="text"
-                                    value={agent.nation}
-                                    placeholder="e.g. Kingdom of France"
-                                    onChange={(e) => handleAgentChange(index, 'nation', e.target.value)}
-                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Agent Alias</label>
-                                  <input
-                                    type="text"
-                                    value={agent.name}
-                                    placeholder="e.g. Agent Dupris"
-                                    onChange={(e) => handleAgentChange(index, 'name', e.target.value)}
-                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Status</label>
-                                  <input
-                                    type="text"
-                                    value={agent.status}
-                                    placeholder="e.g. Under Surveillance / Intercepted / At Large"
-                                    onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
-                                    className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-0.5">Current Sector</label>
-                                  <input
-                                    type="text"
-                                    value={agent.location}
-                                    placeholder="e.g. London"
-                                    onChange={(e) => handleAgentChange(index, 'location', e.target.value)}
-                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SECTION VII */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                      <div className="text-[#E5C158] font-bold text-xs font-mono">
-                        ----------------------------------------------------------------------------------------<br />
-                        VII. DOMESTIC SUMMARY & SECRETARY'S JUDGEMENT<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
-                          <span className="text-slate-300">• Total Positive Factors (Order & Amusements) :</span>
-                          <span className="text-emerald-400 font-bold">+{totalPositiveEffects} Points</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
-                          <span className="text-slate-300">• Total Negative Factors (Sedition & Discontent) :</span>
-                          <span className="text-rose-400 font-bold">-{totalNegativeEffects} Points</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-[#0B192C] p-2.5 rounded border border-slate-800 font-mono">
-                          <span className="text-white font-bold">Net Civil Peace Index :</span>
-                          <span className={`font-bold ${netDomesticBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {netDomesticBalance >= 0 ? `+${netDomesticBalance}` : netDomesticBalance} Points
-                          </span>
-                        </div>
-
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800 mt-2 space-y-1">
-                          <div className="text-[11px] font-bold text-[#E5C158] uppercase tracking-wider">
-                            OFFICIAL JUDGEMENT:
-                          </div>
-                          <div className={`text-xs leading-relaxed ${domesticJudgementColor}`}>
-                            {domesticJudgement}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-center space-y-1 pt-4 border-t border-slate-800">
-                      <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
-                      <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* EXCHEQUER TAB */}
-            {activeTab === 'Exchequer' && (
-              <div className="space-y-4">
-                {/* SUB NAVIGATION WITH TURN LOCKING */}
-                <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
-                  {[
-                    { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
-                    { key: 'GDI_ASSESSMENT', label: 'Consolidated Funds (GDI Growth Assessment)' },
-                    { key: 'FINANCIAL_STATEMENT', label: 'Financial Statement' }
-                  ].map((subTab) => {
-                    const unlocked = isExchequerSubTabUnlocked(subTab.key);
-                    const isActive = exchequerSubTab === subTab.key;
-
-                    return (
+                {/* Exchequer Tab */}
+                {activeTab === 'Exchequer' && (
+                  <div className="space-y-6">
+                    {/* Sub-tab Switcher */}
+                    <div className="flex border-b border-slate-700 bg-[#0B192C] p-2 rounded-t-lg">
                       <button
-                        key={subTab.key}
-                        disabled={!unlocked}
-                        onClick={() => unlocked && setExchequerSubTab(subTab.key)}
-                        className={`px-4 py-2 rounded font-bold transition-colors flex items-center gap-1.5 ${
-                          !unlocked
-                            ? 'opacity-40 cursor-not-allowed bg-slate-900 text-slate-500 border border-slate-800'
-                            : isActive
-                            ? 'bg-[#E5C158] text-[#0F223D] shadow cursor-pointer'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
+                        onClick={() => setExchequerSubTab('CONSOLIDATED_FUNDS')}
+                        className={`px-4 py-2 text-sm font-bold uppercase rounded-t tracking-wider transition ${
+                          exchequerSubTab === 'CONSOLIDATED_FUNDS'
+                            ? 'bg-[#E5C158] text-[#0F223D]'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        <span>{subTab.label}</span>
-                        {!unlocked && <span className="text-[10px]">🔒</span>}
+                        Consolidated Funds
                       </button>
-                    );
-                  })}
-                </div>
+                    </div>
 
-                {/* GUARD CLAUSE FOR LOCKED SUB-TABS */}
-                {!isExchequerSubTabUnlocked(exchequerSubTab) ? (
-                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4">
-                    <div className="text-3xl mb-2">📜🔒</div>
-                    <h3 className="text-lg font-bold text-slate-200">Parliament Not in Session</h3>
-                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                      This Exchequer section is currently locked. Advance turns to reach its scheduled session on the Parliamentary timeline to interact.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* SUBTAB 1: CONSOLIDATED FUNDS LEDGER */}
                     {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
-                      <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                        <div className="text-center space-y-1">
-                          <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
-                          <div className="text-slate-400">=======================================================</div>
-                          <div className="text-white font-bold tracking-wider">HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND</div>
-                          <div className="text-slate-400">=======================================================</div>
-                          <div className="text-left pt-2 font-sans text-slate-300">
-                            <strong className="text-white">DATE:</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Form Controls */}
+                        <div className="bg-[#132A4A] border border-slate-700 rounded-lg p-4 space-y-4">
+                          <h3 className="text-sm font-bold text-[#E5C158] uppercase tracking-wider border-b border-slate-700 pb-2">
+                            Exchequer Audit Input Controls
+                          </h3>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <label className="block text-slate-400 mb-1">Domestic Tax Income (£)</label>
+                              <input type="number" value={cfForm.domTax} onChange={(e) => handleCfChange('domTax', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Trade Income (Customs) (£)</label>
+                              <input type="number" value={cfForm.tradeIncome} onChange={(e) => handleCfChange('tradeIncome', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Core Treasury Income (£)</label>
+                              <input type="number" value={cfForm.coreTreasury} onChange={(e) => handleCfChange('coreTreasury', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Bristol Traffic (£)</label>
+                              <input type="number" value={cfForm.bristol} onChange={(e) => handleCfChange('bristol', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Chatham Docks Traffic (£)</label>
+                              <input type="number" value={cfForm.chatham} onChange={(e) => handleCfChange('chatham', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Liverpool Traffic (£)</label>
+                              <input type="number" value={cfForm.liverpool} onChange={(e) => handleCfChange('liverpool', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Waterford Traffic (£)</label>
+                              <input type="number" value={cfForm.waterford} onChange={(e) => handleCfChange('waterford', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Protectorates Income (£)</label>
+                              <input type="number" value={cfForm.protectorates} onChange={(e) => handleCfChange('protectorates', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Allied Subsidies (£)</label>
+                              <input type="number" value={cfForm.subsidies} onChange={(e) => handleCfChange('subsidies', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Convention Contributions (£)</label>
+                              <input type="number" value={cfForm.contributions} onChange={(e) => handleCfChange('contributions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">War Reparations (£)</label>
+                              <input type="number" value={cfForm.reparations} onChange={(e) => handleCfChange('reparations', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Admiralty Prize Grants (£)</label>
+                              <input type="number" value={cfForm.prizeGrants} onChange={(e) => handleCfChange('prizeGrants', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Exactions / Requisitions (£)</label>
+                              <input type="number" value={cfForm.exactions} onChange={(e) => handleCfChange('exactions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Land Forces Expenditure (£)</label>
+                              <input type="number" value={cfForm.landForces} onChange={(e) => handleCfChange('landForces', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Fleet Maintenance (£)</label>
+                              <input type="number" value={cfForm.fleetMaint} onChange={(e) => handleCfChange('fleetMaint', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Town Watch (£)</label>
+                              <input type="number" value={cfForm.townWatch} onChange={(e) => handleCfChange('townWatch', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Statutory Civil List (£)</label>
+                              <input type="number" value={cfForm.civilList} onChange={(e) => handleCfChange('civilList', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Pensions & Grants (£)</label>
+                              <input type="number" value={cfForm.pensions} onChange={(e) => handleCfChange('pensions', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Diplomatic Expenditures (£)</label>
+                              <input type="number" value={cfForm.diplomatic} onChange={(e) => handleCfChange('diplomatic', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-slate-400 mb-1">Initial Vault Liquidity (£)</label>
+                              <input type="number" value={cfForm.initialLiquidity} onChange={(e) => handleCfChange('initialLiquidity', e.target.value)} className="w-full bg-[#0B192C] border border-slate-700 p-1 rounded font-mono text-white" />
+                            </div>
                           </div>
                         </div>
 
-                        {/* INFLOWS SECTION */}
-                        <div className="space-y-4 bg-[#0F223D] p-4 rounded border border-slate-700">
-                          <div className="text-emerald-400 font-bold text-sm tracking-wide border-b border-slate-800 pb-1">INFLOWS:</div>
-                          
-                          <div className="space-y-3 font-sans">
-                            <div className="text-[#E5C158] font-bold text-xs">&gt; Domestic Inflows</div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
-                              <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Domestic Tax Income</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">£</span>
-                                  <input
-                                    type="number"
-                                    value={cfForm.domTax}
-                                    onChange={(e) => handleCfChange('domTax', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono pl-7 p-1.5 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
+                        {/* Consolidated Funds Display Output */}
+                        <div className="bg-[#0B192C] border border-slate-700 p-6 rounded-lg font-mono text-xs shadow-xl leading-relaxed">
+                          <div className="text-center font-bold text-[#E5C158] text-sm mb-1">
+                            💰 Consolidated Funds
+                          </div>
+                          <div className="text-center text-slate-400 mb-1">
+                            =======================================================
+                          </div>
+                          <div className="text-center text-white font-bold mb-1 tracking-widest">
+                            HM TREASURY // THE EXCHEQUER AUDIT OF THE CONSOLIDATED FUND
+                          </div>
+                          <div className="text-center text-slate-400 mb-3">
+                            =======================================================
+                          </div>
+                          <div className="mb-4 text-slate-200">
+                            DATE: <span className="text-[#E5C158] font-bold">{currentDateString}</span>
+                          </div>
+
+                          <div className="mb-4">
+                            <div className="font-bold text-[#E5C158] mb-1">INFLOWS:</div>
+                            <div className="pl-2 text-slate-300">&gt; Domestic Inflows</div>
+                            <div className="pl-4 space-y-0.5 text-slate-300">
+                              <div>Domestic Tax Income : £{cfForm.domTax.toLocaleString()}</div>
+                              <div>Gross Commercial Port Traffic</div>
+                              <div className="pl-4">Bristol : £{cfForm.bristol.toLocaleString()}</div>
+                              <div className="pl-4">Chatham Docks : £{cfForm.chatham.toLocaleString()}</div>
+                              <div className="pl-4">Liverpool : £{cfForm.liverpool.toLocaleString()}</div>
+                              <div className="pl-4">Waterford : £{cfForm.waterford.toLocaleString()}</div>
+                              <div className="text-amber-300 font-semibold">Total Commercial Capacity : £{totalCapacity.toLocaleString()}</div>
+                              <div>Total Trade Income (Custom Duties Collected) : £{cfForm.tradeIncome.toLocaleString()}</div>
+                              <div>Core Treasury Income : £{cfForm.coreTreasury.toLocaleString()}</div>
                             </div>
 
-                            <div className="pl-2 space-y-2 pt-1">
-                              <div className="text-xs text-slate-300 font-semibold">Gross Commercial Port Traffic</div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Bristol</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.bristol}
-                                    onChange={(e) => handleCfChange('bristol', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Chatham</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.chatham}
-                                    onChange={(e) => handleCfChange('chatham', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Liverpool</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.liverpool}
-                                    onChange={(e) => handleCfChange('liverpool', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] text-slate-400 mb-1">Waterford</label>
-                                  <input
-                                    type="number"
-                                    value={cfForm.waterford}
-                                    onChange={(e) => handleCfChange('waterford', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
-                                  />
-                                </div>
-                              </div>
-                              <div className="text-[11px] text-slate-400 font-mono pt-1">
-                                Total Capacity Yield: <span className="text-[#E5C158] font-bold">£{totalCapacity.toLocaleString()}</span>
-                              </div>
+                            <div className="pl-2 mt-2 text-slate-300">&gt; Foreign Inflows</div>
+                            <div className="pl-4 space-y-0.5 text-slate-300">
+                              <div>Protectorate(s) Income : £{cfForm.protectorates.toLocaleString()}</div>
+                              <div>Allied Subsidies : £{cfForm.subsidies.toLocaleString()}</div>
+                              <div>Convention Contributions : £{cfForm.contributions.toLocaleString()}</div>
+                              <div>War Reparations : £{cfForm.reparations.toLocaleString()}</div>
+                              <div>Admiralty Prize Grants : £{cfForm.prizeGrants.toLocaleString()}</div>
+                              <div>Exactions / Requisitions : £{cfForm.exactions.toLocaleString()}</div>
                             </div>
+                            <div className="text-slate-500 my-1">-------------------------------------------------------</div>
+                            <div className="text-[#E5C158] font-bold">Total Inflows Income : £{totalInflows.toLocaleString()}</div>
+                          </div>
+
+                          <div className="mb-4">
+                            <div className="font-bold text-[#E5C158] mb-1">OUTFLOWS:</div>
+                            <div className="pl-2 text-slate-300">&gt; Domestic Outflows</div>
+                            <div className="pl-4 space-y-0.5 text-slate-300">
+                              <div>Land Forces Expenditure : £{cfForm.landForces.toLocaleString()}</div>
+                              <div>Fleet Maintenance & Ordnance : £{cfForm.fleetMaint.toLocaleString()}</div>
+                              <div>Town Watch : £{cfForm.townWatch.toLocaleString()}</div>
+                              <div>Statutory Civil List : £{cfForm.civilList.toLocaleString()}</div>
+                              <div>Pensions, Grants & Privy Purse Supplements : £{cfForm.pensions.toLocaleString()}</div>
+                            </div>
+
+                            <div className="pl-2 mt-2 text-slate-300">&gt; Foreign Outflows</div>
+                            <div className="pl-4 space-y-0.5 text-slate-300">
+                              <div>Diplomatic Expenditures : £{cfForm.diplomatic.toLocaleString()}</div>
+                            </div>
+                            <div className="text-slate-500 my-1">-------------------------------------------------------</div>
+                            <div className="text-rose-400 font-bold">Total Outflows Expenditure : £{totalOutflows.toLocaleString()}</div>
+                          </div>
+
+                          <div className="text-slate-400 mb-2">
+                            =======================================================
+                          </div>
+                          <div className="text-[#E5C158] font-bold text-sm mb-1">
+                            NET YIELD TO SPECIE VAULTS : £{netYield.toLocaleString()}
+                          </div>
+                          <div className="text-emerald-400 font-bold text-sm mb-3">
+                            TOTAL TREASURY LIQUIDITY : £{totalLiquidity.toLocaleString()}
+                          </div>
+
+                          <div className="text-center text-slate-400 mb-1">
+                            ========================================================================================
+                          </div>
+                          <div className="text-center text-[10px] text-slate-400 tracking-wider">
+                            DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN
+                          </div>
+                          <div className="text-center text-slate-400 mt-1">
+                            ========================================================================================
                           </div>
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
+                )}
+
+                {/* Foreign Office Tab */}
+                {activeTab === 'Foreign Office' && (
+                  <div className="bg-[#132A4A] border border-slate-700 p-6 rounded-lg space-y-4">
+                    <div className="border-b border-slate-700 pb-2">
+                      <h2 className="text-lg font-serif font-bold text-[#E5C158]">
+                        Foreign Office & Diplomatic Conventions
+                      </h2>
+                      <p className="text-xs text-slate-300">
+                        Reporting Officer: <span className="text-white font-bold">{foreignOfficeForm.reportingOfficer}</span>
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-bold">Treaty Name / Accord</label>
+                        <input
+                          type="text"
+                          value={foreignOfficeForm.treatyName}
+                          onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyName: e.target.value })}
+                          placeholder="e.g., Treaty of Vienna Protocol"
+                          className="w-full bg-[#0B192C] border border-slate-700 p-2 rounded text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-bold">Treaty Nature</label>
+                        <select
+                          value={foreignOfficeForm.treatyNature}
+                          onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, treatyNature: e.target.value })}
+                          className="w-full bg-[#0B192C] border border-slate-700 p-2 rounded text-white"
+                        >
+                          <option value="Coalition Accord">Coalition Accord</option>
+                          <option value="Bilateral Convention">Bilateral Convention</option>
+                          <option value="Secret Protocol">Secret Protocol</option>
+                          <option value="Armistice & Peace">Armistice & Peace</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-400 mb-2 font-bold text-xs">Diplomatic Actions Included</label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {DIPLOMATIC_ACTION_TYPES.map((act) => {
+                          const isSel = foreignOfficeForm.selectedActions.includes(act.id);
+                          return (
+                            <button
+                              key={act.id}
+                              onClick={() => toggleDiplomaticAction(act.id)}
+                              className={`p-2 rounded text-xs text-left border transition ${
+                                isSel
+                                  ? 'bg-[#E5C158] text-[#0F223D] border-[#E5C158] font-bold'
+                                  : 'bg-[#0B192C] text-slate-300 border-slate-700 hover:border-slate-500'
+                              }`}
+                            >
+                              {act.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
