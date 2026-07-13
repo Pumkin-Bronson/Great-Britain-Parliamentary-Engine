@@ -30,7 +30,6 @@
       24: 'Christmas & New Year Recess' 
     };
 
-    // Helper function to convert integers to Roman Numerals (1 -> I, 2 -> II, etc.)
     function toRoman(num) {
       const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
       let roman = '';
@@ -57,6 +56,17 @@
       { id: 'payment', label: 'Payment', coreTitle: 'FINANCIAL INDEMNITIES & TREASURY TRANSFERS' }
     ];
 
+    // Historical 19th Century Portraits for Profiles
+    const HISTORICAL_PORTRAITS = {
+      monarch: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/King_George_IV_by_Sir_Thomas_Lawrence.jpg/400px-King_George_IV_by_Sir_Thomas_Lawrence.jpg',
+      lordChancellor: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg/400px-John_Scott%2C_1st_Earl_of_Eldon_by_Sir_Thomas_Lawrence.jpg',
+      exchequer: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
+      foreign: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Stewart%2C_2nd_Marquess_of_Londonderry_%28Lord_Castlereagh%29_by_Sir_Thomas_Lawrence.jpg',
+      home: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Henry_Addington%2C_1st_Viscount_Sidmouth_by_George_Richmond.jpg/400px-Henry_Addington%2C_1st_Viscount_Sidmouth_by_George_Richmond.jpg',
+      admiralty: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Robert_Dundas%2C_2nd_Viscount_Melville.jpg/400px-Robert_Dundas%2C_2nd_Viscount_Melville.jpg',
+      war: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Arthur_Wellesley_1st_Duke_of_Wellington.jpg/400px-Arthur_Wellesley_1st_Duke_of_Wellington.jpg'
+    };
+
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
@@ -75,13 +85,257 @@
       const [turn8Rev, setTurn8Rev] = React.useState(12500);
       const [growthRate, setGrowthRate] = React.useState(null);
 
-      // Cabinet State
+      // Cabinet State with Ministers, Character Traits, Followers, and Effects
+      const [cabinetMinisters, setCabinetMinisters] = React.useState({
+        monarch: {
+          id: 'monarch',
+          role: 'Monarch',
+          name: 'George IV',
+          title: 'King of Great Britain',
+          img: HISTORICAL_PORTRAITS.monarch,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Royal Prerogative', effects: [{ id: 1, text: '+2 Executive Authority' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Privy Purse Keeper', effects: [{ id: 1, text: '+£5,000 Royal Discretionary Fund' }] }
+          ]
+        },
+        lordChancellor: {
+          id: 'lordChancellor',
+          role: 'Lord Chancellor',
+          name: 'Lord Eldon',
+          title: 'Baron Eldon',
+          img: HISTORICAL_PORTRAITS.lordChancellor,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Staunch High Tory', effects: [{ id: 1, text: '+1 Judicial Resistance to Reform' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Chancery Clerk', effects: [{ id: 1, text: '-1 Turn Legal Processing Time' }] }
+          ]
+        },
+        exchequer: {
+          id: 'exchequer',
+          role: 'Chancellor of Exchequer',
+          name: 'Nicholas Vansittart',
+          title: 'Baron Bexley',
+          img: HISTORICAL_PORTRAITS.exchequer,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Fiscal Retrenchment', effects: [{ id: 1, text: '+5% Tax Efficiency' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Bank of England Governor', effects: [{ id: 1, text: '+10% Loan Capacity' }] }
+          ]
+        },
+        foreign: {
+          id: 'foreign',
+          role: 'Foreign Secretary',
+          name: 'Viscount Castlereagh',
+          title: 'Marquess of Londonderry',
+          img: HISTORICAL_PORTRAITS.foreign,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Architect of Concert', effects: [{ id: 1, text: '+2 Diplomatic Prestige with Great Powers' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Special Diplomatic Envoy', effects: [{ id: 1, text: '-15% Subsidies Cost' }] }
+          ]
+        },
+        home: {
+          id: 'home',
+          role: 'Home Secretary',
+          name: 'Viscount Sidmouth',
+          title: 'Baron Addington',
+          img: HISTORICAL_PORTRAITS.home,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Iron Magistrate', effects: [{ id: 1, text: '-2 Radical Sedition Clamour' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Whitehall Informant', effects: [{ id: 1, text: '+1 Foreign Agent Detection Rate' }] }
+          ]
+        },
+        admiralty: {
+          id: 'admiralty',
+          role: 'First Lord of the Admiralty',
+          name: 'Viscount Melville',
+          title: 'Baron Dunira',
+          img: HISTORICAL_PORTRAITS.admiralty,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Wooden Walls Guard', effects: [{ id: 1, text: '-10% Fleet Maintenance Outflow' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Dockyard Superintendent', effects: [{ id: 1, text: '+1 Ship Construction Capacity' }] }
+          ]
+        },
+        war: {
+          id: 'war',
+          role: 'Secretary at War',
+          name: 'Duke of Wellington',
+          title: 'Field Marshal',
+          img: HISTORICAL_PORTRAITS.war,
+          isTraitsOpen: false,
+          traits: [
+            { id: 1, name: 'Victor of Waterloo', effects: [{ id: 1, text: '+3 Army Morale and Discipline' }] }
+          ],
+          followers: [
+            { id: 1, name: 'Quartermaster General', effects: [{ id: 1, text: '-15% Land Force Supply Cost' }] }
+          ]
+        }
+      });
+
       const [cabinetForm, setCabinetForm] = React.useState({
         pmNotes: 'Prime Minister directive: Preserve Tory majority and monitor civil agitation.',
         keyDirectives: '1. Secure Treasury appropriations.\n2. Maintain public tranquility via local garrisons.\n3. Oversee diplomatic posture with the Quadruple Alliance.',
         cabinetAgenda: 'Discussions regarding the repeal of wartime duties and local civil order response.',
         cabinetMinutes: 'Ministers aligned on maintaining current garrison posture across industrial centers.'
       });
+
+      // Helper Handlers for Ministers Traits and Followers
+      const toggleMinisterTraitsOpen = (key) => {
+        setCabinetMinisters(prev => ({
+          ...prev,
+          [key]: { ...prev[key], isTraitsOpen: !prev[key].isTraitsOpen }
+        }));
+      };
+
+      const handleMinisterFieldChange = (key, field, value) => {
+        setCabinetMinisters(prev => ({
+          ...prev,
+          [key]: { ...prev[key], [field]: value }
+        }));
+      };
+
+      // Traits Handlers
+      const addTraitToMinister = (key) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const newTrait = { id: Date.now(), name: 'New Trait', effects: [{ id: Date.now() + 1, text: 'Trait Effect' }] };
+          return { ...prev, [key]: { ...m, traits: [...m.traits, newTrait] } };
+        });
+      };
+
+      const removeTraitFromMinister = (key, traitId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          return { ...prev, [key]: { ...m, traits: m.traits.filter(t => t.id !== traitId) } };
+        });
+      };
+
+      const updateTraitName = (key, traitId, name) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.traits.map(t => t.id === traitId ? { ...t, name } : t);
+          return { ...prev, [key]: { ...m, traits: updated } };
+        });
+      };
+
+      const addEffectToTrait = (key, traitId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.traits.map(t => {
+            if (t.id === traitId) {
+              return { ...t, effects: [...t.effects, { id: Date.now(), text: 'New Effect' }] };
+            }
+            return t;
+          });
+          return { ...prev, [key]: { ...m, traits: updated } };
+        });
+      };
+
+      const removeEffectFromTrait = (key, traitId, effectId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.traits.map(t => {
+            if (t.id === traitId) {
+              return { ...t, effects: t.effects.filter(e => e.id !== effectId) };
+            }
+            return t;
+          });
+          return { ...prev, [key]: { ...m, traits: updated } };
+        });
+      };
+
+      const updateTraitEffectText = (key, traitId, effectId, text) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.traits.map(t => {
+            if (t.id === traitId) {
+              const effs = t.effects.map(e => e.id === effectId ? { ...e, text } : e);
+              return { ...t, effects: effs };
+            }
+            return t;
+          });
+          return { ...prev, [key]: { ...m, traits: updated } };
+        });
+      };
+
+      // Followers Handlers
+      const addFollowerToMinister = (key) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const newFollower = { id: Date.now(), name: 'New Follower', effects: [{ id: Date.now() + 1, text: 'Follower Effect' }] };
+          return { ...prev, [key]: { ...m, followers: [...m.followers, newFollower] } };
+        });
+      };
+
+      const removeFollowerFromMinister = (key, followerId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          return { ...prev, [key]: { ...m, followers: m.followers.filter(f => f.id !== followerId) } };
+        });
+      };
+
+      const updateFollowerName = (key, followerId, name) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.followers.map(f => f.id === followerId ? { ...f, name } : f);
+          return { ...prev, [key]: { ...m, followers: updated } };
+        });
+      };
+
+      const addEffectToFollower = (key, followerId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.followers.map(f => {
+            if (f.id === followerId) {
+              return { ...f, effects: [...f.effects, { id: Date.now(), text: 'New Effect' }] };
+            }
+            return f;
+          });
+          return { ...prev, [key]: { ...m, followers: updated } };
+        });
+      };
+
+      const removeEffectFromFollower = (key, followerId, effectId) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.followers.map(f => {
+            if (f.id === followerId) {
+              return { ...f, effects: f.effects.filter(e => e.id !== effectId) };
+            }
+            return f;
+          });
+          return { ...prev, [key]: { ...m, followers: updated } };
+        });
+      };
+
+      const updateFollowerEffectText = (key, followerId, effectId, text) => {
+        setCabinetMinisters(prev => {
+          const m = prev[key];
+          const updated = m.followers.map(f => {
+            if (f.id === followerId) {
+              const effs = f.effects.map(e => e.id === effectId ? { ...e, text } : e);
+              return { ...f, effects: effs };
+            }
+            return f;
+          });
+          return { ...prev, [key]: { ...m, followers: updated } };
+        });
+      };
 
       // Consolidated Funds Ledger Form State
       const [cfForm, setCfForm] = React.useState({
@@ -282,7 +536,7 @@
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm
+          turn3Rev, turn8Rev, growthRate, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -310,6 +564,7 @@
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
+            if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -485,6 +740,210 @@
         if (t === 8) return "Financial Statement (Annual Budget)";
         if (cfTurns.includes(t)) return "Consolidated Funds";
         return "";
+      };
+
+      // Helper Component to Render Minister Profile Badge
+      const renderMinisterProfile = (ministerKey) => {
+        const minister = cabinetMinisters[ministerKey];
+        if (!minister) return null;
+
+        return (
+          <div className="flex flex-col items-center text-center w-40 font-sans">
+            {/* Oval Frame with 19th Century Portrait */}
+            <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
+              <img 
+                src={minister.img} 
+                alt={minister.role} 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              {/* Silhouette Fallback */}
+              <div className="absolute inset-0 bg-[#0F223D] flex items-center justify-center text-[#E5C158] font-bold text-2xl -z-10">
+                👤
+              </div>
+            </div>
+
+            {/* Title / Role Pill */}
+            <div className="bg-white text-slate-800 font-bold px-3 py-1 rounded-full text-[11px] shadow border border-slate-300 w-full mb-1 truncate">
+              {minister.role}
+            </div>
+
+            {/* Name Input Pill */}
+            <input
+              type="text"
+              value={minister.name}
+              onChange={(e) => handleMinisterFieldChange(ministerKey, 'name', e.target.value)}
+              className="bg-white text-slate-700 font-semibold px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-1 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+              placeholder="Name (Editable)"
+            />
+
+            {/* Historical Title Input Pill */}
+            <input
+              type="text"
+              value={minister.title}
+              onChange={(e) => handleMinisterFieldChange(ministerKey, 'title', e.target.value)}
+              className="bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+              placeholder="Title"
+            />
+
+            {/* Collapsible Traits Button */}
+            <button
+              onClick={() => toggleMinisterTraitsOpen(ministerKey)}
+              className="bg-white text-slate-800 hover:bg-amber-100 border border-slate-300 px-3 py-0.5 rounded-full text-[10px] font-bold shadow flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>{minister.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
+            </button>
+
+            {/* Expanded Traits & Followers Drawer (Reference: Screenshot 2026-07-13 at 13.44.35.jpg) */}
+            {minister.isTraitsOpen && (
+              <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
+                {/* CHARACTER TRAITS SECTION */}
+                <div className="border-b border-slate-700 pb-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[11px] font-bold text-[#E5C158]">📜 Character Traits</span>
+                    <button
+                      onClick={() => addTraitToMinister(ministerKey)}
+                      className="text-[9px] bg-[#E5C158] text-[#0F223D] px-1.5 py-0.5 rounded font-bold hover:bg-yellow-400 cursor-pointer"
+                    >
+                      + Trait
+                    </button>
+                  </div>
+
+                  {minister.traits.length === 0 ? (
+                    <div className="text-[10px] text-slate-500 italic">No character traits added.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {minister.traits.map((trait) => (
+                        <div key={trait.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
+                          <div className="flex justify-between items-center mb-1">
+                            <input
+                              type="text"
+                              value={trait.name}
+                              onChange={(e) => updateTraitName(ministerKey, trait.id, e.target.value)}
+                              className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
+                            />
+                            <button
+                              onClick={() => removeTraitFromMinister(ministerKey, trait.id)}
+                              className="text-rose-400 hover:text-rose-200 font-bold px-1"
+                              title="Delete Trait"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          {/* Nested Trait Effects (Parent to Character Trait) */}
+                          <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
+                            <div className="flex justify-between items-center text-[9px] text-slate-400">
+                              <span>Trait Effects:</span>
+                              <button
+                                onClick={() => addEffectToTrait(ministerKey, trait.id)}
+                                className="text-[#E5C158] hover:underline"
+                              >
+                                + Effect
+                              </button>
+                            </div>
+                            {trait.effects.map((eff) => (
+                              <div key={eff.id} className="flex items-center gap-1">
+                                <span className="text-[#E5C158]">›</span>
+                                <input
+                                  type="text"
+                                  value={eff.text}
+                                  onChange={(e) => updateTraitEffectText(ministerKey, trait.id, eff.id, e.target.value)}
+                                  className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 text-[9px]"
+                                />
+                                {trait.effects.length > 1 && (
+                                  <button
+                                    onClick={() => removeEffectFromTrait(ministerKey, trait.id, eff.id)}
+                                    className="text-slate-500 hover:text-rose-400 text-[9px]"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* FOLLOWERS SECTION */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[11px] font-bold text-cyan-300">👥 Followers</span>
+                    <button
+                      onClick={() => addFollowerToMinister(ministerKey)}
+                      className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded font-bold hover:bg-cyan-500 cursor-pointer"
+                    >
+                      + Follower
+                    </button>
+                  </div>
+
+                  {minister.followers.length === 0 ? (
+                    <div className="text-[10px] text-slate-500 italic">No followers assigned.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {minister.followers.map((follower) => (
+                        <div key={follower.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
+                          <div className="flex justify-between items-center mb-1">
+                            <input
+                              type="text"
+                              value={follower.name}
+                              onChange={(e) => updateFollowerName(ministerKey, follower.id, e.target.value)}
+                              className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
+                            />
+                            <button
+                              onClick={() => removeFollowerFromMinister(ministerKey, follower.id)}
+                              className="text-rose-400 hover:text-rose-200 font-bold px-1"
+                              title="Delete Follower"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          {/* Nested Follower Effects (Parent to Follower) */}
+                          <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
+                            <div className="flex justify-between items-center text-[9px] text-slate-400">
+                              <span>Follower Effects:</span>
+                              <button
+                                onClick={() => addEffectToFollower(ministerKey, follower.id)}
+                                className="text-cyan-300 hover:underline"
+                              >
+                                + Effect
+                              </button>
+                            </div>
+                            {follower.effects.map((eff) => (
+                              <div key={eff.id} className="flex items-center gap-1">
+                                <span className="text-cyan-300">›</span>
+                                <input
+                                  type="text"
+                                  value={eff.text}
+                                  onChange={(e) => updateFollowerEffectText(ministerKey, follower.id, eff.id, e.target.value)}
+                                  className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 text-[9px]"
+                                />
+                                {follower.effects.length > 1 && (
+                                  <button
+                                    onClick={() => removeEffectFromFollower(ministerKey, follower.id, eff.id)}
+                                    className="text-slate-500 hover:text-rose-400 text-[9px]"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
       };
 
       if (gameState === 'MAIN_MENU') {
@@ -723,79 +1182,105 @@
               </button>
             </div>
 
-            {/* CABINET TAB - 2 DISTINCT PANELS */}
+            {/* CABINET TAB - UPDATED WITH NO. 10 DOWNING STREET CABINET PROFILE PANEL (Screenshot 2026-07-13 at 13.35.46.png & 13.44.35.jpg) */}
             {activeTab === 'Cabinet' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* PANEL 1: NO. 10 DOWNING STREET */}
-                <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
-                  <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5C158]">🏛️ No. 10 Downing Street</h2>
-                      <p className="text-xs text-slate-400">First Lord of the Treasury & Executive Office</p>
-                    </div>
-                    <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-2.5 py-1 rounded font-mono font-bold">
-                      {selectedYear}
-                    </span>
+              <div className="space-y-8">
+                {/* CABINET HIERARCHY PANEL: NO. 10 DOWNING STREET */}
+                <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
+                  <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
+                    <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🏛️ No. 10 Downing Street</h2>
+                    <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
                   </div>
 
-                  <div className="space-y-4 text-xs">
-                    <div>
-                      <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
-                      <textarea
-                        rows={5}
-                        value={cabinetForm.pmNotes}
-                        onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
-                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                        placeholder="Enter executive priorities and party political notes..."
-                      />
-                    </div>
+                  {/* MONARCH (TOP LEVEL) */}
+                  <div className="flex justify-center mb-12">
+                    {renderMinisterProfile('monarch')}
+                  </div>
 
-                    <div>
-                      <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
-                      <textarea
-                        rows={5}
-                        value={cabinetForm.keyDirectives}
-                        onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
-                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                        placeholder="Enter strategic goals for the current session..."
-                      />
-                    </div>
+                  {/* MINISTERS (ROW OF 6) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center pt-4 border-t border-slate-800">
+                    {renderMinisterProfile('lordChancellor')}
+                    {renderMinisterProfile('exchequer')}
+                    {renderMinisterProfile('foreign')}
+                    {renderMinisterProfile('home')}
+                    {renderMinisterProfile('admiralty')}
+                    {renderMinisterProfile('war')}
                   </div>
                 </div>
 
-                {/* PANEL 2: CABINET MEETING */}
-                <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
-                  <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5C158]">📜 Cabinet Meeting</h2>
-                      <p className="text-xs text-slate-400">His Majesty's Confidential Servants & Ministerial Deliberations</p>
+                {/* EXECUTIVE & DELIBERATION NOTES PANELS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* STRATEGIC DIRECTIVES */}
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
+                    <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
+                      <div>
+                        <h2 className="text-base font-bold text-[#E5C158]">📜 Executive Priorities</h2>
+                        <p className="text-xs text-slate-400">First Lord of the Treasury & Executive Office</p>
+                      </div>
+                      <span className="text-xs bg-[#E5C158]/20 text-[#E5C158] px-2.5 py-1 rounded font-mono font-bold">
+                        {selectedYear}
+                      </span>
                     </div>
-                    <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded font-mono font-bold">
-                      Turn {currentTurn}
-                    </span>
+
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Prime Minister's Strategic Directives</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.pmNotes}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, pmNotes: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Enter executive priorities and party political notes..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Government Key Directives</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.keyDirectives}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, keyDirectives: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Enter strategic goals for the current session..."
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-4 text-xs">
-                    <div>
-                      <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
-                      <textarea
-                        rows={5}
-                        value={cabinetForm.cabinetAgenda}
-                        onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
-                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                        placeholder="Detail items for Cabinet discussion..."
-                      />
+                  {/* CABINET MINUTES */}
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-4 font-sans">
+                    <div className="border-b border-[#E5C158]/40 pb-3 flex justify-between items-center">
+                      <div>
+                        <h2 className="text-base font-bold text-[#E5C158]">🏛️ Cabinet Deliberations</h2>
+                        <p className="text-xs text-slate-400">Confidential Servants & Ministerial Deliberations</p>
+                      </div>
+                      <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded font-mono font-bold">
+                        Turn {currentTurn}
+                      </span>
                     </div>
 
-                    <div>
-                      <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
-                      <textarea
-                        rows={5}
-                        value={cabinetForm.cabinetMinutes}
-                        onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
-                        className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
-                        placeholder="Record Cabinet decisions and ministerial consensus..."
-                      />
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Session Agenda & Ministerial Business</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.cabinetAgenda}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetAgenda: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Detail items for Cabinet discussion..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-bold mb-1">Cabinet Minutes & Decisions</label>
+                        <textarea
+                          rows={4}
+                          value={cabinetForm.cabinetMinutes}
+                          onChange={(e) => setCabinetForm({ ...cabinetForm, cabinetMinutes: e.target.value })}
+                          className="w-full bg-[#0F223D] border border-slate-700 text-slate-200 p-2.5 rounded focus:border-[#E5C158] font-mono leading-relaxed resize-none"
+                          placeholder="Record Cabinet decisions and ministerial consensus..."
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
