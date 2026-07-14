@@ -74,9 +74,9 @@
     // A renamed cabinet minister receives a fresh nineteenth-century-style SVG portrait.
     // The image is generated entirely inside the browser, requires no external API,
     // and is stored as a data URL so it survives the existing Save / Load system.
-    function createNineteenthCenturyPortrait(name, ministerKey, variationSeed = Date.now()) {
+    function createNineteenthCenturyPortrait(name, ministerKey, variationSeed) {
       const safeName = String(name || 'Unnamed Minister').trim() || 'Unnamed Minister';
-      const seedSource = `${ministerKey || 'minister'}:${safeName}:${variationSeed}`;
+      const seedSource = `${ministerKey || 'minister'}:${safeName}:${String(variationSeed || '')}`;
       let hash = 2166136261;
 
       for (let i = 0; i < seedSource.length; i += 1) {
@@ -108,6 +108,11 @@
         : pick(['brown', 'black', 'white', 'grey', 'ginger', 'blonde']);
       const hair = hairColourMap[hairColourName];
 
+      const facialHairOptions = hairStyle === 'wig'
+        ? ['beard', 'sideburn', 'muttonChop']
+        : ['moustache', 'beard', 'sideburn', 'muttonChop'];
+      const facialHairStyle = pick(facialHairOptions);
+
       const clothingType = pick(['threePiece', 'doubleBreasted']);
       const threePieceColours = {
         brown: '#4a3426',
@@ -127,15 +132,15 @@
         ? threePieceColours[clothingColourName]
         : doubleBreastedColours[clothingColourName];
 
-      const skin = pick(['#d6b18c', '#c99d79', '#e0bd99', '#b98665']);
-      const skinShade = pick(['#aa7657', '#9b684d', '#b88464', '#8f5d45']);
+      // European white skin tones only.
+      const skin = pick(['#f1d2b7', '#e7c2a5', '#ddb394', '#f0c9aa']);
+      const skinShade = pick(['#c28f70', '#b97f63', '#c79374', '#aa7057']);
       const waistcoat = pick(['#d8c59a', '#c8b27f', '#b9c1c9', '#9e8a6b']);
       const backdrop = pick(['#1b2f4b', '#263852', '#2f3547', '#253b3b']);
       const eye = pick(['#40566a', '#4b3b31', '#304c45']);
       const faceWidth = 48 + Math.floor(random() * 9);
       const noseLength = 16 + Math.floor(random() * 7);
       const sideburnLength = 18 + Math.floor(random() * 11);
-      const hasMoustache = random() > 0.55;
       const hasGlasses = random() > 0.78;
 
       const initials = safeName
@@ -148,9 +153,7 @@
       let hairMarkup = '';
       if (hairStyle === 'short') {
         hairMarkup = `
-          <path d="M61 72 C60 43 74 20 99 18 C125 19 141 42 138 75 C132 62 126 52 118 47 C105 56 87 58 67 51 C65 58 63 65 61 72Z" fill="${hair}"/>
-          <path d="M61 69 C57 83 59 104 68 ${112 + sideburnLength} L73 104 L72 69Z" fill="${hair}" opacity="0.96"/>
-          <path d="M139 69 C143 83 141 104 132 ${112 + sideburnLength} L127 104 L128 69Z" fill="${hair}" opacity="0.96"/>`;
+          <path d="M61 72 C60 43 74 20 99 18 C125 19 141 42 138 75 C132 62 126 52 118 47 C105 56 87 58 67 51 C65 58 63 65 61 72Z" fill="${hair}"/>`;
       } else if (hairStyle === 'long') {
         hairMarkup = `
           <path d="M58 74 C56 42 72 18 100 17 C129 18 145 43 142 76 C133 60 124 51 115 47 C101 56 83 58 64 50 C62 58 60 66 58 74Z" fill="${hair}"/>
@@ -168,9 +171,7 @@
           <path d="M140 103 C146 125 138 151 124 164 L117 139 L124 99Z" fill="#eee9dc"/>`;
       } else {
         hairMarkup = `
-          <path d="M65 59 C72 33 85 23 100 23 C116 23 129 34 136 60 C126 49 113 44 100 44 C87 44 74 49 65 59Z" fill="${hair}" opacity="0.28"/>
-          <path d="M62 72 C59 87 61 106 69 126 L74 104 L72 70Z" fill="${hair}"/>
-          <path d="M138 72 C141 87 139 106 131 126 L126 104 L128 70Z" fill="${hair}"/>`;
+          <path d="M65 59 C72 33 85 23 100 23 C116 23 129 34 136 60 C126 49 113 44 100 44 C87 44 74 49 65 59Z" fill="${hair}" opacity="0.18"/>`;
       }
 
       const clothingMarkup = clothingType === 'threePiece'
@@ -191,9 +192,23 @@
             <circle cx="86" cy="235" r="2.8"/><circle cx="114" cy="235" r="2.8"/>
           </g>`;
 
-      const moustacheMarkup = hasMoustache
-        ? `<path d="M78 96 C88 89 97 92 100 97 C103 92 112 89 122 96 C114 104 106 105 100 100 C94 105 86 104 78 96Z" fill="${hair}" opacity="0.9"/>`
-        : '';
+      let facialHairMarkup = '';
+      if (facialHairStyle === 'moustache') {
+        facialHairMarkup = `
+          <path d="M78 96 C88 89 97 92 100 97 C103 92 112 89 122 96 C114 104 106 105 100 100 C94 105 86 104 78 96Z" fill="${hair}" opacity="0.94"/>`;
+      } else if (facialHairStyle === 'beard') {
+        facialHairMarkup = `
+          <path d="M76 103 C79 133 88 153 100 160 C112 153 121 133 124 103 C116 112 108 116 100 116 C92 116 84 112 76 103Z" fill="${hair}" opacity="0.92"/>
+          <path d="M79 96 C88 91 96 93 100 98 C104 93 112 91 121 96 C113 103 106 104 100 100 C94 104 87 103 79 96Z" fill="${hair}"/>`;
+      } else if (facialHairStyle === 'sideburn') {
+        facialHairMarkup = `
+          <path d="M65 78 C60 92 61 115 70 ${116 + sideburnLength} L77 119 L75 78Z" fill="${hair}" opacity="0.94"/>
+          <path d="M135 78 C140 92 139 115 130 ${116 + sideburnLength} L123 119 L125 78Z" fill="${hair}" opacity="0.94"/>`;
+      } else {
+        facialHairMarkup = `
+          <path d="M65 77 C59 96 62 128 78 143 L85 127 C75 112 74 94 75 77Z" fill="${hair}" opacity="0.96"/>
+          <path d="M135 77 C141 96 138 128 122 143 L115 127 C125 112 126 94 125 77Z" fill="${hair}" opacity="0.96"/>`;
+      }
 
       const glassesMarkup = hasGlasses
         ? `<g fill="none" stroke="#5f4a2b" stroke-width="2.2" opacity="0.88">
@@ -243,7 +258,7 @@
           <path d="M100 78 C97 88 95 ${88 + noseLength} 99 ${96 + noseLength} C102 ${99 + noseLength} 107 ${97 + noseLength} 108 ${94 + noseLength}" fill="none" stroke="${skinShade}" stroke-width="2.4" stroke-linecap="round"/>
           <path d="M84 121 Q100 130 116 121 Q100 141 84 121Z" fill="#8b5048" opacity="0.75"/>
           <path d="M77 137 Q100 153 123 137" fill="none" stroke="${skinShade}" stroke-width="2" opacity="0.6"/>
-          ${moustacheMarkup}
+          ${facialHairMarkup}
           ${glassesMarkup}
 
           <ellipse cx="100" cy="118" rx="${faceWidth}" ry="69" fill="none" stroke="#e9c75d" stroke-width="1.4" opacity="0.15"/>
@@ -331,42 +346,42 @@
       // Cabinet State
       const [cabinetMinisters, setCabinetMinisters] = React.useState({
         pm: {
-          id: 'pm', role: 'Prime Minister', name: 'Lord Liverpool', title: 'Earl of Liverpool', managementSkills: '***', age: '50', img: HISTORICAL_PORTRAITS.pm, isTraitsOpen: false,
+          id: 'pm', role: 'Prime Minister', name: 'Lord Liverpool', committedName: 'Lord Liverpool', title: 'Earl of Liverpool', managementSkills: '***', age: '50', img: HISTORICAL_PORTRAITS.pm, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Arch-Conciliator', effects: [{ id: 1, text: '+1 Cabinet Harmony & Cohesion' }] }],
           followers: [{ id: 1, name: 'Treasury Secretary', effects: [{ id: 1, text: '+£2,000 Secret Service Reserve' }] }]
         },
         monarch: {
-          id: 'monarch', role: 'Monarch', name: 'George IV', title: 'King of Great Britain', managementSkills: '**', age: '58', img: HISTORICAL_PORTRAITS.monarch, isTraitsOpen: false,
+          id: 'monarch', role: 'Monarch', name: 'George IV', committedName: 'George IV', title: 'King of Great Britain', managementSkills: '**', age: '58', img: HISTORICAL_PORTRAITS.monarch, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Royal Prerogative', effects: [{ id: 1, text: '+2 Executive Authority' }] }],
           followers: [{ id: 1, name: 'Privy Purse Keeper', effects: [{ id: 1, text: '+£5,000 Royal Discretionary Fund' }] }]
         },
         lordChancellor: {
-          id: 'lordChancellor', role: 'Lord Chancellor', name: 'Lord Eldon', title: 'Baron Eldon', managementSkills: '****', age: '69', img: HISTORICAL_PORTRAITS.lordChancellor, isTraitsOpen: false,
+          id: 'lordChancellor', role: 'Lord Chancellor', name: 'Lord Eldon', committedName: 'Lord Eldon', title: 'Baron Eldon', managementSkills: '****', age: '69', img: HISTORICAL_PORTRAITS.lordChancellor, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Staunch High Tory', effects: [{ id: 1, text: '+1 Judicial Resistance to Reform' }] }],
           followers: [{ id: 1, name: 'Chancery Clerk', effects: [{ id: 1, text: '-1 Turn Legal Processing Time' }] }]
         },
         exchequer: {
-          id: 'exchequer', role: 'Chancellor of Exchequer', name: 'Nicholas Vansittart', title: 'Baron Bexley', managementSkills: '***', age: '54', img: HISTORICAL_PORTRAITS.exchequer, isTraitsOpen: false,
+          id: 'exchequer', role: 'Chancellor of Exchequer', name: 'Nicholas Vansittart', committedName: 'Nicholas Vansittart', title: 'Baron Bexley', managementSkills: '***', age: '54', img: HISTORICAL_PORTRAITS.exchequer, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Fiscal Retrenchment', effects: [{ id: 1, text: '+5% Tax Efficiency' }] }],
           followers: [{ id: 1, name: 'Bank of England Governor', effects: [{ id: 1, text: '+10% Loan Capacity' }] }]
         },
         foreign: {
-          id: 'foreign', role: 'Foreign Secretary', name: 'Viscount Castlereagh', title: 'Marquess of Londonderry', managementSkills: '*****', age: '51', img: HISTORICAL_PORTRAITS.foreign, isTraitsOpen: false,
+          id: 'foreign', role: 'Foreign Secretary', name: 'Viscount Castlereagh', committedName: 'Viscount Castlereagh', title: 'Marquess of Londonderry', managementSkills: '*****', age: '51', img: HISTORICAL_PORTRAITS.foreign, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Architect of Concert', effects: [{ id: 1, text: '+2 Diplomatic Prestige with Great Powers' }] }],
           followers: [{ id: 1, name: 'Special Diplomatic Envoy', effects: [{ id: 1, text: '-15% Subsidies Cost' }] }]
         },
         home: {
-          id: 'home', role: 'Home Secretary', name: 'Viscount Sidmouth', title: 'Baron Addington', managementSkills: '***', age: '63', img: HISTORICAL_PORTRAITS.home, isTraitsOpen: false,
+          id: 'home', role: 'Home Secretary', name: 'Viscount Sidmouth', committedName: 'Viscount Sidmouth', title: 'Baron Addington', managementSkills: '***', age: '63', img: HISTORICAL_PORTRAITS.home, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Iron Magistrate', effects: [{ id: 1, text: '-2 Radical Sedition Clamour' }] }],
           followers: [{ id: 1, name: 'Whitehall Informant', effects: [{ id: 1, text: '+1 Foreign Agent Detection Rate' }] }]
         },
         admiralty: {
-          id: 'admiralty', role: 'First Lord of the Admiralty', name: 'Viscount Melville', title: 'Baron Dunira', managementSkills: '***', age: '49', img: HISTORICAL_PORTRAITS.admiralty, isTraitsOpen: false,
+          id: 'admiralty', role: 'First Lord of the Admiralty', name: 'Viscount Melville', committedName: 'Viscount Melville', title: 'Baron Dunira', managementSkills: '***', age: '49', img: HISTORICAL_PORTRAITS.admiralty, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Wooden Walls Guard', effects: [{ id: 1, text: '-10% Fleet Maintenance Outflow' }] }],
           followers: [{ id: 1, name: 'Dockyard Superintendent', effects: [{ id: 1, text: '+1 Ship Construction Capacity' }] }]
         },
         war: {
-          id: 'war', role: 'Secretary at War', name: 'Duke of Wellington', title: 'Field Marshal', managementSkills: '*****', age: '51', img: HISTORICAL_PORTRAITS.war, isTraitsOpen: false,
+          id: 'war', role: 'Secretary at War', name: 'Duke of Wellington', committedName: 'Duke of Wellington', title: 'Field Marshal', managementSkills: '*****', age: '51', img: HISTORICAL_PORTRAITS.war, isTraitsOpen: false,
           traits: [{ id: 1, name: 'Victor of Waterloo', effects: [{ id: 1, text: '+3 Army Morale and Discipline' }] }],
           followers: [{ id: 1, name: 'Quartermaster General', effects: [{ id: 1, text: '-15% Land Force Supply Cost' }] }]
         }
@@ -401,8 +416,15 @@
         setCabinetMinisters(prev => {
           const currentMinister = prev[key];
           const completedName = String(currentMinister.name || '').trim();
+          const previouslyCommittedName = String(
+            currentMinister.committedName ||
+            currentMinister.portraitGeneratedFromName ||
+            ''
+          ).trim();
 
-          if (!completedName) {
+          // Enter is the only portrait-generation trigger.
+          // Do nothing for an empty name or when the completed name has not changed.
+          if (!completedName || completedName === previouslyCommittedName) {
             return prev;
           }
 
@@ -412,6 +434,7 @@
             [key]: {
               ...currentMinister,
               name: completedName,
+              committedName: completedName,
               img: createNineteenthCenturyPortrait(completedName, key, portraitVariationSeed),
               portraitGeneratedFromName: completedName,
               portraitVariationSeed
@@ -1177,7 +1200,8 @@
                 alt={`${minister.name || minister.role} portrait`}
                 className="absolute inset-0 w-full h-full object-cover object-top z-10"
                 onError={(e) => {
-                  e.currentTarget.src = createNineteenthCenturyPortrait(minister.name, ministerKey);
+                  // Never generate a portrait from image loading, tab switching, or panel switching.
+                  e.currentTarget.style.display = 'none';
                 }}
               />
               <div className="absolute inset-0 bg-[#0F223D] flex items-center justify-center text-[#E5C158] font-bold text-2xl -z-10">
