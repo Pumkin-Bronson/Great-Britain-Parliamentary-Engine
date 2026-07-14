@@ -43,6 +43,40 @@
       return roman;
     }
 
+    function formatOrdinal(value) {
+      const parsed = parseInt(value, 10);
+      if (!Number.isFinite(parsed) || parsed < 1) return '';
+
+      const remainder100 = parsed % 100;
+      if (remainder100 >= 11 && remainder100 <= 13) {
+        return `${parsed}th`;
+      }
+
+      const remainder10 = parsed % 10;
+      if (remainder10 === 1) return `${parsed}st`;
+      if (remainder10 === 2) return `${parsed}nd`;
+      if (remainder10 === 3) return `${parsed}rd`;
+      return `${parsed}th`;
+    }
+
+    const FEMALE_MONARCH_NAMES = new Set([
+      'victoria', 'elizabeth', 'mary', 'anne', 'alexandra', 'adelaide',
+      'charlotte', 'caroline', 'catherine', 'katherine', 'margaret',
+      'matilda', 'eleanor', 'isabella', 'jane', 'louisa', 'louise',
+      'beatrice', 'helena', 'augusta', 'amelia', 'sophia', 'alice',
+      'emily', 'emma', 'florence', 'harriet', 'georgiana', 'henrietta'
+    ]);
+
+    function isFemaleMonarchName(name) {
+      const words = String(name || '')
+        .toLowerCase()
+        .replace(/[^a-z\s-]/g, ' ')
+        .split(/[\s-]+/)
+        .filter(Boolean);
+
+      return words.some(word => FEMALE_MONARCH_NAMES.has(word));
+    }
+
     const DIPLOMATIC_ACTION_TYPES = [
       { id: 'alliance', label: 'Alliance', coreTitle: 'CONCLUDING ALLIANCES & SOLEMN COMPACTS' },
       { id: 'trade', label: 'Trade Agreement', coreTitle: 'COMMERCIAL TREATIES & NAVIGATION CONVENTIONS' },
@@ -117,13 +151,19 @@
         skinTone: pick(['porcelain', 'fair', 'light', 'warmFair']),
         faceShape: pick(['narrow', 'average', 'broad']),
         eyeColour: pick(['blueGrey', 'brown', 'greenGrey']),
-        hasGlasses: random() > 0.82,
+        gender: ministerKey === 'monarch' && isFemaleMonarchName(safeName) ? 'female' : 'male',
         seed: String(variationSeed)
       };
     }
 
     function MinisterPortrait({ portraitData, name, ministerKey }) {
-      const data = portraitData || createNineteenthCenturyPortraitData(name, ministerKey, 'initial');
+      const originalData = portraitData || createNineteenthCenturyPortraitData(name, ministerKey, 'initial');
+      const detectedFemaleMonarch = ministerKey === 'monarch' && isFemaleMonarchName(name);
+      const data = {
+        ...originalData,
+        gender: detectedFemaleMonarch ? 'female' : (originalData.gender || 'male'),
+        facialHair: detectedFemaleMonarch ? 'none' : originalData.facialHair
+      };
 
       const hairColours = {
         brown: '#4a3023',
@@ -206,7 +246,32 @@
         );
       };
 
+
+      const renderFemaleMonarchHairAndCrown = () => (
+        <g>
+          <path
+            d="M57 76 C55 41 72 18 100 17 C129 18 146 42 143 78 C136 62 126 50 115 45 C103 54 85 58 63 49 C61 58 59 67 57 76Z"
+            fill={hair}
+          />
+          <path d="M58 72 C48 92 53 127 70 145 L78 122 L74 72Z" fill={hair} />
+          <path d="M142 72 C152 92 147 127 130 145 L122 122 L126 72Z" fill={hair} />
+          <path
+            d="M65 39 L73 18 L86 31 L100 8 L114 31 L127 18 L135 39 Z"
+            fill="#d8b84f"
+            stroke="#f0d77a"
+            strokeWidth="2"
+          />
+          <circle cx="73" cy="18" r="3.5" fill="#8b1e2d" />
+          <circle cx="100" cy="8" r="4" fill="#295a8a" />
+          <circle cx="127" cy="18" r="3.5" fill="#8b1e2d" />
+          <path d="M66 39 H134 L130 48 H70Z" fill="#b99432" />
+        </g>
+      );
+
       const renderFacialHair = () => {
+        if (data.gender === 'female') {
+          return null;
+        }
         if (data.facialHair === 'moustache') {
           return <path d="M78 103 C88 96 97 99 100 104 C103 99 112 96 122 103 C114 111 106 112 100 107 C94 112 86 111 78 103Z" fill={hair} />;
         }
@@ -242,7 +307,16 @@
           <rect width="200" height="260" fill={`url(#${gradientId})`} />
           <ellipse cx="100" cy="245" rx="92" ry="66" fill="#050b13" opacity="0.55" />
 
-          {data.clothingType === 'threePiece' ? (
+          {data.gender === 'female' ? (
+            <g>
+              <path d="M10 260 C22 190 52 161 100 161 C148 161 178 190 190 260Z" fill={`url(#${coatGradientId})`} />
+              <path d="M45 190 C62 169 78 160 100 160 C122 160 138 169 155 190 L145 260 H55Z" fill="#e9dfcf" />
+              <path d="M52 190 C69 207 83 214 100 214 C117 214 131 207 148 190 L158 260 H42Z" fill={coat} opacity="0.92" />
+              <path d="M69 170 Q100 195 131 170 Q122 209 100 218 Q78 209 69 170Z" fill="#f5ead8" />
+              <circle cx="100" cy="198" r="5" fill="#c7a94b" />
+              <circle cx="100" cy="198" r="2.5" fill="#7b2638" />
+            </g>
+          ) : data.clothingType === 'threePiece' ? (
             <g>
               <path d="M20 260 C28 193 57 165 100 165 C143 165 172 193 180 260Z" fill={`url(#${coatGradientId})`} />
               <path d="M62 174 L100 229 L138 174 C127 166 114 162 100 162 C86 162 73 166 62 174Z" fill="#c8b27f" />
@@ -262,9 +336,9 @@
           <path d="M65 73 C67 38 82 24 100 24 C118 24 133 38 135 73 L129 122 C124 149 114 165 100 165 C86 165 76 149 71 122Z" fill={skin} />
           <ellipse cx="66" cy="94" rx="8" ry="15" fill={skin} />
           <ellipse cx="134" cy="94" rx="8" ry="15" fill={skin} />
-          {renderHair()}
-          <path d="M71 73 Q82 66 93 73" fill="none" stroke={hair} strokeWidth="4" strokeLinecap="round" />
-          <path d="M107 73 Q118 66 129 73" fill="none" stroke={hair} strokeWidth="4" strokeLinecap="round" />
+          {data.gender === 'female' ? renderFemaleMonarchHairAndCrown() : renderHair()}
+          <path d="M71 73 Q82 66 93 73" fill="none" stroke={hair} strokeWidth={data.gender === 'female' ? 2.5 : 4} strokeLinecap="round" />
+          <path d="M107 73 Q118 66 129 73" fill="none" stroke={hair} strokeWidth={data.gender === 'female' ? 2.5 : 4} strokeLinecap="round" />
           <ellipse cx="82" cy="80" rx="5" ry="3.5" fill="#f5f0e8" />
           <ellipse cx="118" cy="80" rx="5" ry="3.5" fill="#f5f0e8" />
           <circle cx="82" cy="80" r="2.2" fill={eye} />
@@ -273,13 +347,6 @@
           <path d="M84 121 Q100 130 116 121 Q100 141 84 121Z" fill="#8b5048" opacity="0.75" />
           <path d="M77 137 Q100 153 123 137" fill="none" stroke={skinShade} strokeWidth="2" opacity="0.6" />
           {renderFacialHair()}
-          {data.hasGlasses && (
-            <g fill="none" stroke="#5f4a2b" strokeWidth="2.2" opacity="0.88">
-              <ellipse cx="82" cy="79" rx="15" ry="11" />
-              <ellipse cx="118" cy="79" rx="15" ry="11" />
-              <path d="M97 79 H103 M67 77 L56 73 M133 77 L144 73" />
-            </g>
-          )}
           <ellipse cx="100" cy="118" rx={faceRx} ry="69" fill="none" stroke="#e9c75d" strokeWidth="1.4" opacity="0.12" />
         </svg>
       );
@@ -3264,14 +3331,24 @@
                         <div key={rate.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={rate.rateNumber}
-                              onChange={(e) => updateNavyRate(rate.id, 'rateNumber', e.target.value)}
-                              className="w-20 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
-                              placeholder="(X)"
-                            />
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={rate.rateNumber}
+                                onChange={(e) => updateNavyRate(rate.id, 'rateNumber', e.target.value)}
+                                className="w-full bg-[#0B192C] border border-slate-600 text-white p-2 pr-9 rounded font-bold"
+                                placeholder="(X)"
+                                aria-label="Rate ordinal number"
+                              />
+                              <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#E5C158] text-[10px] font-bold">
+                                {formatOrdinal(rate.rateNumber).replace(/^\d+/, '')}
+                              </span>
+                            </div>
+                            <span className="text-[#E5C158] font-bold text-xs whitespace-nowrap">
+                              {formatOrdinal(rate.rateNumber)}
+                            </span>
                             <input
                               type="text"
                               value={rate.rateTitle}
