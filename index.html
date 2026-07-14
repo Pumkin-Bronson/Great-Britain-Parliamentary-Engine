@@ -425,20 +425,20 @@
         if (score >= 10) return { label: 'Exceptional', color: 'text-emerald-400' };
         if (score >= 7) return { label: 'Stable', color: 'text-blue-400' };
         if (score >= 0) return { label: 'Elevated Risk', color: 'text-amber-400' };
-        return { label: 'Critical Risk', color: 'text-rose-500 font-bold' };
+        return { label: 'Risk', color: 'text-rose-500 font-bold' };
       };
 
       const getClamourLabel = (score) => {
-        if (score >= 10) return { label: 'High Threat', color: 'text-rose-400 font-bold' };
-        if (score >= 6) return { label: 'Medium Threat', color: 'text-amber-400' };
-        if (score >= 1) return { label: 'Low Threat', color: 'text-blue-400' };
+        if (score >= 10) return { label: 'High', color: 'text-rose-400 font-bold' };
+        if (score >= 6) return { label: 'Medium', color: 'text-amber-400' };
+        if (score >= 1) return { label: 'Low', color: 'text-blue-400' };
         return { label: 'None', color: 'text-emerald-400' };
       };
 
       const getReligiousUnrestLabel = (score) => {
-        if (score >= 5) return { label: 'High Unrest', color: 'text-rose-400 font-bold' };
-        if (score >= 3) return { label: 'Medium Unrest', color: 'text-amber-400' };
-        if (score >= 1) return { label: 'Low Unrest', color: 'text-blue-400' };
+        if (score >= 5) return { label: 'High', color: 'text-rose-400 font-bold' };
+        if (score >= 3) return { label: 'Medium', color: 'text-amber-400' };
+        if (score >= 1) return { label: 'Low', color: 'text-blue-400' };
         return { label: 'None', color: 'text-emerald-400' };
       };
 
@@ -2130,18 +2130,20 @@
                           const regionName = region.charAt(0).toUpperCase() + region.slice(1);
 
                           return (
-                            <div key={region} className="bg-[#0B192C] p-2.5 rounded border border-slate-800 flex justify-between items-center">
-                              <div>
-                                <span className="font-bold text-white text-xs">• {regionName}</span>
-                                <div className={`text-[11px] ${status.color}`}>&gt; Status: {status.label}</div>
+                            <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-white text-sm">{regionName}</span>
+                                <span className={`text-xs font-bold ${status.color}`}>
+                                  &gt; {status.label}
+                                </span>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400 font-mono">Rating:</span>
+                              <div className="flex items-center gap-2">
+                                <label className="text-slate-400 text-xs">Public Order Value :</label>
                                 <input
                                   type="number"
                                   value={val}
                                   onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
-                                  className="w-16 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-1 rounded text-xs focus:border-[#E5C158]"
+                                  className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-20 text-xs focus:border-[#E5C158]"
                                 />
                               </div>
                             </div>
@@ -2149,9 +2151,9 @@
                         })}
                       </div>
 
-                      <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-xs font-bold font-sans">
-                        <span className="text-[#E5C158]">• NATIONAL STABILITY INDEX :</span>
-                        <span className="font-mono text-emerald-400 text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-700">
+                      <div className="pt-2 border-t border-slate-800 flex justify-between items-center font-sans">
+                        <span className="font-bold text-[#E5C158] text-sm">• National Stability Index :</span>
+                        <span className="text-emerald-400 font-mono font-bold text-sm bg-[#0B192C] px-3 py-1 rounded border border-slate-800">
                           {avgPublicOrder}
                         </span>
                       </div>
@@ -2161,49 +2163,31 @@
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
                       <div className="text-[#E5C158] font-bold text-xs">
                         ----------------------------------------------------------------------------------------<br />
-                        II. REGIONAL THREAT & SEDITION DISPOSITION<br />
+                        II. RADICAL SEDITION & REFORM WATCH<br />
                         ----------------------------------------------------------------------------------------
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const clamourVal = homeOfficeForm.clamour[region];
-                          const clamourStatus = getClamourLabel(clamourVal);
-
-                          const relVal = homeOfficeForm.religiousUnrest[region];
-                          const relStatus = getReligiousUnrestLabel(relVal);
-
+                          const val = homeOfficeForm.clamour[region];
+                          const status = getClamourLabel(val);
                           const regionName = region.charAt(0).toUpperCase() + region.slice(1);
 
                           return (
                             <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2">
-                              <div className="font-bold text-white text-xs border-b border-slate-800 pb-1 flex justify-between">
-                                <span>• {regionName}</span>
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-white text-sm">{regionName}</span>
+                                <span className={`text-xs font-bold ${status.color}`}>
+                                  &gt; {status.label}
+                                </span>
                               </div>
-
-                              <div className="flex justify-between items-center text-[11px]">
-                                <div>
-                                  <span className="text-slate-300">Radical Clamour:</span>
-                                  <div className={clamourStatus.color}>&gt; {clamourStatus.label}</div>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <label className="text-slate-400 text-xs">Clamour for Reform Level :</label>
                                 <input
                                   type="number"
-                                  value={clamourVal}
+                                  value={val}
                                   onChange={(e) => handleHomeOfficeChange('clamour', region, e.target.value)}
-                                  className="w-14 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-0.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-
-                              <div className="flex justify-between items-center text-[11px] pt-1 border-t border-slate-800/60">
-                                <div>
-                                  <span className="text-slate-300">Religious Unrest:</span>
-                                  <div className={relStatus.color}>&gt; {relStatus.label}</div>
-                                </div>
-                                <input
-                                  type="number"
-                                  value={relVal}
-                                  onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
-                                  className="w-14 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-0.5 rounded focus:border-[#E5C158]"
+                                  className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-20 text-xs focus:border-[#E5C158]"
                                 />
                               </div>
                             </div>
@@ -2216,39 +2200,94 @@
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
                       <div className="text-[#E5C158] font-bold text-xs">
                         ----------------------------------------------------------------------------------------<br />
-                        III. SECURITY DISPOSITION & LOCAL GARRISONS<br />
+                        III. PROVINCIAL TRANQUILITY & MAGISTRACY RETURNS<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
+                        {[
+                          { key: 'garrisons', label: 'Garrisoned Forces (Repression)' },
+                          { key: 'ministers', label: 'People In Government (Repression)' },
+                          { key: 'buildings', label: 'Government Buildings (Repression)' },
+                          { key: 'govType', label: 'Government Type (Repression)' }
+                        ].map((cat) => (
+                          <div key={cat.key} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2">
+                            <div className="font-bold text-[#E5C158] text-xs border-b border-slate-800 pb-1">
+                              {cat.label}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                                <div key={region} className="flex justify-between items-center">
+                                  <span className="capitalize text-slate-300">{region} :</span>
+                                  <input
+                                    type="number"
+                                    value={homeOfficeForm[cat.key][region]}
+                                    onChange={(e) => handleHomeOfficeChange(cat.key, region, e.target.value)}
+                                    className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-14 text-xs text-center focus:border-[#E5C158]"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SECTION IV */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br />
+                        ----------------------------------------------------------------------------------------
+                      </div>
+
+                      <div className="bg-[#0B192C] p-3 rounded border border-slate-800 font-sans">
+                        <div className="font-bold text-[#E5C158] text-xs mb-3">Entertainment & Culture Measures</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                          {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                            <div key={region} className="flex flex-col gap-1">
+                              <span className="capitalize text-slate-300 font-semibold">{region} :</span>
+                              <input
+                                type="number"
+                                value={homeOfficeForm.culture[region]}
+                                onChange={(e) => handleHomeOfficeChange('culture', region, e.target.value)}
+                                className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-full text-xs focus:border-[#E5C158]"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION V */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
+                      <div className="text-[#E5C158] font-bold text-xs">
+                        ----------------------------------------------------------------------------------------<br />
+                        V. RADICALISATION OF RELIGION AND CULT<br />
                         ----------------------------------------------------------------------------------------
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
                         {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const garrisons = homeOfficeForm.garrisons[region];
-                          const ministers = homeOfficeForm.ministers[region];
+                          const val = homeOfficeForm.religiousUnrest[region];
+                          const status = getReligiousUnrestLabel(val);
                           const regionName = region.charAt(0).toUpperCase() + region.slice(1);
 
                           return (
                             <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2">
-                              <div className="font-bold text-white text-xs border-b border-slate-800 pb-1">
-                                • {regionName} Forces
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-white text-sm">{regionName}</span>
+                                <span className={`text-xs font-bold ${status.color}`}>
+                                  &gt; {status.label}
+                                </span>
                               </div>
-
-                              <div className="flex justify-between items-center text-[11px]">
-                                <span className="text-slate-300">Mil. Garrisons / Regiments:</span>
+                              <div className="flex items-center gap-2">
+                                <label className="text-slate-400 text-xs">Religious Unrest Level :</label>
                                 <input
                                   type="number"
-                                  value={garrisons}
-                                  onChange={(e) => handleHomeOfficeChange('garrisons', region, e.target.value)}
-                                  className="w-14 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-0.5 rounded focus:border-[#E5C158]"
-                                />
-                              </div>
-
-                              <div className="flex justify-between items-center text-[11px]">
-                                <span className="text-slate-300">Crown Magistrates / Constabulary:</span>
-                                <input
-                                  type="number"
-                                  value={ministers}
-                                  onChange={(e) => handleHomeOfficeChange('ministers', region, e.target.value)}
-                                  className="w-14 bg-[#0F223D] border border-slate-700 text-center font-mono font-bold text-white p-0.5 rounded focus:border-[#E5C158]"
+                                  value={val}
+                                  onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
+                                  className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-20 text-xs focus:border-[#E5C158]"
                                 />
                               </div>
                             </div>
@@ -2257,89 +2296,152 @@
                       </div>
                     </div>
 
-                    {/* SECTION IV */}
+                    {/* SECTION VI */}
                     <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
-                      <div className="flex justify-between items-center text-xs font-mono text-[#E5C158] font-bold">
-                        <span>IV. ALIEN OFFICE & FOREIGN AGENT SURVEILLANCE</span>
-                        <button
-                          onClick={handleAddAgent}
-                          className="bg-[#E5C158] text-[#0F223D] px-2 py-0.5 rounded font-bold text-[10px] hover:bg-yellow-400 cursor-pointer"
-                        >
-                          + Add Agent Record
-                        </button>
+                      <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <div className="text-[#E5C158] font-bold text-xs font-mono">
+                          ----------------------------------------------------------------------------------------<br />
+                          VI. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br />
+                          ----------------------------------------------------------------------------------------
+                        </div>
                       </div>
 
-                      <div className="overflow-x-auto pt-1">
-                        <table className="w-full text-left text-[11px]">
-                          <thead className="bg-[#0B192C] text-[#E5C158] font-bold border-b border-slate-800">
-                            <tr>
-                              <th className="p-2">Foreign Power</th>
-                              <th className="p-2">Agent Alias / Subject</th>
-                              <th className="p-2">Surveillance Status</th>
-                              <th className="p-2">Reported Location</th>
-                              <th className="p-2 text-center">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800">
-                            {homeOfficeForm.foreignAgents.map((agent, idx) => (
-                              <tr key={idx} className="hover:bg-[#0B192C]/50">
-                                <td className="p-1.5">
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-xs font-bold text-white">
+                          • Foreign Agents Detected ({homeOfficeForm.foreignAgents.length})
+                        </span>
+                        {homeOfficeForm.foreignAgents.length >= 1 && (
+                          <button
+                            onClick={handleAddAgent}
+                            className="bg-[#E5C158] text-[#0F223D] px-2.5 py-1 rounded font-bold text-xs hover:bg-yellow-400 cursor-pointer"
+                          >
+                            + Foreign Agents Detected
+                          </button>
+                        )}
+                      </div>
+
+                      {homeOfficeForm.foreignAgents.length === 0 ? (
+                        <div className="text-center text-slate-500 italic py-4 bg-[#0B192C] rounded border border-slate-800 text-xs">
+                          No foreign agents currently detected under watch.
+                        </div>
+                      ) : (
+                        <div className="space-y-3 pt-1">
+                          {homeOfficeForm.foreignAgents.map((agent, idx) => (
+                            <div key={idx} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2 relative">
+                              <button
+                                onClick={() => handleRemoveAgent(idx)}
+                                className="absolute top-2 right-2 text-rose-400 hover:text-rose-200 font-bold text-xs px-1"
+                                title="Remove Agent"
+                              >
+                                ✕
+                              </button>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs pr-6">
+                                <div>
+                                  <label className="block text-slate-400 mb-1">Nation :</label>
                                   <input
                                     type="text"
                                     value={agent.nation}
                                     onChange={(e) => handleAgentChange(idx, 'nation', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white p-1 rounded font-mono"
-                                    placeholder="e.g. France"
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                    placeholder="e.g. Kingdom of France"
                                   />
-                                </td>
-                                <td className="p-1.5">
+                                </div>
+                                <div>
+                                  <label className="block text-slate-400 mb-1">Name :</label>
                                   <input
                                     type="text"
                                     value={agent.name}
                                     onChange={(e) => handleAgentChange(idx, 'name', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white p-1 rounded font-mono"
-                                    placeholder="Name/Alias"
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                    placeholder="e.g. Agent Name"
                                   />
-                                </td>
-                                <td className="p-1.5">
-                                  <select
+                                </div>
+                                <div>
+                                  <label className="block text-slate-400 mb-1">Status of Relation :</label>
+                                  <input
+                                    type="text"
                                     value={agent.status}
                                     onChange={(e) => handleAgentChange(idx, 'status', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 p-1 rounded font-mono"
-                                  >
-                                    <option value="Under Surveillance">Under Surveillance</option>
-                                    <option value="Arrested & Detained">Arrested & Detained</option>
-                                    <option value="Deported under Alien Act">Deported under Alien Act</option>
-                                    <option value="Unconfirmed">Unconfirmed</option>
-                                  </select>
-                                </td>
-                                <td className="p-1.5">
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                    placeholder="e.g. Under Surveillance"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-slate-400 mb-1">Location :</label>
                                   <input
                                     type="text"
                                     value={agent.location}
                                     onChange={(e) => handleAgentChange(idx, 'location', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white p-1 rounded font-mono"
-                                    placeholder="Location"
+                                    className="w-full bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded focus:border-[#E5C158]"
+                                    placeholder="e.g. London (Soho)"
                                   />
-                                </td>
-                                <td className="p-1.5 text-center">
-                                  <button
-                                    onClick={() => handleRemoveAgent(idx)}
-                                    className="text-rose-400 hover:text-rose-200 font-bold px-2 py-1"
-                                  >
-                                    ✕
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECTION VII */}
+                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700 font-sans">
+                      <div className="text-[#E5C158] font-bold text-xs font-mono">
+                        ----------------------------------------------------------------------------------------<br />
+                        VII. DOMESTIC SUMMARY<br />
+                        ----------------------------------------------------------------------------------------
                       </div>
+
+                      {(() => {
+                        const totalPositives =
+                          homeOfficeForm.publicOrder.london + homeOfficeForm.publicOrder.wales + homeOfficeForm.publicOrder.scotland + homeOfficeForm.publicOrder.ireland +
+                          homeOfficeForm.garrisons.london + homeOfficeForm.garrisons.wales + homeOfficeForm.garrisons.scotland + homeOfficeForm.garrisons.ireland +
+                          homeOfficeForm.ministers.london + homeOfficeForm.ministers.wales + homeOfficeForm.ministers.scotland + homeOfficeForm.ministers.ireland +
+                          homeOfficeForm.buildings.london + homeOfficeForm.buildings.wales + homeOfficeForm.buildings.scotland + homeOfficeForm.buildings.ireland +
+                          homeOfficeForm.govType.london + homeOfficeForm.govType.wales + homeOfficeForm.govType.scotland + homeOfficeForm.govType.ireland +
+                          homeOfficeForm.culture.london + homeOfficeForm.culture.wales + homeOfficeForm.culture.scotland + homeOfficeForm.culture.ireland;
+
+                        const totalNegatives =
+                          homeOfficeForm.clamour.london + homeOfficeForm.clamour.wales + homeOfficeForm.clamour.scotland + homeOfficeForm.clamour.ireland +
+                          homeOfficeForm.religiousUnrest.london + homeOfficeForm.religiousUnrest.wales + homeOfficeForm.religiousUnrest.scotland + homeOfficeForm.religiousUnrest.ireland;
+
+                        const netBalance = totalPositives - totalNegatives;
+                        const isDisorder = netBalance < 0;
+
+                        return (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                              <div className="bg-[#0B192C] p-2.5 rounded border border-slate-800">
+                                <span className="text-slate-400">Total Positive Stability Measures:</span>
+                                <div className="text-emerald-400 font-mono font-bold text-base mt-0.5">+{totalPositives}</div>
+                              </div>
+                              <div className="bg-[#0B192C] p-2.5 rounded border border-slate-800">
+                                <span className="text-slate-400">Total Radical Threat Effects:</span>
+                                <div className="text-rose-400 font-mono font-bold text-base mt-0.5">-{totalNegatives}</div>
+                              </div>
+                              <div className="bg-[#0B192C] p-2.5 rounded border border-slate-800">
+                                <span className="text-slate-400">Net Domestic Peace Index:</span>
+                                <div className={`font-mono font-bold text-base mt-0.5 ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {netBalance >= 0 ? `+${netBalance}` : netBalance}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={`p-3 rounded border text-xs font-semibold leading-relaxed ${isDisorder ? 'bg-rose-950/80 border-rose-600 text-rose-200' : 'bg-emerald-950/80 border-emerald-600 text-emerald-200'}`}>
+                              <span className="font-bold underline uppercase mr-1">Magistracy Judgement:</span>
+                              {isDisorder ? (
+                                <span>Home regions are exhibiting critical social disorders and unrest. Negative radical and religious factors outweigh public tranquility measures. Civil garrisons and crown authorities must intervene immediately.</span>
+                              ) : (
+                                <span>Home regions maintain public peace and domestic tranquility. Positive civil measures and crown presence successfully suppress radical agitation and religious unrest.</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="text-center space-y-1 pt-4 border-t border-slate-800">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
@@ -2347,13 +2449,13 @@
               </div>
             )}
 
-            {/* Placeholder screens for remaining tabs */}
-            {!['Exchequer', 'Parliamentary Timetable', 'Cabinet', 'Foreign Office', 'Home Office'].includes(activeTab) && (
+            {/* OTHER TABS PLACEHOLDERS */}
+            {activeTab !== 'Exchequer' && activeTab !== 'Parliamentary Timetable' && activeTab !== 'Cabinet' && activeTab !== 'Foreign Office' && activeTab !== 'Home Office' && (
               <div className="bg-[#0B192C] border border-slate-800 p-12 rounded text-center my-8">
                 <div className="text-4xl mb-3">🏛️</div>
-                <h2 className="text-xl font-bold text-white mb-2">{activeTab} Department</h2>
+                <h2 className="text-xl font-bold text-[#E5C158] mb-2">{activeTab}</h2>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Departmental operations and parliamentary records for {activeTab} are actively maintained.
+                  Departmental operations for {activeTab} are actively monitored under the Parliamentary session agenda.
                 </p>
               </div>
             )}
