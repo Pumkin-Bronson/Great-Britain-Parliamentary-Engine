@@ -352,6 +352,26 @@
       );
     }
 
+
+    const WAR_MINISTRY_UNIT_CATALOGUE = [
+      { id: 'footGuards', label: '💂 Foot Guards', branch: 'infantry' },
+      { id: 'lineInfantry', label: '💂 Line Infantry', branch: 'infantry' },
+      { id: 'highlandInfantry', label: '💂 Highland Infantry', branch: 'infantry' },
+      { id: 'lightInfantry', label: '📯 Light Infantry', branch: 'infantry' },
+      { id: 'rifles', label: '📯 Rifles', branch: 'infantry' },
+      { id: 'householdCavalry', label: '🐴 Household Cavalry', branch: 'cavalry' },
+      { id: 'dragoonGuards', label: '🐴 Dragoon Guards', branch: 'cavalry' },
+      { id: 'dragoons', label: '🐴 Dragoons', branch: 'cavalry' },
+      { id: 'hussars', label: '🐴 Hussars', branch: 'cavalry' },
+      { id: 'lightDragoons', label: '🐴 Light Dragoons', branch: 'cavalry' },
+      { id: 'sixPoundFoot', label: '💣 6-lber Foot Artillery', branch: 'artillery' },
+      { id: 'ninePoundFoot', label: '💣 9-lber Foot Artillery', branch: 'artillery' },
+      { id: 'sixPoundHorse', label: '💣 6-lber Horse Artillery', branch: 'artillery' },
+      { id: 'fiveInchHowitzer', label: '💣 5-in Howitzer', branch: 'artillery' },
+      { id: 'experimentalHowitzer', label: '💣 Experimental Howitzer', branch: 'artillery' },
+      { id: 'rocketTroop', label: '💣 Rocket Troop', branch: 'artillery' }
+    ];
+
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
@@ -361,6 +381,31 @@
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
       const [admiraltySubTab, setAdmiraltySubTab] = React.useState('NAVY_LIST');
+
+      const [warOfficeSubTab, setWarOfficeSubTab] = React.useState('ARMY_LIST');
+
+      const [armyListCategories, setArmyListCategories] = React.useState(
+        WAR_MINISTRY_UNIT_CATALOGUE.map((category, categoryIndex) => ({
+          ...category,
+          entries: categoryIndex === 3
+            ? [{ id: 4001, regimentNumber: '2', name: "Duke of Cornwall's Light Infantry" }]
+            : []
+        }))
+      );
+
+      const [armyExpenditure, setArmyExpenditure] = React.useState({
+        infantryPayAndAllowances: 0,
+        cavalryPayAndRemounts: 0,
+        artilleryAndOrdnance: 0,
+        recruitmentAndBounties: 0,
+        uniformsAndEquipment: 0,
+        barracksAndGarrisons: 0,
+        transportAndCommissariat: 0,
+        pensionsAndHalfPay: 0,
+        extraordinaryOperations: 0,
+        notes: ''
+      });
+
 
       // Admiralty State: Royal Navy Navy List, Fleet Disposition, and Maritime Expenditure
       const [navyRates, setNavyRates] = React.useState([
@@ -517,6 +562,84 @@
           };
         });
       };
+
+
+      // War Ministry Army List Handlers
+      const addArmyUnitEntry = (categoryId) => {
+        const stamp = Date.now();
+        setArmyListCategories(prev => prev.map(category =>
+          category.id === categoryId
+            ? {
+                ...category,
+                entries: [
+                  ...category.entries,
+                  category.branch === 'infantry'
+                    ? { id: stamp, regimentNumber: '', name: '' }
+                    : { id: stamp, name: '' }
+                ]
+              }
+            : category
+        ));
+      };
+
+      const updateArmyUnitEntry = (categoryId, entryId, field, value) => {
+        setArmyListCategories(prev => prev.map(category =>
+          category.id === categoryId
+            ? {
+                ...category,
+                entries: category.entries.map(entry =>
+                  entry.id === entryId ? { ...entry, [field]: value } : entry
+                )
+              }
+            : category
+        ));
+      };
+
+      const removeArmyUnitEntry = (categoryId, entryId) => {
+        setArmyListCategories(prev => prev.map(category =>
+          category.id === categoryId
+            ? {
+                ...category,
+                entries: category.entries.filter(entry => entry.id !== entryId)
+              }
+            : category
+        ));
+      };
+
+      const addArmyCategory = (categoryId) => {
+        const categoryDefinition = WAR_MINISTRY_UNIT_CATALOGUE.find(category => category.id === categoryId);
+        if (!categoryDefinition) return;
+
+        setArmyListCategories(prev => {
+          if (prev.some(category => category.id === categoryId)) return prev;
+          return [...prev, { ...categoryDefinition, entries: [] }];
+        });
+      };
+
+      const removeArmyCategory = (categoryId) => {
+        setArmyListCategories(prev => prev.filter(category => category.id !== categoryId));
+      };
+
+      const availableArmyCategories = WAR_MINISTRY_UNIT_CATALOGUE.filter(
+        category => !armyListCategories.some(activeCategory => activeCategory.id === category.id)
+      );
+
+      const handleArmyExpenditureChange = (field, value) => {
+        if (field === 'notes') {
+          setArmyExpenditure(prev => ({ ...prev, notes: value }));
+          return;
+        }
+
+        const parsed = parseFloat(value);
+        setArmyExpenditure(prev => ({
+          ...prev,
+          [field]: Number.isNaN(parsed) ? 0 : parsed
+        }));
+      };
+
+      const armyExpenditureTotal = Object.entries(armyExpenditure)
+        .filter(([field]) => field !== 'notes')
+        .reduce((total, [, value]) => total + (Number(value) || 0), 0);
 
       // Admiralty Navy List Handlers
       const addNavyRate = () => {
@@ -1080,7 +1203,8 @@
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
-          admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure
+          admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
+          warOfficeSubTab, armyListCategories, armyExpenditure
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -1116,6 +1240,9 @@
             if (parsed.navyRates) setNavyRates(parsed.navyRates);
             if (parsed.fleetDisposition) setFleetDisposition(parsed.fleetDisposition);
             if (parsed.maritimeExpenditure) setMaritimeExpenditure(parsed.maritimeExpenditure);
+            if (parsed.warOfficeSubTab) setWarOfficeSubTab(parsed.warOfficeSubTab);
+            if (parsed.armyListCategories) setArmyListCategories(parsed.armyListCategories);
+            if (parsed.armyExpenditure) setArmyExpenditure(parsed.armyExpenditure);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -3699,16 +3826,208 @@
 
             {/* WAR OFFICE TAB */}
             {activeTab === 'War Office' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                <div className="text-center space-y-1">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">WAR OFFICE // COMMANDER-IN-CHIEF'S ANNUAL RETURN</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">ARMY ESTABLISHMENT & REGIMENTAL DISPOSITION</div>
-                  <div className="text-slate-400">========================================================================================</div>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2 bg-[#0B192C] border-b border-[#E5C158]/50 p-2">
+                  <button
+                    onClick={() => setWarOfficeSubTab('ARMY_LIST')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      warOfficeSubTab === 'ARMY_LIST'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    🇬🇧 War Ministry : Army List
+                  </button>
+                  <button
+                    onClick={() => setWarOfficeSubTab('ARMY_EXPENDITURE')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      warOfficeSubTab === 'ARMY_EXPENDITURE'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    Army Expenditure
+                  </button>
                 </div>
-                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
-                  Annual army return scheduled for Turn {warOfficeTurn || 'Unscheduled'}.
-                </div>
+
+                {warOfficeSubTab === 'ARMY_LIST' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Ministry : Army List</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    {availableArmyCategories.length > 0 && (
+                      <div className="flex justify-end">
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            addArmyCategory(e.target.value);
+                            e.currentTarget.value = '';
+                          }}
+                          className="bg-[#0F223D] border border-[#E5C158] text-[#E5C158] px-3 py-2 rounded font-bold"
+                        >
+                          <option value="" disabled>+ Add Army Unit Category</option>
+                          {availableArmyCategories.map(category => (
+                            <option key={category.id} value={category.id}>{category.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                      {['infantry', 'cavalry', 'artillery'].map(branch => (
+                        <div key={branch} className="space-y-5">
+                          {armyListCategories
+                            .filter(category => category.branch === branch)
+                            .map(category => (
+                              <div key={category.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-3">
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => addArmyUnitEntry(category.id)}
+                                    className="w-10 h-10 shrink-0 rounded-full bg-white text-[#0F223D] text-xl font-bold border border-slate-300 hover:bg-amber-100"
+                                    title={`Add unit beneath ${category.label}`}
+                                  >
+                                    +
+                                  </button>
+                                  <div className="text-[#E5C158] text-lg font-bold flex-1">
+                                    {category.label}
+                                  </div>
+                                  <button
+                                    onClick={() => removeArmyCategory(category.id)}
+                                    className="text-rose-400 hover:text-rose-200 font-bold"
+                                    title="Remove this category"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+
+                                <div className="space-y-2 pl-4">
+                                  {category.entries.length === 0 && (
+                                    <div className="text-slate-500 italic">
+                                      Use the circular + button to add a unit.
+                                    </div>
+                                  )}
+
+                                  {category.entries.map(entry => (
+                                    <div key={entry.id} className="flex items-center gap-2">
+                                      <span className="w-6 h-6 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold shrink-0">+</span>
+
+                                      {category.branch === 'infantry' && (
+                                        <>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={entry.regimentNumber || ''}
+                                            onChange={(e) => updateArmyUnitEntry(
+                                              category.id,
+                                              entry.id,
+                                              'regimentNumber',
+                                              e.target.value.replace(/\D/g, '')
+                                            )}
+                                            className="w-20 bg-[#0B192C] border border-slate-600 text-white p-2 rounded text-center"
+                                            placeholder="(X)"
+                                          />
+                                          <span className="text-[#E5C158] font-bold">/</span>
+                                        </>
+                                      )}
+
+                                      <input
+                                        type="text"
+                                        value={entry.name || ''}
+                                        onChange={(e) => updateArmyUnitEntry(category.id, entry.id, 'name', e.target.value)}
+                                        className="min-w-0 flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
+                                        placeholder="XXXXX"
+                                      />
+
+                                      <button
+                                        onClick={() => removeArmyUnitEntry(category.id, entry.id)}
+                                        className="text-rose-400 hover:text-rose-200 font-bold px-1"
+                                        title="Remove unit"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-center text-slate-400 italic">
+                      Annual army return scheduled for Turn {warOfficeTurn || 'Unscheduled'}.
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
+                {warOfficeSubTab === 'ARMY_EXPENDITURE' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Ministry : Army Expenditure</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        ['infantryPayAndAllowances', 'Infantry Pay & Allowances'],
+                        ['cavalryPayAndRemounts', 'Cavalry Pay & Remounts'],
+                        ['artilleryAndOrdnance', 'Artillery & Ordnance'],
+                        ['recruitmentAndBounties', 'Recruitment & Bounties'],
+                        ['uniformsAndEquipment', 'Uniforms & Equipment'],
+                        ['barracksAndGarrisons', 'Barracks & Garrisons'],
+                        ['transportAndCommissariat', 'Transport & Commissariat'],
+                        ['pensionsAndHalfPay', 'Pensions & Half Pay'],
+                        ['extraordinaryOperations', 'Extraordinary Operations']
+                      ].map(([field, label]) => (
+                        <div key={field} className="grid grid-cols-2 gap-2 items-center">
+                          <label className="text-slate-300">{label} :</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={armyExpenditure[field]}
+                            onChange={(e) => handleArmyExpenditureChange(field, e.target.value)}
+                            className="bg-[#0F223D] border border-slate-700 text-emerald-400 font-bold p-2 rounded w-full"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center border-t border-[#E5C158]/40 pt-4 text-base font-bold">
+                      <span className="text-[#E5C158]">TOTAL ARMY EXPENDITURE :</span>
+                      <span className="text-emerald-400 bg-[#0F223D] border border-[#E5C158] p-2 rounded">
+                        £{armyExpenditureTotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-300 block mb-2">Secretary at War's Notes &amp; Army Estimate Remarks :</label>
+                      <textarea
+                        value={armyExpenditure.notes}
+                        onChange={(e) => handleArmyExpenditureChange('notes', e.target.value)}
+                        rows="6"
+                        className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded resize-y"
+                        placeholder="Enter army expenditure notes..."
+                      />
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
