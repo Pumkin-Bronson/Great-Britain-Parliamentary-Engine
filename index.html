@@ -2126,13 +2126,13 @@
 
                             {actionId === 'breakAlliance' && (
                               <div>
-                                <label className="block text-[11px] text-slate-300 mb-1">Former Allied Power / Severed Party :</label>
+                                <label className="block text-[11px] text-slate-300 mb-1">Dissolved League / Severed Power :</label>
                                 <input
                                   type="text"
                                   placeholder="e.g. Austrian Empire"
                                   value={data.power || ''}
                                   onChange={(e) => handleActionDataChange('breakAlliance', 'power', e.target.value)}
-                                  className="w-full bg-[#0B192C] border border-slate-700 text-slate-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-rose-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                 />
                               </div>
                             )}
@@ -2140,23 +2140,23 @@
                             {actionId === 'militaryAccess' && (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Granting Court / Transit Sovereign :</label>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Grantee / Partner Court :</label>
                                   <input
                                     type="text"
-                                    placeholder="e.g. Kingdom of the Two Sicilies"
+                                    placeholder="e.g. Kingdom of Portugal"
                                     value={data.court || ''}
                                     onChange={(e) => handleActionDataChange('militaryAccess', 'court', e.target.value)}
                                     className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Term of Transit / Period of Right :</label>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Term / Duration :</label>
                                   <input
                                     type="text"
-                                    placeholder="e.g. 12 Calendar Months"
+                                    placeholder="e.g. Indefinite / 10 Years"
                                     value={data.term || ''}
                                     onChange={(e) => handleActionDataChange('militaryAccess', 'term', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                               </div>
@@ -2166,32 +2166,32 @@
                               <div className="space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Negotiating Power / Neighboring State :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Counterparty Sovereign / Power :</label>
                                     <input
                                       type="text"
-                                      placeholder="e.g. Kingdom of the Netherlands"
+                                      placeholder="e.g. Kingdom of the Two Sicilies"
                                       value={data.power || ''}
                                       onChange={(e) => handleActionDataChange('regions', 'power', e.target.value)}
                                       className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Nature of Transaction :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Nature of Transfer :</label>
                                     <select
                                       value={data.nature || 'Cession to foreign sovereign'}
                                       onChange={(e) => handleActionDataChange('regions', 'nature', e.target.value)}
                                       className="w-full bg-[#0B192C] border border-slate-700 text-amber-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     >
                                       <option value="Cession to foreign sovereign">Cession to foreign sovereign</option>
-                                      <option value="Annexation to the Crown">Annexation to the Crown</option>
+                                      <option value="Annexation to British Crown">Annexation to British Crown</option>
                                     </select>
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Demarcated Territory / Ceded Provinces :</label>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Territory / Province Designated :</label>
                                   <input
                                     type="text"
-                                    placeholder="e.g. Heligoland / Ionian Islands"
+                                    placeholder="e.g. Ionian Islands / Malta Maritime District"
                                     value={data.territory || ''}
                                     onChange={(e) => handleActionDataChange('regions', 'territory', e.target.value)}
                                     className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
@@ -2204,32 +2204,32 @@
                               <div className="space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Recipient / Providing Power :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Partner Foreign Sovereign :</label>
                                     <input
                                       type="text"
-                                      placeholder="e.g. Kingdom of Hanover"
+                                      placeholder="e.g. Kingdom of the Netherlands"
                                       value={data.power || ''}
                                       onChange={(e) => handleActionDataChange('technology', 'power', e.target.value)}
                                       className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Transmission :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Knowledge :</label>
                                     <select
                                       value={data.direction || 'Imported'}
                                       onChange={(e) => handleActionDataChange('technology', 'direction', e.target.value)}
                                       className="w-full bg-[#0B192C] border border-slate-700 text-cyan-300 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     >
-                                      <option value="Imported">Imported</option>
-                                      <option value="Imparted">Imparted</option>
+                                      <option value="Imported">Imported to Crown Knowledge</option>
+                                      <option value="Exported">Exported to Foreign Power</option>
                                     </select>
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Scientific Principles & Innovations :</label>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Scientific / Technical Principles Exchanged :</label>
                                   <input
                                     type="text"
-                                    placeholder="e.g. Steam Packet Machinery"
+                                    placeholder="e.g. Steam Navigation Patents / Agricultural Husbandry Models"
                                     value={data.principles || ''}
                                     onChange={(e) => handleActionDataChange('technology', 'principles', e.target.value)}
                                     className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
@@ -2242,35 +2242,35 @@
                               <div className="space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Transacting Power / Reciprocal State :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Foreign Sovereign / State Treasury :</label>
                                     <input
                                       type="text"
-                                      placeholder="e.g. Kingdom of Portugal"
+                                      placeholder="e.g. Kingdom of Sardinia"
                                       value={data.power || ''}
                                       onChange={(e) => handleActionDataChange('payment', 'power', e.target.value)}
                                       className="w-full bg-[#0B192C] border border-slate-700 text-white font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Settlement :</label>
+                                    <label className="block text-[11px] text-slate-300 mb-1">Direction of Remittance :</label>
                                     <select
                                       value={data.direction || 'Remittance to Foreign Treasury'}
                                       onChange={(e) => handleActionDataChange('payment', 'direction', e.target.value)}
-                                      className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                      className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
                                     >
                                       <option value="Remittance to Foreign Treasury">Remittance to Foreign Treasury</option>
-                                      <option value="Disbursement from State Vaults">Disbursement from State Vaults</option>
+                                      <option value="Receipt into HM Treasury">Receipt into HM Treasury</option>
                                     </select>
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] text-slate-300 mb-1">Quantum of Settlement / Principal Sum :</label>
+                                  <label className="block text-[11px] text-slate-300 mb-1">Stipulated Quantum / Financial Transfer :</label>
                                   <input
                                     type="text"
-                                    placeholder="e.g. £120,000 Sterling Gold Specie"
+                                    placeholder="e.g. £100,000 Sterling Indication"
                                     value={data.quantum || ''}
                                     onChange={(e) => handleActionDataChange('payment', 'quantum', e.target.value)}
-                                    className="w-full bg-[#0B192C] border border-slate-700 text-[#E5C158] font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                    className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                   />
                                 </div>
                               </div>
@@ -2282,7 +2282,7 @@
                   </div>
                 )}
 
-                <div className="text-center space-y-1 pt-4 border-t border-slate-800">
+                <div className="text-center space-y-1 pt-4">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
                   <div className="text-slate-400">========================================================================================</div>
@@ -2292,76 +2292,464 @@
 
             {/* HOME OFFICE TAB */}
             {activeTab === 'Home Office' && (
-              <div className="space-y-4">
-                {!isHomeOfficeScheduled ? (
-                  <div className="bg-[#0B192C] border border-slate-800 p-8 rounded text-center my-4 font-sans">
-                    <div className="text-3xl mb-2">📜🔒</div>
-                    <h3 className="text-lg font-bold text-slate-200">No Home Office Report Scheduled for Turn {currentTurn}</h3>
-                    <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
-                      Home Office reports are only delivered during their designated sitting turns on the Parliamentary Timetable (Scheduled turns: {peaceTurns.length > 0 ? peaceTurns.map(t => `Turn ${t}`).join(', ') : 'None'}).
-                    </p>
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-[#E5C158] font-bold tracking-wider text-sm">📌 Report on the State of the Public Peace & Domestic Tranquility</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide text-xs">Release Every 2 Months (In Game 4 Turns)</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wide py-1 text-xs">
+                    WHITEHALL // SECRETARY OF STATE FOR THE HOME DEPARTMENT<br/>
+                    REPORT ON THE STATE OF THE PUBLIC PEACE & DOMESTIC TRANQUILITY
                   </div>
-                ) : (
-                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                    <div className="text-center space-y-1">
-                      <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-white font-bold tracking-wider text-sm">WHITEHALL // SECRETARY OF STATE FOR THE HOME DEPARTMENT</div>
-                      <div className="text-[#E5C158] font-bold tracking-wide">REPORT ON THE STATE OF THE PUBLIC PEACE & DOMESTIC TRANQUILITY</div>
-                      <div className="text-slate-400">========================================================================================</div>
-                      <div className="flex justify-between items-center text-slate-300 pt-2 font-sans text-xs">
-                        <div>
-                          <strong className="text-white">Date of Audit :</strong> {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
+                  <div className="text-slate-400">========================================================================================</div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white">Date of Audit :</strong>
+                      <span className="text-[#E5C158] font-mono">{MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white">Reporting Officer :</strong>
+                      <input
+                        type="text"
+                        value={homeOfficeForm.reportingOfficer}
+                        onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
+                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION I */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+                  
+                  <div className="text-slate-300 text-xs space-y-1">
+                    <div className="text-slate-400 font-bold">&gt; Public Order Measures</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-[#0B192C] p-2 rounded border border-slate-800">
+                      <div><span className="text-emerald-400 font-bold">Exceptional :</span> 10+</div>
+                      <div><span className="text-blue-400 font-bold">Stable :</span> 7-9</div>
+                      <div><span className="text-amber-400 font-bold">Elevated Risk :</span> 0-6</div>
+                      <div><span className="text-rose-500 font-bold">Risk :</span> -1 or below</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                      const score = homeOfficeForm.publicOrder[region];
+                      const status = getPublicOrderStatusLabel(score);
+                      return (
+                        <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="capitalize font-bold text-white text-xs">{region} :</span>
+                            <input
+                              type="number"
+                              value={score}
+                              onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
+                              className="bg-[#0F223D] border border-slate-700 text-[#E5C158] font-bold font-mono px-2 py-0.5 rounded w-16 text-right"
+                            />
+                          </div>
+                          <div className="text-[11px] pl-2">
+                            <span className="text-slate-400">&gt; Status: </span>
+                            <span className={status.color}>{status.label}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <strong className="text-white">Reporting Officer :</strong>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 font-mono text-xs">
+                    <span className="text-[#E5C158] font-bold">• National Stability Index : </span>
+                    <span className="text-emerald-400 font-bold bg-[#0B192C] px-2 py-1 rounded border border-slate-800">{avgPublicOrder}</span>
+                    <span className="text-slate-400 text-[11px] ml-2 font-sans">(Average Public Order between the regions)</span>
+                  </div>
+                </div>
+
+                {/* SECTION II */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    II. RADICAL SEDITION & REFORM WATCH<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+
+                  <div className="text-slate-300 text-xs space-y-1">
+                    <div className="text-slate-400 font-bold">&gt; Clamour For Reform Level</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-[#0B192C] p-2 rounded border border-slate-800">
+                      <div><span className="text-rose-400 font-bold">High :</span> 10+</div>
+                      <div><span className="text-amber-400 font-bold">Medium :</span> 9-6</div>
+                      <div><span className="text-blue-400 font-bold">Low :</span> 5-1</div>
+                      <div><span className="text-emerald-400 font-bold">None :</span> 0</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                      const score = homeOfficeForm.clamour[region];
+                      const status = getClamourLabel(score);
+                      return (
+                        <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="capitalize font-bold text-white text-xs">{region} :</span>
+                            <input
+                              type="number"
+                              value={score}
+                              onChange={(e) => handleHomeOfficeChange('clamour', region, e.target.value)}
+                              className="bg-[#0F223D] border border-slate-700 text-rose-400 font-bold font-mono px-2 py-0.5 rounded w-16 text-right"
+                            />
+                          </div>
+                          <div className="text-[11px] pl-2">
+                            <span className="text-slate-400">&gt; Level: </span>
+                            <span className={status.color}>{status.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* SECTION III */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    III. PROVINCIAL TRANQUILITY & MAGISTRACY RETURNS<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3">
+                      <div className="text-[#E5C158] font-bold text-xs">Garrisoned Forces (Repression)</div>
+                      {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                        <div key={region} className="flex justify-between items-center text-xs">
+                          <span className="capitalize text-slate-300">{region} :</span>
                           <input
-                            type="text"
-                            value={homeOfficeForm.reportingOfficer}
-                            onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
-                            className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-0.5 rounded text-xs focus:border-[#E5C158] focus:outline-none"
+                            type="number"
+                            value={homeOfficeForm.garrisons[region]}
+                            onChange={(e) => handleHomeOfficeChange('garrisons', region, e.target.value)}
+                            className="bg-[#0F223D] border border-slate-700 text-cyan-300 font-mono px-2 py-0.5 rounded w-16 text-right"
                           />
                         </div>
-                      </div>
+                      ))}
                     </div>
 
-                    {/* SECTION I */}
-                    <div className="space-y-3 bg-[#0F223D] p-4 rounded border border-slate-700">
-                      <div className="text-[#E5C158] font-bold text-xs">
-                        ----------------------------------------------------------------------------------------<br />
-                        I. EXECUTIVE SUMMARY & THREAT ASSESSMENT<br />
-                        ----------------------------------------------------------------------------------------
-                      </div>
+                    <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3">
+                      <div className="text-[#E5C158] font-bold text-xs">People In Government (Repression)</div>
+                      {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                        <div key={region} className="flex justify-between items-center text-xs">
+                          <span className="capitalize text-slate-300">{region} :</span>
+                          <input
+                            type="number"
+                            value={homeOfficeForm.ministers[region]}
+                            onChange={(e) => handleHomeOfficeChange('ministers', region, e.target.value)}
+                            className="bg-[#0F223D] border border-slate-700 text-cyan-300 font-mono px-2 py-0.5 rounded w-16 text-right"
+                          />
+                        </div>
+                      ))}
+                    </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans pt-1">
-                        {['london', 'wales', 'scotland', 'ireland'].map((region) => {
-                          const val = homeOfficeForm.publicOrder[region];
-                          const status = getPublicOrderStatusLabel(val);
-                          const regionName = region.charAt(0).toUpperCase() + region.slice(1);
+                    <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3">
+                      <div className="text-[#E5C158] font-bold text-xs">Government Buildings (Repression)</div>
+                      {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                        <div key={region} className="flex justify-between items-center text-xs">
+                          <span className="capitalize text-slate-300">{region} :</span>
+                          <input
+                            type="number"
+                            value={homeOfficeForm.buildings[region]}
+                            onChange={(e) => handleHomeOfficeChange('buildings', region, e.target.value)}
+                            className="bg-[#0F223D] border border-slate-700 text-cyan-300 font-mono px-2 py-0.5 rounded w-16 text-right"
+                          />
+                        </div>
+                      ))}
+                    </div>
 
-                          return (
-                            <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="font-bold text-white text-sm">{regionName}</span>
-                                <span className={`text-xs font-bold ${status.color}`}>
-                                  &gt; {status.label}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <label className="text-slate-400 text-xs">Public Order Value :</label>
-                                <input
-                                  type="number"
-                                  value={val}
-                                  onChange={(e) => handleHomeOfficeChange('publicOrder', region, e.target.value)}
-                                  className="bg-[#0F223D] border border-slate-700 text-white font-mono p-1 rounded w-20 text-xs focus:border-[#E5C158]"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3">
+                      <div className="text-[#E5C158] font-bold text-xs">Government Type (Repression)</div>
+                      {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                        <div key={region} className="flex justify-between items-center text-xs">
+                          <span className="capitalize text-slate-300">{region} :</span>
+                          <input
+                            type="number"
+                            value={homeOfficeForm.govType[region]}
+                            onChange={(e) => handleHomeOfficeChange('govType', region, e.target.value)}
+                            className="bg-[#0F223D] border border-slate-700 text-cyan-300 font-mono px-2 py-0.5 rounded w-16 text-right"
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* SECTION IV */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    IV. CIVIC CULTURE, ENTERTAINMENT & INDUSTRY<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+
+                  <div className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3 max-w-xl">
+                    <div className="text-[#E5C158] font-bold text-xs">Entertainment & Culture Measures</div>
+                    {['london', 'wales', 'scotland', 'ireland'].map((region) => (
+                      <div key={region} className="flex justify-between items-center text-xs">
+                        <span className="capitalize text-slate-300">{region} :</span>
+                        <input
+                          type="number"
+                          value={homeOfficeForm.culture[region]}
+                          onChange={(e) => handleHomeOfficeChange('culture', region, e.target.value)}
+                          className="bg-[#0F223D] border border-slate-700 text-emerald-400 font-mono px-2 py-0.5 rounded w-16 text-right"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SECTION V */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    V. RADICALISATION OF RELIGION AND CULT<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+
+                  <div className="text-slate-300 text-xs space-y-1">
+                    <div className="text-slate-400 font-bold">&gt; Religious Unrest Level</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-[#0B192C] p-2 rounded border border-slate-800">
+                      <div><span className="text-rose-400 font-bold">High :</span> 5-6+</div>
+                      <div><span className="text-amber-400 font-bold">Medium :</span> 3-4</div>
+                      <div><span className="text-blue-400 font-bold">Low :</span> 1-2</div>
+                      <div><span className="text-emerald-400 font-bold">None :</span> 0</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {['london', 'wales', 'scotland', 'ireland'].map((region) => {
+                      const score = homeOfficeForm.religiousUnrest[region];
+                      const status = getReligiousUnrestLabel(score);
+                      return (
+                        <div key={region} className="bg-[#0B192C] p-3 rounded border border-slate-800 space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="capitalize font-bold text-white text-xs">{region} :</span>
+                            <input
+                              type="number"
+                              value={score}
+                              onChange={(e) => handleHomeOfficeChange('religiousUnrest', region, e.target.value)}
+                              className="bg-[#0F223D] border border-slate-700 text-rose-400 font-bold font-mono px-2 py-0.5 rounded w-16 text-right"
+                            />
+                          </div>
+                          <div className="text-[11px] pl-2">
+                            <span className="text-slate-400">&gt; Level: </span>
+                            <span className={status.color}>{status.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* SECTION VI */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono flex justify-between items-center">
+                    <div>
+                      ----------------------------------------------------------------------------------------<br/>
+                      VI. REGISTER OF FOREIGN ALIENS (Aliens Act / Espionage Surveillance)<br/>
+                      ----------------------------------------------------------------------------------------
+                    </div>
+                    <button
+                      onClick={handleAddAgent}
+                      className="bg-[#E5C158] text-[#0F223D] px-2.5 py-1 rounded font-bold text-xs hover:bg-yellow-400 transition-colors"
+                      title="Add Agent Record"
+                    >
+                      + Add Agent
+                    </button>
+                  </div>
+
+                  <div className="text-xs text-slate-300 font-mono">
+                    • <span className="text-[#E5C158] font-bold">{homeOfficeForm.foreignAgents.length}</span> Foreign Agents Detected
+                  </div>
+
+                  <div className="space-y-3">
+                    {homeOfficeForm.foreignAgents.map((agent, index) => (
+                      <div key={index} className="bg-[#0B192C] p-4 rounded border border-slate-800 space-y-3 relative">
+                        <button
+                          onClick={() => handleRemoveAgent(index)}
+                          className="absolute top-2 right-2 text-rose-400 hover:text-rose-200 font-bold text-xs"
+                          title="Remove Record"
+                        >
+                          ✕
+                        </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          <div>
+                            <label className="block text-slate-400 mb-1">Nation :</label>
+                            <input
+                              type="text"
+                              value={agent.nation}
+                              onChange={(e) => handleAgentChange(index, 'nation', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-white p-1.5 rounded font-mono"
+                              placeholder="e.g. Kingdom of France"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-400 mb-1">Name :</label>
+                            <input
+                              type="text"
+                              value={agent.name}
+                              onChange={(e) => handleAgentChange(index, 'name', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-white p-1.5 rounded font-mono"
+                              placeholder="Agent Name"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-400 mb-1">Status of Relation :</label>
+                            <input
+                              type="text"
+                              value={agent.status}
+                              onChange={(e) => handleAgentChange(index, 'status', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-amber-300 p-1.5 rounded font-mono"
+                              placeholder="Status"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-400 mb-1">Location :</label>
+                            <input
+                              type="text"
+                              value={agent.location}
+                              onChange={(e) => handleAgentChange(index, 'location', e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-cyan-300 p-1.5 rounded font-mono"
+                              placeholder="Location"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SECTION VII */}
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 font-sans">
+                  <div className="text-[#E5C158] font-bold text-sm border-b border-slate-700 pb-1 font-mono">
+                    ----------------------------------------------------------------------------------------<br/>
+                    VII. Domestic Summary<br/>
+                    ----------------------------------------------------------------------------------------
+                  </div>
+
+                  {(() => {
+                    const regions = ['london', 'wales', 'scotland', 'ireland'];
+                    const posTotal = regions.reduce((acc, r) => 
+                      acc + homeOfficeForm.publicOrder[r] + homeOfficeForm.garrisons[r] + 
+                      homeOfficeForm.ministers[r] + homeOfficeForm.buildings[r] + 
+                      homeOfficeForm.govType[r] + homeOfficeForm.culture[r], 0);
+                    const negTotal = regions.reduce((acc, r) => 
+                      acc + homeOfficeForm.clamour[r] + homeOfficeForm.religiousUnrest[r], 0);
+                    const inDisorder = posTotal < negTotal;
+
+                    return (
+                      <div className="space-y-3 bg-[#0B192C] p-4 rounded border border-slate-800 text-xs">
+                        <div className="grid grid-cols-2 gap-4 border-b border-slate-800 pb-2 font-mono">
+                          <div>
+                            <span className="text-slate-400">Positive Stability Measures Total: </span>
+                            <span className="text-emerald-400 font-bold">{posTotal}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Negative Agitation Measures Total: </span>
+                            <span className="text-rose-400 font-bold">{negTotal}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <strong className="text-[#E5C158]">Ministerial Judgement & Assessment : </strong>
+                          <span className={inDisorder ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
+                            {inDisorder 
+                              ? 'Home regions are experiencing significant social disorders and heightened civil risk.' 
+                              : 'Home regions remain in a state of domestic tranquility and public peace.'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="text-center space-y-1 pt-4">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIRALTY TAB */}
+            {activeTab === 'Admiralty' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">ADMIRALTY // BOARD OF ADMIRALTY ANNUAL RETURN</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">FLEET DISPOSITION & NAVAL ESTIMATES</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
+                  Annual naval return scheduled for Turn {admiraltyTurn || 'Unscheduled'}.
+                </div>
+              </div>
+            )}
+
+            {/* WAR OFFICE TAB */}
+            {activeTab === 'War Office' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">WAR OFFICE // COMMANDER-IN-CHIEF'S ANNUAL RETURN</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">ARMY ESTABLISHMENT & REGIMENTAL DISPOSITION</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
+                  Annual army return scheduled for Turn {warOfficeTurn || 'Unscheduled'}.
+                </div>
+              </div>
+            )}
+
+            {/* LORD CHANCELLOR TAB */}
+            {activeTab === "Lord Chancellor's Department" && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">LORD CHANCELLOR // HIGH COURT OF CHANCERY RETURN</div>
+                  <div className="text-[#E5C158] font-bold tracking-wide">ADMINISTRATION OF JUSTICE & JUDICIAL MAGISTRACY</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
+                  Lord Chancellor's Report active on scheduled turns.
+                </div>
+              </div>
+            )}
+
+            {/* GENERAL ELECTION TAB */}
+            {activeTab === 'General Election' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">PARLIAMENT // GENERAL ELECTION & WRITS OF ELECTION</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
+                  Election status and borough franchise tracking.
+                </div>
+              </div>
+            )}
+
+            {/* PARLIAMENT TAB */}
+            {activeTab === 'Parliament' && (
+              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                <div className="text-center space-y-1">
+                  <div className="text-slate-400">========================================================================================</div>
+                  <div className="text-white font-bold tracking-wider text-sm">PALACE OF WESTMINSTER // HOUSE OF COMMONS & LORDS DEBATES</div>
+                  <div className="text-slate-400">========================================================================================</div>
+                </div>
+                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
+                  Parliamentary legislative division lists and chamber debates.
+                </div>
               </div>
             )}
           </main>
@@ -2369,7 +2757,9 @@
       );
     }
 
-    ReactDOM.render(<ParliamentaryEngine />, document.getElementById('root'));
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<ParliamentaryEngine />);
   </script>
 </body>
 </html>
