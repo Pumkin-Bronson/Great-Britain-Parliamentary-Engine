@@ -77,6 +77,56 @@
       const [cabinetSubTab, setCabinetSubTab] = React.useState('NO_10_DOWNING_STREET');
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+      const [admiraltySubTab, setAdmiraltySubTab] = React.useState('NAVY_LIST');
+
+      // Admiralty State: Royal Navy Navy List, Fleet Disposition, and Maritime Expenditure
+      const [navyRates, setNavyRates] = React.useState([
+        {
+          id: 1,
+          rateNumber: 1,
+          rateTitle: 'First Rate',
+          gunCount: 100,
+          shipType: 'Ship-of-the-Line',
+          classes: [
+            {
+              id: 11,
+              className: 'Example Class',
+              ships: [
+                { id: 111, name: 'Victory' }
+              ]
+            }
+          ]
+        }
+      ]);
+
+      const [fleetDisposition, setFleetDisposition] = React.useState([
+        {
+          id: 1,
+          fleetName: 'Channel Fleet',
+          admiralOfFleet: '',
+          squadrons: [
+            {
+              id: 11,
+              squadronName: 'First Squadron',
+              admiralOfSquadron: '',
+              shipIds: []
+            }
+          ]
+        }
+      ]);
+
+      const [maritimeExpenditure, setMaritimeExpenditure] = React.useState({
+        dockyardMaintenance: 0,
+        victuallingAndStores: 0,
+        seamenAndMarines: 0,
+        shipConstruction: 0,
+        repairsAndRefits: 0,
+        ordnanceAndPowder: 0,
+        overseasStations: 0,
+        pensionsAndHalfPay: 0,
+        extraordinaryServices: 0,
+        notes: ''
+      });
 
       const [justiceTurns, setJusticeTurns] = React.useState([]);
       const [peaceTurns, setPeaceTurns] = React.useState([]);
@@ -157,6 +207,243 @@
           [key]: { ...prev[key], [field]: value }
         }));
       };
+
+      // Admiralty Navy List Handlers
+      const addNavyRate = () => {
+        const stamp = Date.now();
+        setNavyRates(prev => [
+          ...prev,
+          {
+            id: stamp,
+            rateNumber: '',
+            rateTitle: '',
+            gunCount: '',
+            shipType: 'Ship-of-the-Line',
+            classes: [
+              { id: stamp + 1, className: '', ships: [{ id: stamp + 2, name: '' }] }
+            ]
+          }
+        ]);
+      };
+
+      const removeNavyRate = (rateId) => {
+        setNavyRates(prev => prev.filter(rate => rate.id !== rateId));
+      };
+
+      const updateNavyRate = (rateId, field, value) => {
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId ? { ...rate, [field]: value } : rate
+        ));
+      };
+
+      const addNavyClass = (rateId) => {
+        const stamp = Date.now();
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? {
+                ...rate,
+                classes: [
+                  ...rate.classes,
+                  { id: stamp, className: '', ships: [{ id: stamp + 1, name: '' }] }
+                ]
+              }
+            : rate
+        ));
+      };
+
+      const removeNavyClass = (rateId, classId) => {
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? { ...rate, classes: rate.classes.filter(shipClass => shipClass.id !== classId) }
+            : rate
+        ));
+      };
+
+      const updateNavyClass = (rateId, classId, value) => {
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? {
+                ...rate,
+                classes: rate.classes.map(shipClass =>
+                  shipClass.id === classId ? { ...shipClass, className: value } : shipClass
+                )
+              }
+            : rate
+        ));
+      };
+
+      const addNavyShip = (rateId, classId) => {
+        const stamp = Date.now();
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? {
+                ...rate,
+                classes: rate.classes.map(shipClass =>
+                  shipClass.id === classId
+                    ? { ...shipClass, ships: [...shipClass.ships, { id: stamp, name: '' }] }
+                    : shipClass
+                )
+              }
+            : rate
+        ));
+      };
+
+      const updateNavyShip = (rateId, classId, shipId, value) => {
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? {
+                ...rate,
+                classes: rate.classes.map(shipClass =>
+                  shipClass.id === classId
+                    ? {
+                        ...shipClass,
+                        ships: shipClass.ships.map(ship =>
+                          ship.id === shipId ? { ...ship, name: value } : ship
+                        )
+                      }
+                    : shipClass
+                )
+              }
+            : rate
+        ));
+      };
+
+      const removeNavyShip = (rateId, classId, shipId) => {
+        setNavyRates(prev => prev.map(rate =>
+          rate.id === rateId
+            ? {
+                ...rate,
+                classes: rate.classes.map(shipClass =>
+                  shipClass.id === classId
+                    ? { ...shipClass, ships: shipClass.ships.filter(ship => ship.id !== shipId) }
+                    : shipClass
+                )
+              }
+            : rate
+        ));
+      };
+
+      const navyShipOptions = navyRates.flatMap(rate =>
+        rate.classes.flatMap(shipClass =>
+          shipClass.ships
+            .filter(ship => ship.name.trim())
+            .map(ship => ({
+              id: String(ship.id),
+              name: ship.name.trim(),
+              className: shipClass.className.trim(),
+              rateTitle: rate.rateTitle.trim()
+            }))
+        )
+      );
+
+      // Admiralty Fleet Disposition Handlers
+      const addFleet = () => {
+        const stamp = Date.now();
+        setFleetDisposition(prev => [
+          ...prev,
+          {
+            id: stamp,
+            fleetName: '',
+            admiralOfFleet: '',
+            squadrons: [
+              { id: stamp + 1, squadronName: '', admiralOfSquadron: '', shipIds: [] }
+            ]
+          }
+        ]);
+      };
+
+      const removeFleet = (fleetId) => {
+        setFleetDisposition(prev => prev.filter(fleet => fleet.id !== fleetId));
+      };
+
+      const updateFleet = (fleetId, field, value) => {
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId ? { ...fleet, [field]: value } : fleet
+        ));
+      };
+
+      const addSquadron = (fleetId) => {
+        const stamp = Date.now();
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId
+            ? {
+                ...fleet,
+                squadrons: [
+                  ...fleet.squadrons,
+                  { id: stamp, squadronName: '', admiralOfSquadron: '', shipIds: [] }
+                ]
+              }
+            : fleet
+        ));
+      };
+
+      const removeSquadron = (fleetId, squadronId) => {
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId
+            ? { ...fleet, squadrons: fleet.squadrons.filter(squadron => squadron.id !== squadronId) }
+            : fleet
+        ));
+      };
+
+      const updateSquadron = (fleetId, squadronId, field, value) => {
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId
+            ? {
+                ...fleet,
+                squadrons: fleet.squadrons.map(squadron =>
+                  squadron.id === squadronId ? { ...squadron, [field]: value } : squadron
+                )
+              }
+            : fleet
+        ));
+      };
+
+      const addShipToSquadron = (fleetId, squadronId, shipId) => {
+        if (!shipId) return;
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId
+            ? {
+                ...fleet,
+                squadrons: fleet.squadrons.map(squadron =>
+                  squadron.id === squadronId && !squadron.shipIds.includes(shipId)
+                    ? { ...squadron, shipIds: [...squadron.shipIds, shipId] }
+                    : squadron
+                )
+              }
+            : fleet
+        ));
+      };
+
+      const removeShipFromSquadron = (fleetId, squadronId, shipId) => {
+        setFleetDisposition(prev => prev.map(fleet =>
+          fleet.id === fleetId
+            ? {
+                ...fleet,
+                squadrons: fleet.squadrons.map(squadron =>
+                  squadron.id === squadronId
+                    ? { ...squadron, shipIds: squadron.shipIds.filter(id => id !== shipId) }
+                    : squadron
+                )
+              }
+            : fleet
+        ));
+      };
+
+      const handleMaritimeExpenditureChange = (field, value) => {
+        if (field === 'notes') {
+          setMaritimeExpenditure(prev => ({ ...prev, notes: value }));
+          return;
+        }
+        const parsed = parseFloat(value);
+        setMaritimeExpenditure(prev => ({
+          ...prev,
+          [field]: Number.isNaN(parsed) ? 0 : parsed
+        }));
+      };
+
+      const maritimeExpenditureTotal = Object.entries(maritimeExpenditure)
+        .filter(([field]) => field !== 'notes')
+        .reduce((total, [, value]) => total + (Number(value) || 0), 0);
 
       // Traits Handlers
       const addTraitToMinister = (key) => {
@@ -459,7 +746,8 @@
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab,
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters
+          turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
+          admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -491,6 +779,10 @@
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
+            if (parsed.admiraltySubTab) setAdmiraltySubTab(parsed.admiraltySubTab);
+            if (parsed.navyRates) setNavyRates(parsed.navyRates);
+            if (parsed.fleetDisposition) setFleetDisposition(parsed.fleetDisposition);
+            if (parsed.maritimeExpenditure) setMaritimeExpenditure(parsed.maritimeExpenditure);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -2682,16 +2974,380 @@
 
             {/* ADMIRALTY TAB */}
             {activeTab === 'Admiralty' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                <div className="text-center space-y-1">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">ADMIRALTY // BOARD OF ADMIRALTY ANNUAL RETURN</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">FLEET DISPOSITION & NAVAL ESTIMATES</div>
-                  <div className="text-slate-400">========================================================================================</div>
+              <div className="space-y-4">
+                <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'NAVY_LIST', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List' },
+                    { key: 'FLEET_DISPOSITION', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List' },
+                    { key: 'MARITIME_EXPENDITURE', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Maritime Expenditure' }
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.key}
+                      onClick={() => setAdmiraltySubTab(subTab.key)}
+                      className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
+                        admiraltySubTab === subTab.key
+                          ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
-                  Annual naval return scheduled for Turn {admiraltyTurn || 'Unscheduled'}.
-                </div>
+
+                {admiraltySubTab === 'NAVY_LIST' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={addNavyRate}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded hover:bg-yellow-400 cursor-pointer"
+                      >
+                        ＋ Add Rate of Ship
+                      </button>
+                    </div>
+
+                    <div className="space-y-5">
+                      {navyRates.map((rate, rateIndex) => (
+                        <div key={rate.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={rate.rateNumber}
+                              onChange={(e) => updateNavyRate(rate.id, 'rateNumber', e.target.value)}
+                              className="w-20 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                              placeholder="(X)"
+                            />
+                            <input
+                              type="text"
+                              value={rate.rateTitle}
+                              onChange={(e) => updateNavyRate(rate.id, 'rateTitle', e.target.value)}
+                              className="min-w-[170px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                              placeholder="Rate title (XXXX)"
+                            />
+                            <span className="text-white font-bold">-</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={rate.gunCount}
+                              onChange={(e) => updateNavyRate(rate.id, 'gunCount', e.target.value)}
+                              className="w-24 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                              placeholder="(X)"
+                            />
+                            <span className="text-white font-bold">-Gun</span>
+                            <select
+                              value={rate.shipType}
+                              onChange={(e) => updateNavyRate(rate.id, 'shipType', e.target.value)}
+                              className="bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                            >
+                              <option>Ship-of-the-Line</option>
+                              <option>Steam Ship-of-the-Line</option>
+                              <option>Ironclad</option>
+                            </select>
+                            <button
+                              onClick={() => removeNavyRate(rate.id)}
+                              disabled={navyRates.length === 1}
+                              className="text-rose-400 hover:text-rose-200 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Remove Rate"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="pl-6 md:pl-12 space-y-4">
+                            {rate.classes.map((shipClass, classIndex) => (
+                              <div key={shipClass.id} className="border-l-2 border-[#E5C158]/40 pl-4 space-y-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                                  <input
+                                    type="text"
+                                    value={shipClass.className}
+                                    onChange={(e) => updateNavyClass(rate.id, shipClass.id, e.target.value)}
+                                    className="min-w-[220px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                                    placeholder="XXXX Class"
+                                  />
+                                  <span className="text-white font-bold">Class</span>
+                                  <button
+                                    onClick={() => addNavyShip(rate.id, shipClass.id)}
+                                    className="border border-[#E5C158] text-[#E5C158] px-3 py-1.5 rounded hover:bg-[#E5C158]/10 cursor-pointer"
+                                  >
+                                    ＋ Add HMS Ship
+                                  </button>
+                                  <button
+                                    onClick={() => removeNavyClass(rate.id, shipClass.id)}
+                                    disabled={rate.classes.length === 1}
+                                    className="text-rose-400 hover:text-rose-200 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Remove Class"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+
+                                <div className="pl-6 md:pl-12 space-y-2">
+                                  {shipClass.ships.map((ship, shipIndex) => (
+                                    <div key={ship.id} className="flex items-center gap-2">
+                                      <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                                      <span className="text-white font-bold">HMS</span>
+                                      <input
+                                        type="text"
+                                        value={ship.name}
+                                        onChange={(e) => updateNavyShip(rate.id, shipClass.id, ship.id, e.target.value)}
+                                        className="min-w-[220px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                                        placeholder="XXXX"
+                                      />
+                                      <button
+                                        onClick={() => removeNavyShip(rate.id, shipClass.id, ship.id)}
+                                        disabled={shipClass.ships.length === 1}
+                                        className="text-rose-400 hover:text-rose-200 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        title="Remove Ship"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+
+                            <button
+                              onClick={() => addNavyClass(rate.id)}
+                              className="border border-[#E5C158] text-[#E5C158] px-3 py-1.5 rounded hover:bg-[#E5C158]/10 cursor-pointer"
+                            >
+                              ＋ Add Class beneath Rate {rateIndex + 1}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
+                {admiraltySubTab === 'FLEET_DISPOSITION' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="bg-[#0F223D] border border-slate-700 rounded p-3 text-slate-300">
+                      Only ships entered in the Royal Navy - Navy List may be assigned below.
+                      <span className="text-[#E5C158] font-bold ml-2">Recorded ships: {navyShipOptions.length}</span>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={addFleet}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded hover:bg-yellow-400 cursor-pointer"
+                      >
+                        ＋ Add Fleet
+                      </button>
+                    </div>
+
+                    <div className="space-y-5">
+                      {fleetDisposition.map((fleet) => (
+                        <div key={fleet.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                            <input
+                              type="text"
+                              value={fleet.fleetName}
+                              onChange={(e) => updateFleet(fleet.id, 'fleetName', e.target.value)}
+                              className="min-w-[240px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold text-base"
+                              placeholder="XXXX Fleet"
+                            />
+                            <span className="text-white font-bold text-base">Fleet</span>
+                            <button
+                              onClick={() => removeFleet(fleet.id)}
+                              disabled={fleetDisposition.length === 1}
+                              className="text-rose-400 hover:text-rose-200 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="pl-6 md:pl-12 flex flex-wrap items-center gap-2">
+                            <span className="text-white">• Admiral of the Fleet :</span>
+                            <input
+                              type="text"
+                              value={fleet.admiralOfFleet}
+                              onChange={(e) => updateFleet(fleet.id, 'admiralOfFleet', e.target.value)}
+                              className="min-w-[260px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
+                              placeholder="User Input"
+                            />
+                          </div>
+
+                          <div className="pl-6 md:pl-12 space-y-4">
+                            {fleet.squadrons.map((squadron) => (
+                              <div key={squadron.id} className="border-l-2 border-[#E5C158]/40 pl-4 space-y-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                                  <input
+                                    type="text"
+                                    value={squadron.squadronName}
+                                    onChange={(e) => updateSquadron(fleet.id, squadron.id, 'squadronName', e.target.value)}
+                                    className="min-w-[220px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded font-bold"
+                                    placeholder="XXXXX Squadron"
+                                  />
+                                  <span className="text-white font-bold">Squadron</span>
+                                  <button
+                                    onClick={() => removeSquadron(fleet.id, squadron.id)}
+                                    disabled={fleet.squadrons.length === 1}
+                                    className="text-rose-400 hover:text-rose-200 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+
+                                <div className="pl-6 md:pl-12 flex flex-wrap items-center gap-2">
+                                  <span className="text-white">• Admiral of the Squadron :</span>
+                                  <input
+                                    type="text"
+                                    value={squadron.admiralOfSquadron}
+                                    onChange={(e) => updateSquadron(fleet.id, squadron.id, 'admiralOfSquadron', e.target.value)}
+                                    className="min-w-[240px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
+                                    placeholder="User Input"
+                                  />
+                                </div>
+
+                                <div className="pl-6 md:pl-12 space-y-2">
+                                  {squadron.shipIds.map((shipId) => {
+                                    const ship = navyShipOptions.find(option => option.id === shipId);
+                                    if (!ship) return null;
+                                    return (
+                                      <div key={shipId} className="flex items-center gap-2 bg-[#0B192C] border border-slate-700 rounded p-2">
+                                        <span className="w-7 h-7 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold">＋</span>
+                                        <span className="text-white font-bold flex-1">HMS {ship.name}</span>
+                                        <span className="text-slate-500">{ship.className ? `${ship.className} Class` : 'Class not entered'}</span>
+                                        <button
+                                          onClick={() => removeShipFromSquadron(fleet.id, squadron.id, shipId)}
+                                          className="text-rose-400 hover:text-rose-200 px-2"
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+
+                                  <select
+                                    value=""
+                                    onChange={(e) => addShipToSquadron(fleet.id, squadron.id, e.target.value)}
+                                    className="w-full bg-[#0B192C] border border-[#E5C158] text-white p-2 rounded"
+                                    disabled={navyShipOptions.length === 0}
+                                  >
+                                    <option value="">
+                                      {navyShipOptions.length === 0 ? '-- Add ships in Navy List first --' : '-- Select HMS ship from Navy List --'}
+                                    </option>
+                                    {navyShipOptions
+                                      .filter(option => !squadron.shipIds.includes(option.id))
+                                      .map(option => (
+                                        <option key={option.id} value={option.id}>
+                                          HMS {option.name}{option.className ? ` — ${option.className} Class` : ''}
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ))}
+
+                            <button
+                              onClick={() => addSquadron(fleet.id)}
+                              className="border border-[#E5C158] text-[#E5C158] px-3 py-1.5 rounded hover:bg-[#E5C158]/10 cursor-pointer"
+                            >
+                              ＋ Add Squadron
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
+                {admiraltySubTab === 'MARITIME_EXPENDITURE' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Maritime Expenditure</div>
+                      <div className="text-white font-bold tracking-wide">ADMIRALTY // NAVAL ESTIMATES &amp; MARITIME SERVICES</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-3">
+                      {[
+                        ['dockyardMaintenance', 'Royal Dockyards & Maintenance'],
+                        ['victuallingAndStores', 'Victualling, Stores & Provisions'],
+                        ['seamenAndMarines', 'Wages of Seamen & Royal Marines'],
+                        ['shipConstruction', 'Construction of New Ships'],
+                        ['repairsAndRefits', 'Repairs, Refits & Coppering'],
+                        ['ordnanceAndPowder', 'Naval Ordnance, Guns & Powder'],
+                        ['overseasStations', 'Overseas Stations & Fleet Supply'],
+                        ['pensionsAndHalfPay', 'Pensions, Widows & Half-Pay'],
+                        ['extraordinaryServices', 'Extraordinary Maritime Services']
+                      ].map(([field, label]) => (
+                        <div key={field} className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+                          <label className="text-slate-300">{label} :</label>
+                          <div className="flex items-center gap-1">
+                            <span className="text-emerald-400">£</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={maritimeExpenditure[field]}
+                              onChange={(e) => handleMaritimeExpenditureChange(field, e.target.value)}
+                              className="bg-[#0B192C] border border-slate-700 text-emerald-400 font-bold p-2 rounded w-full"
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center border-t border-[#E5C158]/40 pt-4 text-base font-bold">
+                        <span className="text-[#E5C158]">TOTAL MARITIME EXPENDITURE :</span>
+                        <span className="text-emerald-400 bg-[#0B192C] border border-[#E5C158] p-2 rounded">
+                          £{maritimeExpenditureTotal.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="pt-3">
+                        <label className="text-slate-300 block mb-2">First Lord's Notes &amp; Naval Estimate Remarks :</label>
+                        <textarea
+                          value={maritimeExpenditure.notes}
+                          onChange={(e) => handleMaritimeExpenditureChange('notes', e.target.value)}
+                          rows="6"
+                          className="w-full bg-[#0B192C] border border-slate-700 text-white p-3 rounded resize-y"
+                          placeholder="Enter maritime expenditure notes..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-center text-slate-400 italic">
+                      Annual naval return scheduled for Turn {admiraltyTurn || 'Unscheduled'}.
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
