@@ -69,6 +69,118 @@
       war: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Arthur_Wellesley_1st_Duke_of_Wellington.jpg/400px-Arthur_Wellesley_1st_Duke_of_Wellington.jpg'
     };
 
+
+    // Deterministic local portrait generator.
+    // A renamed cabinet minister receives a fresh nineteenth-century-style SVG portrait.
+    // The image is generated entirely inside the browser, requires no external API,
+    // and is stored as a data URL so it survives the existing Save / Load system.
+    function createNineteenthCenturyPortrait(name, ministerKey) {
+      const safeName = String(name || 'Unnamed Minister').trim() || 'Unnamed Minister';
+      const seedSource = `${ministerKey || 'minister'}:${safeName}`;
+      let hash = 2166136261;
+
+      for (let i = 0; i < seedSource.length; i += 1) {
+        hash ^= seedSource.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+
+      const unsignedHash = hash >>> 0;
+      const pick = (values, shift = 0) => values[(unsignedHash >>> shift) % values.length];
+
+      const skin = pick(['#d6b18c', '#c99d79', '#e0bd99', '#b98665'], 0);
+      const skinShade = pick(['#aa7657', '#9b684d', '#b88464', '#8f5d45'], 3);
+      const hair = pick(['#2d211d', '#46342b', '#5a4635', '#6c5844', '#1d1a19'], 6);
+      const coat = pick(['#152a46', '#27364d', '#3d2731', '#223b36', '#4b3926'], 9);
+      const waistcoat = pick(['#d8c59a', '#c8b27f', '#b9c1c9', '#9e8a6b'], 12);
+      const backdrop = pick(['#1b2f4b', '#263852', '#2f3547', '#253b3b'], 15);
+      const eye = pick(['#40566a', '#4b3b31', '#304c45'], 18);
+      const faceWidth = 48 + ((unsignedHash >>> 20) % 9);
+      const noseLength = 16 + ((unsignedHash >>> 23) % 7);
+      const hairHeight = 24 + ((unsignedHash >>> 26) % 8);
+      const sideburnLength = 18 + ((unsignedHash >>> 28) % 11);
+      const hasMoustache = ((unsignedHash >>> 5) & 1) === 1;
+      const hasGlasses = ((unsignedHash >>> 7) & 3) === 3;
+
+      const initials = safeName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join('');
+
+      const moustacheMarkup = hasMoustache
+        ? `<path d="M78 96 C88 89 97 92 100 97 C103 92 112 89 122 96 C114 104 106 105 100 100 C94 105 86 104 78 96Z" fill="${hair}" opacity="0.9"/>`
+        : '';
+
+      const glassesMarkup = hasGlasses
+        ? `<g fill="none" stroke="#5f4a2b" stroke-width="2.2" opacity="0.88">
+             <ellipse cx="82" cy="79" rx="15" ry="11"/>
+             <ellipse cx="118" cy="79" rx="15" ry="11"/>
+             <path d="M97 79 H103 M67 77 L56 73 M133 77 L144 73"/>
+           </g>`
+        : '';
+
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="520" viewBox="0 0 200 260">
+          <defs>
+            <radialGradient id="background" cx="50%" cy="38%" r="70%">
+              <stop offset="0%" stop-color="#425574"/>
+              <stop offset="58%" stop-color="${backdrop}"/>
+              <stop offset="100%" stop-color="#091522"/>
+            </radialGradient>
+            <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${coat}"/>
+              <stop offset="100%" stop-color="#080d15"/>
+            </linearGradient>
+            <filter id="grain">
+              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="${unsignedHash % 999}"/>
+              <feColorMatrix type="saturate" values="0"/>
+              <feComponentTransfer>
+                <feFuncA type="table" tableValues="0 0.08"/>
+              </feComponentTransfer>
+            </filter>
+          </defs>
+
+          <rect width="200" height="260" fill="url(#background)"/>
+          <ellipse cx="100" cy="245" rx="92" ry="66" fill="#050b13" opacity="0.55"/>
+
+          <path d="M20 260 C28 193 57 165 100 165 C143 165 172 193 180 260Z" fill="url(#coat)"/>
+          <path d="M67 174 L100 224 L133 174 C123 167 112 163 100 163 C88 163 77 167 67 174Z" fill="${waistcoat}"/>
+          <path d="M74 166 L100 195 L126 166 L118 220 L100 233 L82 220Z" fill="#f1ece0"/>
+          <path d="M92 184 L100 197 L108 184 L105 229 L100 236 L95 229Z" fill="#ddd4c0"/>
+
+          <path d="M65 73 C67 38 82 24 100 24 C118 24 133 38 135 73 L129 122 C124 149 114 165 100 165 C86 165 76 149 71 122Z" fill="${skin}"/>
+          <ellipse cx="66" cy="94" rx="8" ry="15" fill="${skin}"/>
+          <ellipse cx="134" cy="94" rx="8" ry="15" fill="${skin}"/>
+
+          <path d="M61 72 C60 43 74 20 99 18 C125 19 141 42 138 75 C132 62 126 52 118 47 C105 56 87 58 67 51 C65 58 63 65 61 72Z" fill="${hair}"/>
+          <path d="M61 69 C57 83 59 104 68 ${112 + sideburnLength} L73 104 L72 69Z" fill="${hair}" opacity="0.96"/>
+          <path d="M139 69 C143 83 141 104 132 ${112 + sideburnLength} L127 104 L128 69Z" fill="${hair}" opacity="0.96"/>
+          <path d="M72 47 C81 ${33 - hairHeight / 4} 92 ${29 - hairHeight / 6} 101 30 C111 25 123 33 131 48 C113 40 90 42 72 47Z" fill="${hair}" opacity="0.9"/>
+
+          <path d="M71 73 Q82 66 93 73" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
+          <path d="M107 73 Q118 66 129 73" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="82" cy="80" rx="5" ry="3.5" fill="#f5f0e8"/>
+          <ellipse cx="118" cy="80" rx="5" ry="3.5" fill="#f5f0e8"/>
+          <circle cx="82" cy="80" r="2.2" fill="${eye}"/>
+          <circle cx="118" cy="80" r="2.2" fill="${eye}"/>
+
+          <path d="M100 78 C97 88 95 ${88 + noseLength} 99 ${96 + noseLength} C102 ${99 + noseLength} 107 ${97 + noseLength} 108 ${94 + noseLength}" fill="none" stroke="${skinShade}" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M84 121 Q100 130 116 121 Q100 141 84 121Z" fill="#8b5048" opacity="0.75"/>
+          <path d="M77 137 Q100 153 123 137" fill="none" stroke="${skinShade}" stroke-width="2" opacity="0.6"/>
+          ${moustacheMarkup}
+          ${glassesMarkup}
+
+          <ellipse cx="100" cy="118" rx="${faceWidth}" ry="69" fill="none" stroke="#e9c75d" stroke-width="1.4" opacity="0.15"/>
+          <text x="100" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#e9c75d" opacity="0.55">${initials}</text>
+
+          <rect width="200" height="260" filter="url(#grain)" opacity="0.55"/>
+        </svg>
+      `;
+
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
@@ -202,10 +314,25 @@
       };
 
       const handleMinisterFieldChange = (key, field, value) => {
-        setCabinetMinisters(prev => ({
-          ...prev,
-          [key]: { ...prev[key], [field]: value }
-        }));
+        setCabinetMinisters(prev => {
+          const currentMinister = prev[key];
+          const updatedMinister = {
+            ...currentMinister,
+            [field]: value
+          };
+
+          // Only a name change creates a replacement portrait.
+          // The generated portrait fills the complete interior of the existing oval frame.
+          if (field === 'name') {
+            updatedMinister.img = createNineteenthCenturyPortrait(value, key);
+            updatedMinister.portraitGeneratedFromName = value;
+          }
+
+          return {
+            ...prev,
+            [key]: updatedMinister
+          };
+        });
       };
 
       // Admiralty Navy List Handlers
@@ -962,9 +1089,11 @@
             <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
               <img 
                 src={minister.img} 
-                alt={minister.role} 
-                className="w-full h-full object-cover" 
-                onError={(e) => { e.target.style.display = 'none'; }}
+                alt={`${minister.name || minister.role} portrait`}
+                className="absolute inset-0 w-full h-full object-cover object-top z-10"
+                onError={(e) => {
+                  e.currentTarget.src = createNineteenthCenturyPortrait(minister.name, ministerKey);
+                }}
               />
               <div className="absolute inset-0 bg-[#0F223D] flex items-center justify-center text-[#E5C158] font-bold text-2xl -z-10">
                 👤
