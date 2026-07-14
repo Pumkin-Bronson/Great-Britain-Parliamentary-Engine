@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -99,8 +99,8 @@
         : pick(['brown', 'black', 'white', 'grey', 'ginger', 'blonde']);
 
       const facialHairOptions = hairStyle === 'wig'
-        ? ['none', 'beard', 'sideburns', 'muttonChops']
-        : ['none', 'moustache', 'beard', 'sideburns', 'muttonChops'];
+        ? ['none', 'sideburns', 'muttonChops']
+        : ['none', 'moustache', 'sideburns', 'muttonChops'];
 
       const clothingType = pick(['threePiece', 'doubleBreasted']);
       const clothingColourName = clothingType === 'threePiece'
@@ -209,9 +209,6 @@
       const renderFacialHair = () => {
         if (data.facialHair === 'moustache') {
           return <path d="M78 103 C88 96 97 99 100 104 C103 99 112 96 122 103 C114 111 106 112 100 107 C94 112 86 111 78 103Z" fill={hair} />;
-        }
-        if (data.facialHair === 'beard') {
-          return <path d="M74 111 C77 145 87 162 100 164 C113 162 123 145 126 111 C119 126 111 135 100 136 C89 135 81 126 74 111Z" fill={hair} opacity="0.96" />;
         }
         if (data.facialHair === 'sideburns') {
           return <g fill={hair}><path d="M67 84 C62 102 64 121 72 139 L78 121 L75 83Z" /><path d="M133 84 C138 102 136 121 128 139 L122 121 L125 83Z" /></g>;
@@ -1208,7 +1205,7 @@
             <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
               <MinisterPortrait
                 portraitData={minister.portraitData}
-                name={minister.portraitGeneratedFromName || minister.name}
+                name={minister.portraitGeneratedFromName || minister.portraitData?.safeName || 'Unconfirmed Minister'}
                 ministerKey={ministerKey}
               />
             </div>
@@ -1221,6 +1218,7 @@
               type="text"
               value={minister.name}
               onChange={(e) => handleMinisterFieldChange(ministerKey, 'name', e.target.value)}
+              // Typing only edits the text field. Portrait generation is restricted to Enter below.
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
