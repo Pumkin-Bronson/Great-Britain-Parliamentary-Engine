@@ -646,6 +646,18 @@
         )
       );
 
+      // Every Navy List ship may be assigned to only one squadron across all fleets.
+      // Removing it from its current squadron automatically makes it available again.
+      const assignedNavyShipIds = new Set(
+        fleetDisposition.flatMap(fleet =>
+          fleet.squadrons.flatMap(squadron => squadron.shipIds)
+        )
+      );
+
+      const availableNavyShipOptions = navyShipOptions.filter(
+        option => !assignedNavyShipIds.has(option.id)
+      );
+
       // Admiralty Fleet Disposition Handlers
       const addFleet = () => {
         const stamp = Date.now();
@@ -710,18 +722,29 @@
 
       const addShipToSquadron = (fleetId, squadronId, shipId) => {
         if (!shipId) return;
-        setFleetDisposition(prev => prev.map(fleet =>
-          fleet.id === fleetId
-            ? {
-                ...fleet,
-                squadrons: fleet.squadrons.map(squadron =>
-                  squadron.id === squadronId && !squadron.shipIds.includes(shipId)
-                    ? { ...squadron, shipIds: [...squadron.shipIds, shipId] }
-                    : squadron
-                )
-              }
-            : fleet
-        ));
+
+        setFleetDisposition(prev => {
+          const shipIsAlreadyAssigned = prev.some(fleet =>
+            fleet.squadrons.some(squadron => squadron.shipIds.includes(shipId))
+          );
+
+          if (shipIsAlreadyAssigned) {
+            return prev;
+          }
+
+          return prev.map(fleet =>
+            fleet.id === fleetId
+              ? {
+                  ...fleet,
+                  squadrons: fleet.squadrons.map(squadron =>
+                    squadron.id === squadronId
+                      ? { ...squadron, shipIds: [...squadron.shipIds, shipId] }
+                      : squadron
+                  )
+                }
+              : fleet
+          );
+        });
       };
 
       const removeShipFromSquadron = (fleetId, squadronId, shipId) => {
@@ -3346,9 +3369,6 @@
                                 {formatOrdinal(rate.rateNumber).replace(/^\d+/, '')}
                               </span>
                             </div>
-                            <span className="text-[#E5C158] font-bold text-xs whitespace-nowrap">
-                              {formatOrdinal(rate.rateNumber)}
-                            </span>
                             <input
                               type="text"
                               value={rate.rateTitle}
@@ -3570,18 +3590,20 @@
                                     value=""
                                     onChange={(e) => addShipToSquadron(fleet.id, squadron.id, e.target.value)}
                                     className="w-full bg-[#0B192C] border border-[#E5C158] text-white p-2 rounded"
-                                    disabled={navyShipOptions.length === 0}
+                                    disabled={navyShipOptions.length === 0 || availableNavyShipOptions.length === 0}
                                   >
                                     <option value="">
-                                      {navyShipOptions.length === 0 ? '-- Add ships in Navy List first --' : '-- Select HMS ship from Navy List --'}
+                                      {navyShipOptions.length === 0
+                                        ? '-- Add ships in Navy List first --'
+                                        : availableNavyShipOptions.length === 0
+                                        ? '-- Every Navy List ship is already assigned --'
+                                        : '-- Select HMS ship from Navy List --'}
                                     </option>
-                                    {navyShipOptions
-                                      .filter(option => !squadron.shipIds.includes(option.id))
-                                      .map(option => (
-                                        <option key={option.id} value={option.id}>
-                                          HMS {option.name}{option.className ? ` — ${option.className} Class` : ''}
-                                        </option>
-                                      ))}
+                                    {availableNavyShipOptions.map(option => (
+                                      <option key={option.id} value={option.id}>
+                                        HMS {option.name}{option.className ? ` — ${option.className} Class` : ''}
+                                      </option>
+                                    ))}
                                   </select>
                                 </div>
                               </div>
