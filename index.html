@@ -74,9 +74,9 @@
     // A renamed cabinet minister receives a fresh nineteenth-century-style SVG portrait.
     // The image is generated entirely inside the browser, requires no external API,
     // and is stored as a data URL so it survives the existing Save / Load system.
-    function createNineteenthCenturyPortrait(name, ministerKey) {
+    function createNineteenthCenturyPortrait(name, ministerKey, variationSeed = Date.now()) {
       const safeName = String(name || 'Unnamed Minister').trim() || 'Unnamed Minister';
-      const seedSource = `${ministerKey || 'minister'}:${safeName}`;
+      const seedSource = `${ministerKey || 'minister'}:${safeName}:${variationSeed}`;
       let hash = 2166136261;
 
       for (let i = 0; i < seedSource.length; i += 1) {
@@ -84,22 +84,59 @@
         hash = Math.imul(hash, 16777619);
       }
 
-      const unsignedHash = hash >>> 0;
-      const pick = (values, shift = 0) => values[(unsignedHash >>> shift) % values.length];
+      let randomState = hash >>> 0;
+      const random = () => {
+        randomState += 0x6D2B79F5;
+        let value = randomState;
+        value = Math.imul(value ^ (value >>> 15), value | 1);
+        value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+      };
+      const pick = (values) => values[Math.floor(random() * values.length)];
 
-      const skin = pick(['#d6b18c', '#c99d79', '#e0bd99', '#b98665'], 0);
-      const skinShade = pick(['#aa7657', '#9b684d', '#b88464', '#8f5d45'], 3);
-      const hair = pick(['#2d211d', '#46342b', '#5a4635', '#6c5844', '#1d1a19'], 6);
-      const coat = pick(['#152a46', '#27364d', '#3d2731', '#223b36', '#4b3926'], 9);
-      const waistcoat = pick(['#d8c59a', '#c8b27f', '#b9c1c9', '#9e8a6b'], 12);
-      const backdrop = pick(['#1b2f4b', '#263852', '#2f3547', '#253b3b'], 15);
-      const eye = pick(['#40566a', '#4b3b31', '#304c45'], 18);
-      const faceWidth = 48 + ((unsignedHash >>> 20) % 9);
-      const noseLength = 16 + ((unsignedHash >>> 23) % 7);
-      const hairHeight = 24 + ((unsignedHash >>> 26) % 8);
-      const sideburnLength = 18 + ((unsignedHash >>> 28) % 11);
-      const hasMoustache = ((unsignedHash >>> 5) & 1) === 1;
-      const hasGlasses = ((unsignedHash >>> 7) & 3) === 3;
+      const hairStyle = pick(['short', 'long', 'wig', 'bald']);
+      const hairColourMap = {
+        brown: '#4a3023',
+        black: '#171514',
+        white: '#eee9dc',
+        grey: '#817f78',
+        ginger: '#a84f22',
+        blonde: '#c6a56a'
+      };
+      const hairColourName = hairStyle === 'wig'
+        ? 'white'
+        : pick(['brown', 'black', 'white', 'grey', 'ginger', 'blonde']);
+      const hair = hairColourMap[hairColourName];
+
+      const clothingType = pick(['threePiece', 'doubleBreasted']);
+      const threePieceColours = {
+        brown: '#4a3426',
+        black: '#17191d',
+        navy: '#172a45'
+      };
+      const doubleBreastedColours = {
+        brown: '#4a3426',
+        black: '#17191d',
+        navy: '#172a45',
+        charcoal: '#34383d'
+      };
+      const clothingColourName = clothingType === 'threePiece'
+        ? pick(Object.keys(threePieceColours))
+        : pick(Object.keys(doubleBreastedColours));
+      const coat = clothingType === 'threePiece'
+        ? threePieceColours[clothingColourName]
+        : doubleBreastedColours[clothingColourName];
+
+      const skin = pick(['#d6b18c', '#c99d79', '#e0bd99', '#b98665']);
+      const skinShade = pick(['#aa7657', '#9b684d', '#b88464', '#8f5d45']);
+      const waistcoat = pick(['#d8c59a', '#c8b27f', '#b9c1c9', '#9e8a6b']);
+      const backdrop = pick(['#1b2f4b', '#263852', '#2f3547', '#253b3b']);
+      const eye = pick(['#40566a', '#4b3b31', '#304c45']);
+      const faceWidth = 48 + Math.floor(random() * 9);
+      const noseLength = 16 + Math.floor(random() * 7);
+      const sideburnLength = 18 + Math.floor(random() * 11);
+      const hasMoustache = random() > 0.55;
+      const hasGlasses = random() > 0.78;
 
       const initials = safeName
         .split(/\s+/)
@@ -107,6 +144,52 @@
         .slice(0, 2)
         .map(part => part.charAt(0).toUpperCase())
         .join('');
+
+      let hairMarkup = '';
+      if (hairStyle === 'short') {
+        hairMarkup = `
+          <path d="M61 72 C60 43 74 20 99 18 C125 19 141 42 138 75 C132 62 126 52 118 47 C105 56 87 58 67 51 C65 58 63 65 61 72Z" fill="${hair}"/>
+          <path d="M61 69 C57 83 59 104 68 ${112 + sideburnLength} L73 104 L72 69Z" fill="${hair}" opacity="0.96"/>
+          <path d="M139 69 C143 83 141 104 132 ${112 + sideburnLength} L127 104 L128 69Z" fill="${hair}" opacity="0.96"/>`;
+      } else if (hairStyle === 'long') {
+        hairMarkup = `
+          <path d="M58 74 C56 42 72 18 100 17 C129 18 145 43 142 76 C133 60 124 51 115 47 C101 56 83 58 64 50 C62 58 60 66 58 74Z" fill="${hair}"/>
+          <path d="M58 66 C48 92 51 137 66 158 C72 145 74 120 72 77Z" fill="${hair}"/>
+          <path d="M142 66 C152 92 149 137 134 158 C128 145 126 120 128 77Z" fill="${hair}"/>`;
+      } else if (hairStyle === 'wig') {
+        hairMarkup = `
+          <path d="M55 73 C51 41 70 15 100 15 C131 15 149 41 145 74 C137 61 128 51 117 46 C103 54 84 57 62 49 C60 57 57 66 55 73Z" fill="#eee9dc"/>
+          <g fill="#eee9dc" stroke="#d7d0c1" stroke-width="1">
+            <circle cx="58" cy="71" r="11"/><circle cx="55" cy="88" r="10"/><circle cx="57" cy="105" r="10"/>
+            <circle cx="142" cy="71" r="11"/><circle cx="145" cy="88" r="10"/><circle cx="143" cy="105" r="10"/>
+            <circle cx="72" cy="42" r="12"/><circle cx="88" cy="34" r="12"/><circle cx="105" cy="33" r="12"/><circle cx="122" cy="40" r="12"/>
+          </g>
+          <path d="M60 103 C54 125 62 151 76 164 L83 139 L76 99Z" fill="#eee9dc"/>
+          <path d="M140 103 C146 125 138 151 124 164 L117 139 L124 99Z" fill="#eee9dc"/>`;
+      } else {
+        hairMarkup = `
+          <path d="M65 59 C72 33 85 23 100 23 C116 23 129 34 136 60 C126 49 113 44 100 44 C87 44 74 49 65 59Z" fill="${hair}" opacity="0.28"/>
+          <path d="M62 72 C59 87 61 106 69 126 L74 104 L72 70Z" fill="${hair}"/>
+          <path d="M138 72 C141 87 139 106 131 126 L126 104 L128 70Z" fill="${hair}"/>`;
+      }
+
+      const clothingMarkup = clothingType === 'threePiece'
+        ? `
+          <path d="M20 260 C28 193 57 165 100 165 C143 165 172 193 180 260Z" fill="url(#coat)"/>
+          <path d="M62 174 L100 229 L138 174 C127 166 114 162 100 162 C86 162 73 166 62 174Z" fill="${waistcoat}"/>
+          <path d="M73 166 L100 198 L127 166 L119 220 L100 236 L81 220Z" fill="#f1ece0"/>
+          <path d="M92 185 L100 198 L108 185 L105 229 L100 237 L95 229Z" fill="#ddd4c0"/>
+          <circle cx="100" cy="211" r="2.2" fill="#5e4b2d"/><circle cx="100" cy="220" r="2.2" fill="#5e4b2d"/>`
+        : `
+          <path d="M15 260 C23 190 54 164 100 164 C146 164 177 190 185 260Z" fill="url(#coat)"/>
+          <path d="M68 170 L88 260 L106 260 L96 179Z" fill="${coat}" opacity="0.85"/>
+          <path d="M132 170 L112 260 L94 260 L104 179Z" fill="${coat}" opacity="0.85"/>
+          <path d="M78 166 L100 197 L122 166 L115 214 L100 228 L85 214Z" fill="#eee8dc"/>
+          <g fill="#c7a94b">
+            <circle cx="82" cy="205" r="2.8"/><circle cx="118" cy="205" r="2.8"/>
+            <circle cx="84" cy="220" r="2.8"/><circle cx="116" cy="220" r="2.8"/>
+            <circle cx="86" cy="235" r="2.8"/><circle cx="114" cy="235" r="2.8"/>
+          </g>`;
 
       const moustacheMarkup = hasMoustache
         ? `<path d="M78 96 C88 89 97 92 100 97 C103 92 112 89 122 96 C114 104 106 105 100 100 C94 105 86 104 78 96Z" fill="${hair}" opacity="0.9"/>`
@@ -133,7 +216,7 @@
               <stop offset="100%" stop-color="#080d15"/>
             </linearGradient>
             <filter id="grain">
-              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="${unsignedHash % 999}"/>
+              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="${Math.floor(random() * 999)}"/>
               <feColorMatrix type="saturate" values="0"/>
               <feComponentTransfer>
                 <feFuncA type="table" tableValues="0 0.08"/>
@@ -143,20 +226,12 @@
 
           <rect width="200" height="260" fill="url(#background)"/>
           <ellipse cx="100" cy="245" rx="92" ry="66" fill="#050b13" opacity="0.55"/>
-
-          <path d="M20 260 C28 193 57 165 100 165 C143 165 172 193 180 260Z" fill="url(#coat)"/>
-          <path d="M67 174 L100 224 L133 174 C123 167 112 163 100 163 C88 163 77 167 67 174Z" fill="${waistcoat}"/>
-          <path d="M74 166 L100 195 L126 166 L118 220 L100 233 L82 220Z" fill="#f1ece0"/>
-          <path d="M92 184 L100 197 L108 184 L105 229 L100 236 L95 229Z" fill="#ddd4c0"/>
+          ${clothingMarkup}
 
           <path d="M65 73 C67 38 82 24 100 24 C118 24 133 38 135 73 L129 122 C124 149 114 165 100 165 C86 165 76 149 71 122Z" fill="${skin}"/>
           <ellipse cx="66" cy="94" rx="8" ry="15" fill="${skin}"/>
           <ellipse cx="134" cy="94" rx="8" ry="15" fill="${skin}"/>
-
-          <path d="M61 72 C60 43 74 20 99 18 C125 19 141 42 138 75 C132 62 126 52 118 47 C105 56 87 58 67 51 C65 58 63 65 61 72Z" fill="${hair}"/>
-          <path d="M61 69 C57 83 59 104 68 ${112 + sideburnLength} L73 104 L72 69Z" fill="${hair}" opacity="0.96"/>
-          <path d="M139 69 C143 83 141 104 132 ${112 + sideburnLength} L127 104 L128 69Z" fill="${hair}" opacity="0.96"/>
-          <path d="M72 47 C81 ${33 - hairHeight / 4} 92 ${29 - hairHeight / 6} 101 30 C111 25 123 33 131 48 C113 40 90 42 72 47Z" fill="${hair}" opacity="0.9"/>
+          ${hairMarkup}
 
           <path d="M71 73 Q82 66 93 73" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
           <path d="M107 73 Q118 66 129 73" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
@@ -173,7 +248,6 @@
 
           <ellipse cx="100" cy="118" rx="${faceWidth}" ry="69" fill="none" stroke="#e9c75d" stroke-width="1.4" opacity="0.15"/>
           <text x="100" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#e9c75d" opacity="0.55">${initials}</text>
-
           <rect width="200" height="260" filter="url(#grain)" opacity="0.55"/>
         </svg>
       `;
@@ -314,23 +388,34 @@
       };
 
       const handleMinisterFieldChange = (key, field, value) => {
+        setCabinetMinisters(prev => ({
+          ...prev,
+          [key]: {
+            ...prev[key],
+            [field]: value
+          }
+        }));
+      };
+
+      const commitMinisterNameAndPortrait = (key) => {
         setCabinetMinisters(prev => {
           const currentMinister = prev[key];
-          const updatedMinister = {
-            ...currentMinister,
-            [field]: value
-          };
+          const completedName = String(currentMinister.name || '').trim();
 
-          // Only a name change creates a replacement portrait.
-          // The generated portrait fills the complete interior of the existing oval frame.
-          if (field === 'name') {
-            updatedMinister.img = createNineteenthCenturyPortrait(value, key);
-            updatedMinister.portraitGeneratedFromName = value;
+          if (!completedName) {
+            return prev;
           }
 
+          const portraitVariationSeed = `${Date.now()}-${Math.random()}`;
           return {
             ...prev,
-            [key]: updatedMinister
+            [key]: {
+              ...currentMinister,
+              name: completedName,
+              img: createNineteenthCenturyPortrait(completedName, key, portraitVariationSeed),
+              portraitGeneratedFromName: completedName,
+              portraitVariationSeed
+            }
           };
         });
       };
@@ -1108,6 +1193,13 @@
               type="text"
               value={minister.name}
               onChange={(e) => handleMinisterFieldChange(ministerKey, 'name', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  commitMinisterNameAndPortrait(ministerKey);
+                  e.currentTarget.blur();
+                }
+              }}
               className="bg-white text-slate-700 font-semibold px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-1 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
               placeholder="Name (Editable)"
             />
