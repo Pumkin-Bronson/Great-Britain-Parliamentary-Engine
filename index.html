@@ -2680,20 +2680,244 @@
               </div>
             )}
 
-            {/* ADMIRALTY TAB */}
-            {activeTab === 'Admiralty' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                <div className="text-center space-y-1">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">ADMIRALTY // BOARD OF ADMIRALTY ANNUAL RETURN</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">FLEET DISPOSITION & NAVAL ESTIMATES</div>
-                  <div className="text-slate-400">========================================================================================</div>
-                </div>
-                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
-                  Annual naval return scheduled for Turn {admiraltyTurn || 'Unscheduled'}.
-                </div>
-              </div>
-            )}
+          // --- ADMIRALTY STATE ---
+const [admiraltySubTab, setAdmiraltySubTab] = React.useState('navy_list');
+
+// Sub-Tab 1: Navy List State
+const [navyRates, setNavyRates] = React.useState([
+  {
+    id: 'rate_1',
+    name: 'First Rate (100+ Guns)',
+    classes: [
+      {
+        id: 'class_1',
+        name: 'Caledonia-class',
+        guns: 120,
+        ships: [
+          { id: 'ship_1', name: 'HMS Victory', guns: 104, tonnage: 3500, status: 'Active Service', commander: 'Capt. Thomas Hardy' },
+          { id: 'ship_2', name: 'HMS Britannia', guns: 120, tonnage: 3600, status: 'In Reserve', commander: 'Unassigned' }
+        ]
+      }
+    ]
+  }
+]);
+
+// Sub-Tab 2: Fleet Disposition State
+const [fleets, setFleets] = React.useState([
+  {
+    id: 'fleet_1',
+    name: 'Channel Fleet',
+    base: 'Portsmouth',
+    commander: 'Admiral Sir Edward Thornbrough',
+    assignedShipIds: ['ship_1']
+  }
+]);
+
+// Sub-Tab 3: Expenditure State
+const [maritimeExpenditure, setMaritimeExpenditure] = React.useState({
+  seamenPay: 1250000,
+  victualling: 850000,
+  dockyardLabor: 620000,
+  navalStores: 940000,
+  newConstruction: 450000,
+  halfPayPensions: 780000,
+  transportService: 210000
+});
+
+// Helper: Extract all recorded HMS Ships from Sub-Tab 1
+const getAllNavyListShips = () => {
+  const ships = [];
+  navyRates.forEach(rate => {
+    rate.classes.forEach(cls => {
+      cls.ships.forEach(s => {
+        ships.push({ ...s, rateName: rate.name, className: cls.name });
+      });
+    });
+  });
+  return ships;
+};
+
+// --- HANDLERS FOR SUB-TAB 1 (Navy List) ---
+const addRate = () => {
+  setNavyRates([
+    ...navyRates,
+    { id: `rate_${Date.now()}`, name: 'New Rate Title (XXXX)', classes: [] }
+  ]);
+};
+
+const updateRateName = (rateId, val) => {
+  setNavyRates(navyRates.map(r => r.id === rateId ? { ...r, name: val } : r));
+};
+
+const removeRate = (rateId) => {
+  setNavyRates(navyRates.filter(r => r.id !== rateId));
+};
+
+const addClassToRate = (rateId) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: [
+          ...r.classes,
+          { id: `class_${Date.now()}`, name: 'New Class (XXXX)', guns: 74, ships: [] }
+        ]
+      };
+    }
+    return r;
+  }));
+};
+
+const updateClassName = (rateId, classId, val) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: r.classes.map(c => c.id === classId ? { ...c, name: val } : c)
+      };
+    }
+    return r;
+  }));
+};
+
+const updateClassGuns = (rateId, classId, val) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: r.classes.map(c => c.id === classId ? { ...c, guns: parseInt(val) || 0 } : c)
+      };
+    }
+    return r;
+  }));
+};
+
+const removeClass = (rateId, classId) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return { ...r, classes: r.classes.filter(c => c.id !== classId) };
+    }
+    return r;
+  }));
+};
+
+const addShipToClass = (rateId, classId) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: r.classes.map(c => {
+          if (c.id === classId) {
+            return {
+              ...c,
+              ships: [
+                ...c.ships,
+                {
+                  id: `ship_${Date.now()}`,
+                  name: 'HMS New Warship (XXXX)',
+                  guns: c.guns,
+                  tonnage: 1200,
+                  status: 'Active Service',
+                  commander: 'Unassigned'
+                }
+              ]
+            };
+          }
+          return c;
+        })
+      };
+    }
+    return r;
+  }));
+};
+
+const updateShipField = (rateId, classId, shipId, field, val) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: r.classes.map(c => {
+          if (c.id === classId) {
+            return {
+              ...c,
+              ships: c.ships.map(s => s.id === shipId ? { ...s, [field]: val } : s)
+            };
+          }
+          return c;
+        })
+      };
+    }
+    return r;
+  }));
+};
+
+const removeShip = (rateId, classId, shipId) => {
+  setNavyRates(navyRates.map(r => {
+    if (r.id === rateId) {
+      return {
+        ...r,
+        classes: r.classes.map(c => {
+          if (c.id === classId) {
+            return { ...c, ships: c.ships.filter(s => s.id !== shipId) };
+          }
+          return c;
+        })
+      };
+    }
+    return r;
+  }));
+  // Clean up references in fleet assignments
+  setFleets(fleets.map(f => ({
+    ...f,
+    assignedShipIds: f.assignedShipIds.filter(id => id !== shipId)
+  })));
+};
+
+// --- HANDLERS FOR SUB-TAB 2 (Fleet Disposition) ---
+const addFleet = () => {
+  setFleets([
+    ...fleets,
+    {
+      id: `fleet_${Date.now()}`,
+      name: 'New Fleet Station (XXXX)',
+      base: 'Port Base (XXXX)',
+      commander: 'Commander Name (XXXX)',
+      assignedShipIds: []
+    }
+  ]);
+};
+
+const updateFleetField = (fleetId, field, val) => {
+  setFleets(fleets.map(f => f.id === fleetId ? { ...f, [field]: val } : f));
+};
+
+const removeFleet = (fleetId) => {
+  setFleets(fleets.filter(f => f.id !== fleetId));
+};
+
+const assignShipToFleet = (fleetId, shipId) => {
+  if (!shipId) return;
+  setFleets(fleets.map(f => {
+    if (f.id === fleetId) {
+      if (!f.assignedShipIds.includes(shipId)) {
+        return { ...f, assignedShipIds: [...f.assignedShipIds, shipId] };
+      }
+    } else {
+      // Unassign from other fleets if single assignment preferred
+      return { ...f, assignedShipIds: f.assignedShipIds.filter(id => id !== shipId) };
+    }
+    return f;
+  }));
+};
+
+const unassignShipFromFleet = (fleetId, shipId) => {
+  setFleets(fleets.map(f => {
+    if (f.id === fleetId) {
+      return { ...f, assignedShipIds: f.assignedShipIds.filter(id => id !== shipId) };
+    }
+    return f;
+  }));
+};
 
             {/* WAR OFFICE TAB */}
             {activeTab === 'War Office' && (
