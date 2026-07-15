@@ -316,6 +316,18 @@
               <circle cx="100" cy="198" r="5" fill="#c7a94b" />
               <circle cx="100" cy="198" r="2.5" fill="#7b2638" />
             </g>
+          ) : ministerKey === 'monarch' ? (
+            <g>
+              <path d="M14 260 C22 188 53 161 100 161 C147 161 178 188 186 260Z" fill="#8f1f2d" />
+              <path d="M49 173 L79 260 H121 L151 173 C135 164 119 160 100 160 C81 160 65 164 49 173Z" fill="#a92738" />
+              <path d="M66 166 L100 202 L134 166 L124 225 L100 242 L76 225Z" fill="#111318" />
+              <path d="M79 169 L100 196 L121 169 L114 207 L100 220 L86 207Z" fill="#eee8dc" />
+              <g fill="#d8b84f">
+                <circle cx="80" cy="211" r="3" /><circle cx="120" cy="211" r="3" />
+                <circle cx="82" cy="228" r="3" /><circle cx="118" cy="228" r="3" />
+                <circle cx="84" cy="245" r="3" /><circle cx="116" cy="245" r="3" />
+              </g>
+            </g>
           ) : data.clothingType === 'threePiece' ? (
             <g>
               <path d="M20 260 C28 193 57 165 100 165 C143 165 172 193 180 260Z" fill={`url(#${coatGradientId})`} />
@@ -489,6 +501,17 @@
       const [gdiTurn1Inflow, setGdiTurn1Inflow] = React.useState(25000);
       const [gdiTurn7Inflow, setGdiTurn7Inflow] = React.useState(32000);
 
+
+      // Chancellor's Annual Financial Statement State
+      const [financialStatement, setFinancialStatement] = React.useState({
+        lateAprilTreasuryBalance: 0,
+        armyEstimate: 0, armyReserve: 0,
+        navalEstimate: 0, navalReserve: 0,
+        homeEstimate: 0, homeReserve: 0,
+        foreignEstimate: 0, foreignReserve: 0,
+        civilListEstimate: 0, civilListReserve: 0
+      });
+
       // Cabinet State
       const [cabinetMinisters, setCabinetMinisters] = React.useState({
         pm: {
@@ -605,7 +628,7 @@
           year: selectedYear,
           turn: currentTurn,
           period: MONTH_NAMES[currentTurn - 1],
-          sealedPhrase: 'The Great Seal',
+          sealedPhrase: 'The Great Seal of Great Britain',
           sealedAt: new Date().toISOString()
         };
 
@@ -1282,6 +1305,36 @@
       const netYield = totalInflows - totalOutflows;
       const totalLiquidity = (cfForm.initialLiquidity || 0) + netYield;
 
+
+      // Chancellor's Annual Financial Statement Calculations
+      const handleFinancialStatementChange = (field, value) => {
+        const parsed = parseFloat(value);
+        setFinancialStatement(prev => ({ ...prev, [field]: Number.isNaN(parsed) ? 0 : parsed }));
+      };
+
+      const projectedAnnualRevenue = (() => {
+        const opening = Number(gdiTurn1Inflow) || 0;
+        const later = Number(gdiTurn7Inflow) || 0;
+        const growthPerTurn = (later - opening) / 6;
+        return Array.from({ length: 24 }, (_, index) => Math.max(0, opening + growthPerTurn * index))
+          .reduce((sum, value) => sum + value, 0);
+      })();
+
+      const totalServiceEstimates =
+        (financialStatement.armyEstimate || 0) + (financialStatement.navalEstimate || 0) +
+        (financialStatement.homeEstimate || 0) + (financialStatement.foreignEstimate || 0) +
+        (financialStatement.civilListEstimate || 0);
+
+      const totalReserveFunds =
+        (financialStatement.armyReserve || 0) + (financialStatement.navalReserve || 0) +
+        (financialStatement.homeReserve || 0) + (financialStatement.foreignReserve || 0) +
+        (financialStatement.civilListReserve || 0);
+
+      const estimatedAnnualSurplus = projectedAnnualRevenue - totalServiceEstimates;
+      const estimatedAnnualSurplusWithReserve = estimatedAnnualSurplus - totalReserveFunds;
+      const predictedMaximumTreasuryBalance = estimatedAnnualSurplus + (financialStatement.lateAprilTreasuryBalance || 0);
+      const predictedMinimumTreasuryBalance = estimatedAnnualSurplusWithReserve + (financialStatement.lateAprilTreasuryBalance || 0);
+
       // Home Office Calculations
       const getPublicOrderStatusLabel = (score) => {
         if (score >= 10) return { label: 'Exceptional', color: 'text-emerald-400' };
@@ -1317,7 +1370,7 @@
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab, chancerySubTab,
           peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
-          turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
+          turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
           warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
           greatSealDraft, nationalArchive
@@ -1347,6 +1400,7 @@
             setGrowthRate(parsed.growthRate || null);
             if (parsed.gdiTurn1Inflow !== undefined) setGdiTurn1Inflow(parsed.gdiTurn1Inflow);
             if (parsed.gdiTurn7Inflow !== undefined) setGdiTurn7Inflow(parsed.gdiTurn7Inflow);
+            if (parsed.financialStatement) setFinancialStatement(parsed.financialStatement);
             if (parsed.cfForm) setCfForm(parsed.cfForm);
             if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
@@ -1972,7 +2026,8 @@
                 <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
                   {[
                     { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
-                    { key: 'GDI_ASSESSMENT', label: 'Consolidated Funds (Gross Domestic Income Growth Assessment)' }
+                    { key: 'GDI_ASSESSMENT', label: 'Consolidated Funds (Gross Domestic Income Growth Assessment)' },
+                    { key: 'FINANCIAL_STATEMENT', label: 'Financial Statement' }
                   ].map((subTab) => (
                     <button
                       key={subTab.key}
@@ -1987,6 +2042,69 @@
                     </button>
                   ))}
                 </div>
+
+                {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">=======================================================</div>
+                      <div className="text-white font-bold tracking-wider text-lg">HM TREASURY // THE CHANCELLOR'S ANNUAL FINANCIAL STATEMENT</div>
+                      <div className="text-slate-400">=======================================================</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="text-slate-300 font-bold">Date :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">{MONTH_NAMES[currentTurn - 1]} {selectedYear} — Turn {currentTurn}</div>
+                      <div className="text-slate-300 font-bold">Estimated Annual Revenue :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-emerald-400 font-bold">£{Math.round(projectedAnnualRevenue).toLocaleString()}</div>
+                      <label className="text-slate-300 font-bold">Late April Treasury Balance :</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#E5C158] font-bold">£</span>
+                        <input type="number" min="0" value={financialStatement.lateAprilTreasuryBalance} onChange={(e) => handleFinancialStatementChange('lateAprilTreasuryBalance', e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded" />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-b border-[#E5C158]/50 py-5 space-y-4">
+                      {[
+                        ['armyEstimate', 'armyReserve', 'Army Service Estimate'],
+                        ['navalEstimate', 'navalReserve', 'Naval Service Estimate'],
+                        ['homeEstimate', 'homeReserve', 'Home Department Estimate'],
+                        ['foreignEstimate', 'foreignReserve', 'Foreign Service Estimate'],
+                        ['civilListEstimate', 'civilListReserve', 'Civil List, Pension & Royal Grants']
+                      ].map(([estimateField, reserveField, label]) => (
+                        <div key={estimateField} className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-center">
+                          <label className="text-[#E5C158] font-bold">&gt; {label} :</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-300">£</span>
+                            <input type="number" min="0" value={financialStatement[estimateField]} onChange={(e) => handleFinancialStatementChange(estimateField, e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                          </div>
+                          <label className="text-slate-300 font-bold lg:text-right">Reserve Fund :</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-300">£</span>
+                            <input type="number" min="0" value={financialStatement[reserveField]} onChange={(e) => handleFinancialStatementChange(reserveField, e.target.value)} className="w-full bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                      <div className="text-slate-300 font-bold">Estimated Annual Surplus :</div>
+                      <div className={`bg-[#0F223D] border border-slate-700 p-3 rounded font-bold ${estimatedAnnualSurplus >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>£{Math.round(estimatedAnnualSurplus).toLocaleString()}</div>
+                      <div className="text-slate-300 font-bold">Estimated Annual Surplus with Reserve Fund :</div>
+                      <div className={`bg-[#0F223D] border border-slate-700 p-3 rounded font-bold ${estimatedAnnualSurplusWithReserve >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>£{Math.round(estimatedAnnualSurplusWithReserve).toLocaleString()}</div>
+                      <div className="text-[#E5C158] font-bold">Predicted Maximum Treasury Balance :</div>
+                      <div className={`bg-[#0F223D] border border-[#E5C158]/60 p-3 rounded font-bold ${predictedMaximumTreasuryBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>£{Math.round(predictedMaximumTreasuryBalance).toLocaleString()}</div>
+                      <div className="text-[#E5C158] font-bold">Predicted Minimum Treasury Balance :</div>
+                      <div className={`bg-[#0F223D] border border-[#E5C158]/60 p-3 rounded font-bold ${predictedMinimumTreasuryBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>£{Math.round(predictedMinimumTreasuryBalance).toLocaleString()}</div>
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
 
                 {exchequerSubTab === 'CONSOLIDATED_FUNDS' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
@@ -4269,7 +4387,7 @@
                         className="w-full min-h-[270px] border-[6px] border-dashed border-[#E5C158] rounded-2xl text-[#E5C158] bg-[#0F223D] hover:bg-[#E5C158]/10 transition-colors flex items-center justify-center cursor-pointer"
                         title="Apply the Great Seal and send this instrument to the National Archive"
                       >
-                        <span className="text-5xl md:text-6xl font-bold -rotate-12">The Great Seal</span>
+                        <span className="text-5xl md:text-6xl font-bold -rotate-12">The Great Seal of Great Britain</span>
                       </button>
 
                       <div className="text-center text-slate-400 italic">
@@ -4305,7 +4423,7 @@
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="border-2 border-dashed border-[#E5C158] text-[#E5C158] px-4 py-2 rounded font-bold -rotate-3">
-                                  The Great Seal
+                                  The Great Seal of Great Britain
                                 </span>
                                 <button
                                   onClick={() => removeNationalArchiveRecord(record.id)}
