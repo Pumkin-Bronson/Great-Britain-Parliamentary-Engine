@@ -353,7 +353,14 @@
     }
 
 
-    const WAR_MINISTRY_UNIT_CATALOGUE = [
+    const WAR_OFFICE_TERRITORIES = {
+      England: ['London','Chatham Docks','Bristol','Portsmouth','Oxford','Birmingham','Newmarket Pastures','Yorkshire Farmlands','York','Manchester','Liverpool','Coalbrookdale Mines'],
+      Wales: ['Cardiff','Swansea','Caernarfon Mines'],
+      Scotland: ['Edinburgh','Dumfries','Glasgow'],
+      Ireland: ['Dublin','Waterford','Connemara Farmland','Cork']
+    };
+
+    const WAR_OFFICE_UNIT_CATALOGUE = [
       { id: 'footGuards', label: '💂 Foot Guards', branch: 'infantry' },
       { id: 'lineInfantry', label: '💂 Line Infantry', branch: 'infantry' },
       { id: 'highlandInfantry', label: '💂 Highland Infantry', branch: 'infantry' },
@@ -385,13 +392,18 @@
       const [warOfficeSubTab, setWarOfficeSubTab] = React.useState('ARMY_LIST');
 
       const [armyListCategories, setArmyListCategories] = React.useState(
-        WAR_MINISTRY_UNIT_CATALOGUE.map((category, categoryIndex) => ({
+        WAR_OFFICE_UNIT_CATALOGUE.map(category => ({
           ...category,
-          entries: categoryIndex === 3
-            ? [{ id: 4001, regimentNumber: '2', name: "Duke of Cornwall's Light Infantry" }]
-            : []
+          entries: []
         }))
       );
+
+      const [territorialOrganisation, setTerritorialOrganisation] = React.useState({
+        England: [],
+        Wales: [],
+        Scotland: [],
+        Ireland: []
+      });
 
       const [armyExpenditure, setArmyExpenditure] = React.useState({
         infantryPayAndAllowances: 0,
@@ -607,7 +619,7 @@
       };
 
       const addArmyCategory = (categoryId) => {
-        const categoryDefinition = WAR_MINISTRY_UNIT_CATALOGUE.find(category => category.id === categoryId);
+        const categoryDefinition = WAR_OFFICE_UNIT_CATALOGUE.find(category => category.id === categoryId);
         if (!categoryDefinition) return;
 
         setArmyListCategories(prev => {
@@ -620,9 +632,67 @@
         setArmyListCategories(prev => prev.filter(category => category.id !== categoryId));
       };
 
-      const availableArmyCategories = WAR_MINISTRY_UNIT_CATALOGUE.filter(
+      const availableArmyCategories = WAR_OFFICE_UNIT_CATALOGUE.filter(
         category => !armyListCategories.some(activeCategory => activeCategory.id === category.id)
       );
+
+
+      const armyUnitOptions = armyListCategories.flatMap(category =>
+        category.entries
+          .filter(entry => String(entry.name || '').trim())
+          .map(entry => ({
+            id: String(entry.id), branch: category.branch, categoryId: category.id,
+            categoryLabel: category.label, name: String(entry.name || '').trim(),
+            regimentNumber: category.branch === 'infantry' ? String(entry.regimentNumber || '').trim() : '',
+            displayName: category.branch === 'infantry' && String(entry.regimentNumber || '').trim()
+              ? `${String(entry.regimentNumber).trim()}/${String(entry.name || '').trim()}`
+              : String(entry.name || '').trim()
+          }))
+      );
+
+      const assignedTerritorialArmyUnitIds = new Set(
+        Object.values(territorialOrganisation).flatMap(regions =>
+          regions.flatMap(region => Object.values(region.units || {}).flatMap(unitIds => unitIds))
+        )
+      );
+
+      const selectedTerritorialRegionNames = new Set(
+        Object.values(territorialOrganisation).flatMap(regions => regions.map(region => region.name))
+      );
+
+      const addTerritorialRegion = (nation, regionName) => {
+        if (!regionName) return;
+        setTerritorialOrganisation(prev => {
+          const exists = Object.values(prev).some(regions => regions.some(region => region.name === regionName));
+          if (exists) return prev;
+          return { ...prev, [nation]: [...prev[nation], { id: `${nation}-${Date.now()}-${Math.random()}`, name: regionName, enabledBranches: [], units: { infantry: [], cavalry: [], artillery: [] } }] };
+        });
+      };
+
+      const removeTerritorialRegion = (nation, regionId) => {
+        setTerritorialOrganisation(prev => ({ ...prev, [nation]: prev[nation].filter(region => region.id !== regionId) }));
+      };
+
+      const addTerritorialBranch = (nation, regionId, branch) => {
+        setTerritorialOrganisation(prev => ({ ...prev, [nation]: prev[nation].map(region => region.id === regionId && !region.enabledBranches.includes(branch) ? { ...region, enabledBranches: [...region.enabledBranches, branch] } : region) }));
+      };
+
+      const removeTerritorialBranch = (nation, regionId, branch) => {
+        setTerritorialOrganisation(prev => ({ ...prev, [nation]: prev[nation].map(region => region.id === regionId ? { ...region, enabledBranches: region.enabledBranches.filter(item => item !== branch), units: { ...region.units, [branch]: [] } } : region) }));
+      };
+
+      const addTerritorialUnit = (nation, regionId, branch, unitId) => {
+        if (!unitId) return;
+        setTerritorialOrganisation(prev => {
+          const used = Object.values(prev).some(regions => regions.some(region => Object.values(region.units || {}).some(ids => ids.includes(unitId))));
+          if (used) return prev;
+          return { ...prev, [nation]: prev[nation].map(region => region.id === regionId ? { ...region, units: { ...region.units, [branch]: [...region.units[branch], unitId] } } : region) };
+        });
+      };
+
+      const removeTerritorialUnit = (nation, regionId, branch, unitId) => {
+        setTerritorialOrganisation(prev => ({ ...prev, [nation]: prev[nation].map(region => region.id === regionId ? { ...region, units: { ...region.units, [branch]: region.units[branch].filter(id => id !== unitId) } } : region) }));
+      };
 
       const handleArmyExpenditureChange = (field, value) => {
         if (field === 'notes') {
@@ -1204,7 +1274,7 @@
           justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
-          warOfficeSubTab, armyListCategories, armyExpenditure
+          warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -1242,6 +1312,7 @@
             if (parsed.maritimeExpenditure) setMaritimeExpenditure(parsed.maritimeExpenditure);
             if (parsed.warOfficeSubTab) setWarOfficeSubTab(parsed.warOfficeSubTab);
             if (parsed.armyListCategories) setArmyListCategories(parsed.armyListCategories);
+            if (parsed.territorialOrganisation) setTerritorialOrganisation(parsed.territorialOrganisation);
             if (parsed.armyExpenditure) setArmyExpenditure(parsed.armyExpenditure);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
@@ -3836,7 +3907,17 @@
                         : 'text-slate-200 hover:text-[#E5C158]'
                     }`}
                   >
-                    🇬🇧 War Ministry : Army List
+                    🇬🇧 War Office : Army List
+                  </button>
+                  <button
+                    onClick={() => setWarOfficeSubTab('TERRITORIAL_ORGANISATION')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      warOfficeSubTab === 'TERRITORIAL_ORGANISATION'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    🇬🇧 War Office : Territorial Organisation
                   </button>
                   <button
                     onClick={() => setWarOfficeSubTab('ARMY_EXPENDITURE')}
@@ -3854,7 +3935,7 @@
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-center space-y-1">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Ministry : Army List</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Army List</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
 
@@ -3912,8 +3993,6 @@
 
                                   {category.entries.map(entry => (
                                     <div key={entry.id} className="flex items-center gap-2">
-                                      <span className="w-6 h-6 rounded-full bg-white text-[#0F223D] flex items-center justify-center font-bold shrink-0">+</span>
-
                                       {category.branch === 'infantry' && (
                                         <>
                                           <input
@@ -3970,11 +4049,72 @@
                   </div>
                 )}
 
+                {warOfficeSubTab === 'TERRITORIAL_ORGANISATION' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Territorial Organisation</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+                      {[
+                        ['England', '🏴'], ['Wales', '🏴'], ['Scotland', '🏴'], ['Ireland', '🇮🇪']
+                      ].map(([nation, flag]) => {
+                        const availableRegions = WAR_OFFICE_TERRITORIES[nation].filter(regionName => !selectedTerritorialRegionNames.has(regionName));
+                        return (
+                          <div key={nation} className="space-y-4">
+                            <div className="text-[#E5C158] font-bold text-lg">{flag} {nation}</div>
+                            {availableRegions.length > 0 && (
+                              <select defaultValue="" onChange={(e) => { addTerritorialRegion(nation, e.target.value); e.currentTarget.value = ''; }} className="w-full bg-[#0F223D] border border-[#E5C158] text-[#E5C158] px-3 py-2 rounded font-bold">
+                                <option value="" disabled>+ Add Region</option>
+                                {availableRegions.map(regionName => <option key={regionName} value={regionName}>{regionName}</option>)}
+                              </select>
+                            )}
+                            {territorialOrganisation[nation].length === 0 && <div className="text-slate-500 italic border border-slate-800 rounded p-3">No region selected.</div>}
+                            {territorialOrganisation[nation].map(region => (
+                              <div key={region.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-[#E5C158] font-bold text-base flex-1">🏛️ {region.name}</div>
+                                  <button onClick={() => removeTerritorialRegion(nation, region.id)} className="text-rose-400 hover:text-rose-200 font-bold">×</button>
+                                </div>
+                                {region.enabledBranches.length < 3 && (
+                                  <select defaultValue="" onChange={(e) => { addTerritorialBranch(nation, region.id, e.target.value); e.currentTarget.value = ''; }} className="w-full bg-[#0B192C] border border-slate-600 text-slate-200 px-2 py-2 rounded">
+                                    <option value="" disabled>+ Add Force Branch</option>
+                                    {!region.enabledBranches.includes('infantry') && <option value="infantry">💂 Infantry</option>}
+                                    {!region.enabledBranches.includes('cavalry') && <option value="cavalry">🐴 Cavalry</option>}
+                                    {!region.enabledBranches.includes('artillery') && <option value="artillery">💣 Artillery</option>}
+                                  </select>
+                                )}
+                                {region.enabledBranches.map(branch => {
+                                  const branchLabel = branch === 'infantry' ? '💂 Infantry' : branch === 'cavalry' ? '🐴 Cavalry' : '💣 Artillery';
+                                  const assignedUnits = region.units[branch].map(unitId => armyUnitOptions.find(option => option.id === unitId)).filter(Boolean);
+                                  const availableUnits = armyUnitOptions.filter(option => option.branch === branch && !assignedTerritorialArmyUnitIds.has(option.id));
+                                  return (
+                                    <div key={branch} className="border-l-2 border-[#E5C158]/50 pl-3 space-y-2">
+                                      <div className="flex items-center gap-2"><div className="text-[#E5C158] font-bold flex-1">{branchLabel}</div><button onClick={() => removeTerritorialBranch(nation, region.id, branch)} className="text-rose-400 hover:text-rose-200 font-bold">×</button></div>
+                                      {assignedUnits.map(unit => <div key={unit.id} className="flex items-center gap-2 bg-[#0B192C] border border-slate-700 rounded px-2 py-2"><span className="text-slate-200 flex-1">{unit.displayName}</span><button onClick={() => removeTerritorialUnit(nation, region.id, branch, unit.id)} className="text-rose-400 hover:text-rose-200 font-bold">×</button></div>)}
+                                      <select defaultValue="" disabled={availableUnits.length === 0} onChange={(e) => { addTerritorialUnit(nation, region.id, branch, e.target.value); e.currentTarget.value = ''; }} className="w-full bg-[#0B192C] border border-[#E5C158] text-slate-200 px-2 py-2 rounded disabled:opacity-50">
+                                        <option value="" disabled>{availableUnits.length > 0 ? `-- Select unit from Army List --` : `-- No available ${branch} units --`}</option>
+                                        {availableUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.displayName} — {unit.categoryLabel.replace(/^[^\s]+\s/, '')}</option>)}
+                                      </select>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-center space-y-1 pt-4"><div className="text-slate-400">========================================================================================</div><div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div><div className="text-slate-400">========================================================================================</div></div>
+                  </div>
+                )}
+
                 {warOfficeSubTab === 'ARMY_EXPENDITURE' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-center space-y-1">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Ministry : Army Expenditure</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Army Expenditure</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
 
