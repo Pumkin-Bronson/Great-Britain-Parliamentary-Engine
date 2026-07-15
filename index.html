@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+!DOCTYPE html><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -385,6 +385,14 @@
       const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
       const [cabinetSubTab, setCabinetSubTab] = React.useState('NO_10_DOWNING_STREET');
+      const [chancerySubTab, setChancerySubTab] = React.useState('GREAT_SEAL_REGISTER');
+      const [greatSealDraft, setGreatSealDraft] = React.useState({
+        title: '',
+        instrumentType: 'Act of Parliament',
+        context: ''
+      });
+      const [nationalArchive, setNationalArchive] = React.useState([]);
+
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
       const [admiraltySubTab, setAdmiraltySubTab] = React.useState('NAVY_LIST');
@@ -468,7 +476,6 @@
         notes: ''
       });
 
-      const [justiceTurns, setJusticeTurns] = React.useState([]);
       const [peaceTurns, setPeaceTurns] = React.useState([]);
       const [oppositionTurns, setOppositionTurns] = React.useState([]);
       const [warOfficeTurn, setWarOfficeTurn] = React.useState(null);
@@ -576,7 +583,45 @@
       };
 
 
-      // War Ministry Army List Handlers
+
+      // Chancery Office Great Seal and National Archive Handlers
+      const handleGreatSealDraftChange = (field, value) => {
+        setGreatSealDraft(prev => ({ ...prev, [field]: value }));
+      };
+
+      const stampGreatSealInstrument = () => {
+        const title = String(greatSealDraft.title || '').trim();
+        const context = String(greatSealDraft.context || '').trim();
+        if (!title) {
+          alert('Enter the title of the Act, Convention, Mobilisation or other instrument before applying the Great Seal.');
+          return;
+        }
+
+        const sealedRecord = {
+          id: `${Date.now()}-${Math.random()}`,
+          title,
+          instrumentType: greatSealDraft.instrumentType,
+          context,
+          year: selectedYear,
+          turn: currentTurn,
+          period: MONTH_NAMES[currentTurn - 1],
+          sealedPhrase: 'The Great Seal',
+          sealedAt: new Date().toISOString()
+        };
+
+        setNationalArchive(prev => [sealedRecord, ...prev]);
+        setGreatSealDraft({
+          title: '',
+          instrumentType: 'Act of Parliament',
+          context: ''
+        });
+      };
+
+      const removeNationalArchiveRecord = (recordId) => {
+        setNationalArchive(prev => prev.filter(record => record.id !== recordId));
+      };
+
+      // War Office Army List Handlers
       const addArmyUnitEntry = (categoryId) => {
         const stamp = Date.now();
         setArmyListCategories(prev => prev.map(category =>
@@ -1270,11 +1315,12 @@
       // Save & Load Handlers
       const handleSaveGame = () => {
         const stateToSave = {
-          selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab,
-          justiceTurns, peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
+          selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab, chancerySubTab,
+          peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
-          warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure
+          warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
+          greatSealDraft, nationalArchive
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -1291,7 +1337,7 @@
             setActiveTab(parsed.activeTab || 'Parliamentary Timetable');
             setExchequerSubTab(parsed.exchequerSubTab || 'CONSOLIDATED_FUNDS');
             setCabinetSubTab(parsed.cabinetSubTab || 'NO_10_DOWNING_STREET');
-            setJusticeTurns(parsed.justiceTurns || []);
+            setChancerySubTab(parsed.chancerySubTab || 'GREAT_SEAL_REGISTER');
             setPeaceTurns(parsed.peaceTurns || []);
             setOppositionTurns(parsed.oppositionTurns || []);
             setWarOfficeTurn(parsed.warOfficeTurn || null);
@@ -1314,6 +1360,8 @@
             if (parsed.armyListCategories) setArmyListCategories(parsed.armyListCategories);
             if (parsed.territorialOrganisation) setTerritorialOrganisation(parsed.territorialOrganisation);
             if (parsed.armyExpenditure) setArmyExpenditure(parsed.armyExpenditure);
+            if (parsed.greatSealDraft) setGreatSealDraft(parsed.greatSealDraft);
+            if (parsed.nationalArchive) setNationalArchive(parsed.nationalArchive);
             setGameState('DASHBOARD');
             setIsMenuOpen(false);
           } catch (e) {
@@ -1326,14 +1374,6 @@
 
       const validateRules = () => {
         const errors = [];
-        if (justiceTurns.length > 1) {
-          const sorted = [...justiceTurns].sort((a, b) => a - b);
-          for (let i = 0; i < sorted.length - 1; i++) {
-            if (sorted[i + 1] - sorted[i] !== 8) {
-              errors.push("Lord Chancellor reports must be exactly 8 turns apart.");
-            }
-          }
-        }
         if (peaceTurns.length > 1) {
           const sorted = [...peaceTurns].sort((a, b) => a - b);
           for (let i = 0; i < sorted.length - 1; i++) {
@@ -1426,14 +1466,13 @@
                   const recessName = RECESS_TURNS[t];
                   const monthLabel = MONTH_NAMES[t - 1];
                   
-                  const isJustice = justiceTurns.includes(t);
                   const isPeace = peaceTurns.includes(t);
                   const isOpp = oppositionTurns.includes(t);
                   const isWar = warOfficeTurn === t;
                   const isAdm = admiraltyTurn === t;
                   const isBudget = t === 8;
 
-                  const hasScheduledEvent = isJustice || isPeace || isOpp || isWar || isAdm || isBudget;
+                  const hasScheduledEvent = isPeace || isOpp || isWar || isAdm || isBudget;
 
                   return (
                     <div key={t} className="flex flex-col items-center flex-1 min-w-[55px] relative z-10">
@@ -1457,7 +1496,6 @@
                         <div className="mt-1 space-y-0.5 text-[8px] leading-tight">
                           {recessName && <span className="text-slate-500 italic block">Recess</span>}
                           {isBudget && <span className="bg-amber-500 text-black px-1 rounded block font-bold">Budget</span>}
-                          {isJustice && <span className="bg-blue-600 text-white px-1 rounded block font-bold">Justice</span>}
                           {isPeace && <span className="bg-purple-600 text-white px-1 rounded block font-bold">Home</span>}
                           {isOpp && <span className="bg-rose-600 text-white px-1 rounded block font-bold">Opp</span>}
                           {isWar && <span className="bg-amber-600 text-white px-1 rounded block font-bold">War</span>}
@@ -1802,13 +1840,6 @@
               </div>
             </div>
 
-            <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-white text-sm">Lord Chancellor's Report <span className="text-xs text-slate-400 font-normal">(Administration of Justice)</span></h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Spacing: 8 turns</span>
-              </div>
-              {renderLucidTimeline(optionWindowTurns, justiceTurns, setJusticeTurns)}
-            </div>
 
             <div className="border border-slate-700 bg-[#0B192C] p-5 rounded-lg mb-6 shadow-md">
               <div className="flex justify-between items-center mb-1">
@@ -1874,7 +1905,7 @@
 
       const tabs = [
         'Parliamentary Timetable', 'General Election', 'Parliament', 
-        'Cabinet', "Lord Chancellor's Department", 
+        'Cabinet', "Chancery Office", 
         'Exchequer', 'Foreign Office', 'Home Office', 'Admiralty', 'War Office'
       ];
 
@@ -2465,12 +2496,6 @@
                             <span className="font-bold text-amber-300">{getTurnPrimaryLabel(currentTurn)}</span>
                           </div>
                         )}
-                        {justiceTurns.includes(currentTurn) && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-blue-400">▸</span>
-                            <span className="font-bold text-blue-300">Lord Chancellor's Report (Administration of Justice)</span>
-                          </div>
-                        )}
                         {peaceTurns.includes(currentTurn) && (
                           <div className="flex items-center gap-2">
                             <span className="text-purple-400">▸</span>
@@ -2495,7 +2520,7 @@
                             <span className="font-bold text-cyan-300">Admiralty Annual Report</span>
                           </div>
                         )}
-                        {!getTurnPrimaryLabel(currentTurn) && !justiceTurns.includes(currentTurn) && !peaceTurns.includes(currentTurn) && !oppositionTurns.includes(currentTurn) && warOfficeTurn !== currentTurn && admiraltyTurn !== currentTurn && (
+                        {!getTurnPrimaryLabel(currentTurn) && !peaceTurns.includes(currentTurn) && !oppositionTurns.includes(currentTurn) && warOfficeTurn !== currentTurn && admiraltyTurn !== currentTurn && (
                           <div className="text-slate-400 italic">Standard Parliamentary Sitting & Debates.</div>
                         )}
                       </>
@@ -2519,8 +2544,7 @@
                         const recessName = RECESS_TURNS[t];
                         const monthLabel = MONTH_NAMES[t - 1];
                         
-                        const isJustice = justiceTurns.includes(t);
-                        const isPeace = peaceTurns.includes(t);
+                              const isPeace = peaceTurns.includes(t);
                         const isOpp = oppositionTurns.includes(t);
                         const isWar = warOfficeTurn === t;
                         const isAdm = admiraltyTurn === t;
@@ -2552,11 +2576,6 @@
                                     <div className="text-amber-300 font-medium">{primaryLabel}</div>
                                   )}
                                   <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                    {isJustice && (
-                                      <span className="bg-blue-900/80 text-blue-200 border border-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">
-                                        Lord Chancellor's Report
-                                      </span>
-                                    )}
                                     {isPeace && (
                                       <span className="bg-purple-900/80 text-purple-200 border border-purple-700 px-2 py-0.5 rounded text-[10px] font-bold">
                                         Home Office Report
@@ -4058,7 +4077,7 @@
                     </div>
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
                       {[
-                        ['England', '🏴'], ['Wales', '🏴'], ['Scotland', '🏴'], ['Ireland', '🇮🇪']
+                        ['England', '🏴󠁧󠁢󠁥󠁮󠁧󠁿'], ['Wales', '🏴󠁧󠁢󠁷󠁬󠁳󠁿'], ['Scotland', '🏴󠁧󠁢󠁳󠁣󠁴󠁿'], ['Ireland', '🇮🇪']
                       ].map(([nation, flag]) => {
                         const availableRegions = WAR_OFFICE_TERRITORIES[nation].filter(regionName => !selectedTerritorialRegionNames.has(regionName));
                         return (
@@ -4171,18 +4190,143 @@
               </div>
             )}
 
-            {/* LORD CHANCELLOR TAB */}
-            {activeTab === "Lord Chancellor's Department" && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
-                <div className="text-center space-y-1">
-                  <div className="text-slate-400">========================================================================================</div>
-                  <div className="text-white font-bold tracking-wider text-sm">LORD CHANCELLOR // HIGH COURT OF CHANCERY RETURN</div>
-                  <div className="text-[#E5C158] font-bold tracking-wide">ADMINISTRATION OF JUSTICE & JUDICIAL MAGISTRACY</div>
-                  <div className="text-slate-400">========================================================================================</div>
+            {/* CHANCERY OFFICE TAB */}
+            {activeTab === "Chancery Office" && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2 bg-[#0B192C] border-b border-[#E5C158]/50 p-2">
+                  <button
+                    onClick={() => setChancerySubTab('GREAT_SEAL_REGISTER')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      chancerySubTab === 'GREAT_SEAL_REGISTER'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    ⚖️ Chancery Office : Great Seal Register
+                  </button>
+                  <button
+                    onClick={() => setChancerySubTab('NATIONAL_ARCHIVE')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      chancerySubTab === 'NATIONAL_ARCHIVE'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    National Archive
+                  </button>
                 </div>
-                <div className="bg-[#0F223D] p-5 rounded border border-slate-700 text-center text-slate-400 italic">
-                  Lord Chancellor's Report active on scheduled turns.
-                </div>
+
+                {chancerySubTab === 'GREAT_SEAL_REGISTER' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-8 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">⚖️ Chancery Office : Great Seal Register</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="max-w-3xl mx-auto space-y-5">
+                      <div>
+                        <label className="block text-[#E5C158] font-bold mb-2">Instrument Type</label>
+                        <select
+                          value={greatSealDraft.instrumentType}
+                          onChange={(e) => handleGreatSealDraftChange('instrumentType', e.target.value)}
+                          className="w-full bg-[#0F223D] border border-slate-600 text-white p-3 rounded"
+                        >
+                          <option>Act of Parliament</option>
+                          <option>Convention or Treaty</option>
+                          <option>Mobilisation Order</option>
+                          <option>Royal Warrant</option>
+                          <option>Order in Council</option>
+                          <option>Letters Patent</option>
+                          <option>Other Instrument of State</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[#E5C158] font-bold mb-2">Act / Convention / Mobilisation / Instrument Title</label>
+                        <input
+                          type="text"
+                          value={greatSealDraft.title}
+                          onChange={(e) => handleGreatSealDraftChange('title', e.target.value)}
+                          className="w-full bg-[#0F223D] border border-slate-600 text-white p-3 rounded text-lg font-bold"
+                          placeholder="XXXX Act / Convention / Mobilisation etc."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[#E5C158] font-bold mb-2 text-center text-lg">Context</label>
+                        <textarea
+                          value={greatSealDraft.context}
+                          onChange={(e) => handleGreatSealDraftChange('context', e.target.value)}
+                          rows="8"
+                          className="w-full bg-[#0F223D] border border-slate-600 text-white p-4 rounded resize-y"
+                          placeholder="Record the context, authority, parliamentary passage, treaty terms, mobilisation purpose or other relevant details."
+                        />
+                      </div>
+
+                      <button
+                        onClick={stampGreatSealInstrument}
+                        className="w-full min-h-[270px] border-[6px] border-dashed border-[#E5C158] rounded-2xl text-[#E5C158] bg-[#0F223D] hover:bg-[#E5C158]/10 transition-colors flex items-center justify-center cursor-pointer"
+                        title="Apply the Great Seal and send this instrument to the National Archive"
+                      >
+                        <span className="text-5xl md:text-6xl font-bold -rotate-12">The Great Seal</span>
+                      </button>
+
+                      <div className="text-center text-slate-400 italic">
+                        Stamp action records the instrument for Year {selectedYear}, Turn {currentTurn} and transfers it to the National Archive.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {chancerySubTab === 'NATIONAL_ARCHIVE' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">⚖️ Chancery Office : National Archive</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    {nationalArchive.length === 0 ? (
+                      <div className="bg-[#0F223D] border border-slate-700 rounded p-8 text-center text-slate-400 italic">
+                        No instrument has yet been certified under The Great Seal.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {nationalArchive.map(record => (
+                          <div key={record.id} className="bg-[#0F223D] border border-[#E5C158]/50 rounded p-5 space-y-3">
+                            <div className="flex flex-col md:flex-row md:items-start gap-3">
+                              <div className="flex-1">
+                                <div className="text-[#E5C158] font-bold text-lg">{record.title}</div>
+                                <div className="text-slate-300 mt-1">{record.instrumentType}</div>
+                                <div className="text-slate-400 mt-1">
+                                  {record.period} {record.year} · Turn {record.turn}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="border-2 border-dashed border-[#E5C158] text-[#E5C158] px-4 py-2 rounded font-bold -rotate-3">
+                                  The Great Seal
+                                </span>
+                                <button
+                                  onClick={() => removeNationalArchiveRecord(record.id)}
+                                  className="text-rose-400 hover:text-rose-200 font-bold"
+                                  title="Remove archive record"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                            {record.context && (
+                              <div className="border-t border-slate-700 pt-3 whitespace-pre-wrap text-slate-200 leading-relaxed">
+                                {record.context}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
