@@ -556,6 +556,37 @@
         }
       });
 
+      const [governmentPopularity, setGovernmentPopularity] = React.useState(0);
+
+      const [navalEngagementReport, setNavalEngagementReport] = React.useState({
+        outcome: 'Victory',
+        opponentNation: '',
+        capturedShips: 0,
+        lostShips: 0,
+        remainingShips: 0,
+        prizeMoney: 0,
+        admiral: '',
+        shipIds: [],
+        governmentPopularityPostEngagement: 0,
+        londonRulingPublicOrder: 0,
+        londonRulingPatrioticFervour: 0,
+        londonLowerPublicOrder: 0,
+        londonLowerPatrioticFervour: 0
+      });
+
+      const [armyEngagementReport, setArmyEngagementReport] = React.useState({
+        outcome: 'Victory',
+        opponentNation: '',
+        engagementType: 'Land Battle',
+        commanderInChief: '',
+        unitIds: [],
+        governmentPopularityPostEngagement: 0,
+        londonRulingPublicOrder: 0,
+        londonRulingPatrioticFervour: 0,
+        londonLowerPublicOrder: 0,
+        londonLowerPatrioticFervour: 0
+      });
+
       const [cabinetForm, setCabinetForm] = React.useState({
         pmNotes: 'Prime Minister directive: Preserve Tory majority and monitor civil agitation.',
         keyDirectives: '1. Secure Treasury appropriations.\n2. Maintain public tranquility via local garrisons.\n3. Oversee diplomatic posture with the Quadruple Alliance.',
@@ -1039,6 +1070,85 @@
         .filter(([field]) => field !== 'notes')
         .reduce((total, [, value]) => total + (Number(value) || 0), 0);
 
+
+      const handleNavalEngagementChange = (field, value) => {
+        const numericFields = new Set([
+          'capturedShips', 'lostShips', 'remainingShips', 'prizeMoney',
+          'governmentPopularityPostEngagement', 'londonRulingPublicOrder',
+          'londonRulingPatrioticFervour', 'londonLowerPublicOrder',
+          'londonLowerPatrioticFervour'
+        ]);
+        setNavalEngagementReport(prev => ({
+          ...prev,
+          [field]: numericFields.has(field)
+            ? (Number.isNaN(parseFloat(value)) ? 0 : parseFloat(value))
+            : value
+        }));
+      };
+
+      const handleArmyEngagementChange = (field, value) => {
+        const numericFields = new Set([
+          'governmentPopularityPostEngagement', 'londonRulingPublicOrder',
+          'londonRulingPatrioticFervour', 'londonLowerPublicOrder',
+          'londonLowerPatrioticFervour'
+        ]);
+        setArmyEngagementReport(prev => ({
+          ...prev,
+          [field]: numericFields.has(field)
+            ? (Number.isNaN(parseFloat(value)) ? 0 : parseFloat(value))
+            : value
+        }));
+      };
+
+      const admiralOptions = Array.from(new Set(
+        fleetDisposition.flatMap(fleet => [
+          String(fleet.admiralOfFleet || '').trim(),
+          ...fleet.squadrons.map(squadron => String(squadron.admiralOfSquadron || '').trim())
+        ]).filter(Boolean)
+      ));
+
+      const addNavalEngagementShip = (shipId) => {
+        if (!shipId) return;
+        setNavalEngagementReport(prev => (
+          prev.shipIds.includes(shipId)
+            ? prev
+            : { ...prev, shipIds: [...prev.shipIds, shipId] }
+        ));
+      };
+
+      const removeNavalEngagementShip = (shipId) => {
+        setNavalEngagementReport(prev => ({
+          ...prev,
+          shipIds: prev.shipIds.filter(id => id !== shipId)
+        }));
+      };
+
+      const addArmyEngagementUnit = (unitId) => {
+        if (!unitId) return;
+        setArmyEngagementReport(prev => (
+          prev.unitIds.includes(unitId)
+            ? prev
+            : { ...prev, unitIds: [...prev.unitIds, unitId] }
+        ));
+      };
+
+      const removeArmyEngagementUnit = (unitId) => {
+        setArmyEngagementReport(prev => ({
+          ...prev,
+          unitIds: prev.unitIds.filter(id => id !== unitId)
+        }));
+      };
+
+      const getArmyUnitTerritorialLocation = (unitId) => {
+        for (const [nation, regions] of Object.entries(territorialOrganisation)) {
+          for (const region of regions) {
+            const assigned = Object.values(region.units || {}).some(ids => ids.includes(unitId));
+            if (assigned) return `${region.name}, ${nation}`;
+          }
+        }
+        return 'No territorial region recorded';
+      };
+
       // Traits Handlers
       const addTraitToMinister = (key) => {
         setCabinetMinisters(prev => {
@@ -1404,6 +1514,7 @@
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab, chancerySubTab,
           peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
+          governmentPopularity, navalEngagementReport, armyEngagementReport,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
           warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
           greatSealDraft, nationalArchive
@@ -1439,6 +1550,9 @@
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
+            if (parsed.governmentPopularity !== undefined) setGovernmentPopularity(parsed.governmentPopularity);
+            if (parsed.navalEngagementReport) setNavalEngagementReport(parsed.navalEngagementReport);
+            if (parsed.armyEngagementReport) setArmyEngagementReport(parsed.armyEngagementReport);
             if (parsed.admiraltySubTab) setAdmiraltySubTab(parsed.admiraltySubTab);
             if (parsed.navyRates) setNavyRates(parsed.navyRates);
             if (parsed.fleetDisposition) setFleetDisposition(parsed.fleetDisposition);
@@ -2796,9 +2910,23 @@
 
                 {cabinetSubTab === 'NO_10_DOWNING_STREET' && (
                   <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-8 rounded-lg shadow-2xl relative overflow-hidden">
-                    <div className="border-b border-[#E5C158]/40 pb-4 mb-8 text-center">
+                    <div className="border-b border-[#E5C158]/40 pb-4 mb-8 relative text-center">
                       <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🏛️ No. 10 Downing Street</h2>
                       <p className="text-xs text-slate-400 italic">His Majesty's Cabinet & Executive Officers of the Crown</p>
+
+                      <div className="mt-4 lg:mt-0 lg:absolute lg:right-0 lg:top-0 flex items-center justify-center lg:justify-end gap-2">
+                        <label className="text-[#E5C158] font-bold text-xs whitespace-nowrap">
+                          Government Popularity :
+                        </label>
+                        <input
+                          type="number"
+                          value={governmentPopularity}
+                          onChange={(e) => setGovernmentPopularity(
+                            Number.isNaN(parseFloat(e.target.value)) ? 0 : parseFloat(e.target.value)
+                          )}
+                          className="w-24 bg-[#0F223D] border border-[#E5C158] text-white font-bold text-center px-2 py-1.5 rounded"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-center gap-12 mb-12">
@@ -3684,6 +3812,7 @@
                   {[
                     { key: 'NAVY_LIST', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List' },
                     { key: 'FLEET_DISPOSITION', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List' },
+                    { key: 'NAVAL_ENGAGEMENT_REPORT', label: '⚓️ Naval Engagement Report' },
                     { key: 'MARITIME_EXPENDITURE', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Maritime Expenditure' }
                   ].map((subTab) => (
                     <button
@@ -3996,6 +4125,153 @@
                   </div>
                 )}
 
+                {admiraltySubTab === 'NAVAL_ENGAGEMENT_REPORT' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-[#E5C158] font-bold text-base">
+                      ⚓️ Naval Engagement Report — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                    </div>
+
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-lg">
+                        FIRST LORD OF THE ADMIRALTY // NAVAL ENGAGEMENT REPORT
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="text-slate-300 font-bold">Date :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[currentTurn - 1]} {selectedYear} — Turn {currentTurn}
+                      </div>
+
+                      <label className="text-slate-300 font-bold">Result :</label>
+                      <select
+                        value={navalEngagementReport.outcome}
+                        onChange={(e) => handleNavalEngagementChange('outcome', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                      >
+                        <option value="Victory">Victory</option>
+                        <option value="Defeat">Defeat</option>
+                      </select>
+
+                      <label className="text-slate-300 font-bold">Opposing Nation :</label>
+                      <input
+                        type="text"
+                        value={navalEngagementReport.opponentNation}
+                        onChange={(e) => handleNavalEngagementChange('opponentNation', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                      />
+
+                      {[
+                        ['capturedShips', 'Captured Ship(s)'],
+                        ['lostShips', 'Lost Ship(s)'],
+                        ['remainingShips', 'Remaining Ship(s)'],
+                        ['prizeMoney', 'Prize Money']
+                      ].map(([field, label]) => (
+                        <React.Fragment key={field}>
+                          <label className="text-slate-300 font-bold">{label} :</label>
+                          <div className="flex items-center gap-2">
+                            {field === 'prizeMoney' && <span className="text-[#E5C158] font-bold">£</span>}
+                            <input
+                              type="number"
+                              min="0"
+                              value={navalEngagementReport[field]}
+                              onChange={(e) => handleNavalEngagementChange(field, e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                            />
+                          </div>
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-b border-[#E5C158]/40 py-5 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <label className="text-slate-300 font-bold">Admiral :</label>
+                        <select
+                          value={navalEngagementReport.admiral}
+                          onChange={(e) => handleNavalEngagementChange('admiral', e.target.value)}
+                          className="bg-[#0F223D] border border-[#E5C158] text-white p-3 rounded"
+                        >
+                          <option value="">-- Select Admiral from Fleet Disposition List --</option>
+                          {admiralOptions.map(admiral => (
+                            <option key={admiral} value={admiral}>{admiral}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="text-slate-300 font-bold">Ship(s) :</div>
+                        {navalEngagementReport.shipIds.map(shipId => {
+                          const ship = navyShipOptions.find(option => option.id === shipId);
+                          if (!ship) return null;
+                          return (
+                            <div key={shipId} className="flex items-center gap-2 bg-[#0F223D] border border-slate-700 p-3 rounded">
+                              <span className="text-white flex-1">
+                                HMS {ship.name}{ship.className ? ` — ${ship.className} Class` : ''}
+                              </span>
+                              <button
+                                onClick={() => removeNavalEngagementShip(shipId)}
+                                className="text-rose-400 hover:text-rose-200 font-bold"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            addNavalEngagementShip(e.target.value);
+                            e.currentTarget.value = '';
+                          }}
+                          className="w-full bg-[#0F223D] border border-[#E5C158] text-white p-3 rounded"
+                        >
+                          <option value="" disabled>+ Add HMS Ship from Navy List</option>
+                          {navyShipOptions
+                            .filter(ship => !navalEngagementReport.shipIds.includes(ship.id))
+                            .map(ship => (
+                              <option key={ship.id} value={ship.id}>
+                                HMS {ship.name}{ship.className ? ` — ${ship.className} Class` : ''}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      {[
+                        ['governmentPopularityPostEngagement', 'Government Popularity Post Engagement', '%'],
+                        ['londonRulingPublicOrder', 'London Ruling Class Public Order', ''],
+                        ['londonRulingPatrioticFervour', 'London Ruling Class Patriotic Fervour', ''],
+                        ['londonLowerPublicOrder', 'London Lower Class Public Order', ''],
+                        ['londonLowerPatrioticFervour', 'London Lower Class Patriotic Fervour', '']
+                      ].map(([field, label, suffix]) => (
+                        <React.Fragment key={field}>
+                          <label className="text-slate-300 font-bold">{label} :</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={navalEngagementReport[field]}
+                              onChange={(e) => handleNavalEngagementChange(field, e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                            />
+                            {suffix && <span className="text-[#E5C158] font-bold">{suffix}</span>}
+                          </div>
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">
+                        DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
                 {admiraltySubTab === 'MARITIME_EXPENDITURE' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-center space-y-1">
@@ -4089,6 +4365,17 @@
                   >
                     🇬🇧 War Office : Territorial Organisation
                   </button>
+                  <button
+                    onClick={() => setWarOfficeSubTab('ARMY_ENGAGEMENT_REPORT')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      warOfficeSubTab === 'ARMY_ENGAGEMENT_REPORT'
+                        ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    ⚔️ Army Engagement Report
+                  </button>
+
                   <button
                     onClick={() => setWarOfficeSubTab('ARMY_EXPENDITURE')}
                     className={`px-4 py-2 rounded font-bold transition-colors ${
@@ -4277,6 +4564,142 @@
                       })}
                     </div>
                     <div className="text-center space-y-1 pt-4"><div className="text-slate-400">========================================================================================</div><div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div><div className="text-slate-400">========================================================================================</div></div>
+                  </div>
+                )}
+
+                {warOfficeSubTab === 'ARMY_ENGAGEMENT_REPORT' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-[#E5C158] font-bold text-base">
+                      ⚔️ Army Engagement Report — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                    </div>
+
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-lg">
+                        SECRETARY AT WAR // ARMY ENGAGEMENT REPORT
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="text-slate-300 font-bold">Date :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[currentTurn - 1]} {selectedYear} — Turn {currentTurn}
+                      </div>
+
+                      <label className="text-slate-300 font-bold">Result :</label>
+                      <select
+                        value={armyEngagementReport.outcome}
+                        onChange={(e) => handleArmyEngagementChange('outcome', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                      >
+                        <option value="Victory">Victory</option>
+                        <option value="Defeat">Defeat</option>
+                      </select>
+
+                      <label className="text-slate-300 font-bold">Opposing Nation :</label>
+                      <input
+                        type="text"
+                        value={armyEngagementReport.opponentNation}
+                        onChange={(e) => handleArmyEngagementChange('opponentNation', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                      />
+
+                      <label className="text-slate-300 font-bold">Type of Engagement :</label>
+                      <select
+                        value={armyEngagementReport.engagementType}
+                        onChange={(e) => handleArmyEngagementChange('engagementType', e.target.value)}
+                        className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                      >
+                        <option value="Land Battle">Land Battle</option>
+                        <option value="Ambush">Ambush</option>
+                        <option value="Siege">Siege</option>
+                      </select>
+                    </div>
+
+                    <div className="border-t border-b border-[#E5C158]/40 py-5 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <label className="text-slate-300 font-bold">Commander-in-Chief :</label>
+                        <input
+                          type="text"
+                          value={armyEngagementReport.commanderInChief}
+                          onChange={(e) => handleArmyEngagementChange('commanderInChief', e.target.value)}
+                          className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="text-slate-300 font-bold">Unit(s) :</div>
+                        {armyEngagementReport.unitIds.map(unitId => {
+                          const unit = armyUnitOptions.find(option => option.id === unitId);
+                          if (!unit) return null;
+                          return (
+                            <div key={unitId} className="flex items-center gap-3 bg-[#0F223D] border border-slate-700 p-3 rounded">
+                              <div className="flex-1">
+                                <div className="text-white font-bold">{unit.displayName}</div>
+                                <div className="text-slate-400 mt-1">
+                                  Territorial Record: {getArmyUnitTerritorialLocation(unitId)}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeArmyEngagementUnit(unitId)}
+                                className="text-rose-400 hover:text-rose-200 font-bold"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            addArmyEngagementUnit(e.target.value);
+                            e.currentTarget.value = '';
+                          }}
+                          className="w-full bg-[#0F223D] border border-[#E5C158] text-white p-3 rounded"
+                        >
+                          <option value="" disabled>+ Add Unit from Army List</option>
+                          {armyUnitOptions
+                            .filter(unit => !armyEngagementReport.unitIds.includes(unit.id))
+                            .map(unit => (
+                              <option key={unit.id} value={unit.id}>
+                                {unit.displayName} — {getArmyUnitTerritorialLocation(unit.id)}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      {[
+                        ['governmentPopularityPostEngagement', 'Government Popularity Post Engagement', '%'],
+                        ['londonRulingPublicOrder', 'London Ruling Class Public Order', ''],
+                        ['londonRulingPatrioticFervour', 'London Ruling Class Patriotic Fervour', ''],
+                        ['londonLowerPublicOrder', 'London Lower Class Public Order', ''],
+                        ['londonLowerPatrioticFervour', 'London Lower Class Patriotic Fervour', '']
+                      ].map(([field, label, suffix]) => (
+                        <React.Fragment key={field}>
+                          <label className="text-slate-300 font-bold">{label} :</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={armyEngagementReport[field]}
+                              onChange={(e) => handleArmyEngagementChange(field, e.target.value)}
+                              className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                            />
+                            {suffix && <span className="text-[#E5C158] font-bold">{suffix}</span>}
+                          </div>
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">
+                        DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
                   </div>
                 )}
 
