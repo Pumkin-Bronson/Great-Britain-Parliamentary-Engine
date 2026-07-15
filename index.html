@@ -1320,20 +1320,53 @@
           .reduce((sum, value) => sum + value, 0);
       })();
 
+      // Army and Naval estimates are entered as per-turn figures and annualised across 24 turns.
+      // Home Department, Foreign Service, and Civil List figures are entered as annual amounts.
+      const annualisedArmyEstimate =
+        (financialStatement.armyEstimate || 0) * 24;
+
+      const annualisedNavalEstimate =
+        (financialStatement.navalEstimate || 0) * 24;
+
+      const annualisedArmyReserve =
+        (financialStatement.armyReserve || 0) * 24;
+
+      const annualisedNavalReserve =
+        (financialStatement.navalReserve || 0) * 24;
+
+      const annualisedCivilListEstimate =
+        (financialStatement.civilListEstimate || 0) * 24;
+
+      const annualisedCivilListReserve =
+        (financialStatement.civilListReserve || 0) * 24;
+
       const totalServiceEstimates =
-        (financialStatement.armyEstimate || 0) + (financialStatement.navalEstimate || 0) +
-        (financialStatement.homeEstimate || 0) + (financialStatement.foreignEstimate || 0) +
-        (financialStatement.civilListEstimate || 0);
+        annualisedArmyEstimate +
+        annualisedNavalEstimate +
+        (financialStatement.homeEstimate || 0) +
+        (financialStatement.foreignEstimate || 0) +
+        annualisedCivilListEstimate;
 
       const totalReserveFunds =
-        (financialStatement.armyReserve || 0) + (financialStatement.navalReserve || 0) +
-        (financialStatement.homeReserve || 0) + (financialStatement.foreignReserve || 0) +
-        (financialStatement.civilListReserve || 0);
+        annualisedArmyReserve +
+        annualisedNavalReserve +
+        (financialStatement.homeReserve || 0) +
+        (financialStatement.foreignReserve || 0) +
+        annualisedCivilListReserve;
 
-      const estimatedAnnualSurplus = projectedAnnualRevenue - totalServiceEstimates;
-      const estimatedAnnualSurplusWithReserve = estimatedAnnualSurplus - totalReserveFunds;
-      const predictedMaximumTreasuryBalance = estimatedAnnualSurplus + (financialStatement.lateAprilTreasuryBalance || 0);
-      const predictedMinimumTreasuryBalance = estimatedAnnualSurplusWithReserve + (financialStatement.lateAprilTreasuryBalance || 0);
+      const estimatedAnnualSurplus =
+        projectedAnnualRevenue - totalServiceEstimates;
+
+      const estimatedAnnualSurplusWithReserve =
+        projectedAnnualRevenue - totalServiceEstimates - totalReserveFunds;
+
+      const predictedMaximumTreasuryBalance =
+        estimatedAnnualSurplus +
+        (financialStatement.lateAprilTreasuryBalance || 0);
+
+      const predictedMinimumTreasuryBalance =
+        estimatedAnnualSurplusWithReserve +
+        (financialStatement.lateAprilTreasuryBalance || 0);
 
       // Home Office Calculations
       const getPublicOrderStatusLabel = (score) => {
@@ -2066,8 +2099,8 @@
 
                     <div className="border-t border-b border-[#E5C158]/50 py-5 space-y-4">
                       {[
-                        ['armyEstimate', 'armyReserve', 'Army Service Estimate'],
-                        ['navalEstimate', 'navalReserve', 'Naval Service Estimate'],
+                        ['armyEstimate', 'armyReserve', 'Army Service Estimate (Per Turn × 24)'],
+                        ['navalEstimate', 'navalReserve', 'Naval Service Estimate (Per Turn × 24)'],
                         ['homeEstimate', 'homeReserve', 'Home Department Estimate'],
                         ['foreignEstimate', 'foreignReserve', 'Foreign Service Estimate'],
                         ['civilListEstimate', 'civilListReserve', 'Civil List, Pension & Royal Grants']
