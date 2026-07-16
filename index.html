@@ -391,6 +391,41 @@
       { id: 'rocketTroop', label: '💣 Rocket Troop', branch: 'artillery' }
     ];
 
+    function flattenNavyRegister(rates) {
+      return (rates || []).flatMap(rate =>
+        (rate.classes || []).flatMap(shipClass =>
+          (shipClass.ships || [])
+            .filter(ship => String(ship.name || '').trim())
+            .map(ship => ({
+              id: String(ship.id),
+              name: String(ship.name || '').trim(),
+              className: String(shipClass.className || '').trim() || 'Unrecorded Class',
+              rateTitle: String(rate.rateTitle || '').trim() || formatOrdinal(rate.rateNumber) || 'Unrecorded Rate'
+            }))
+        )
+      );
+    }
+
+    function flattenArmyRegister(categories) {
+      return (categories || []).flatMap(category =>
+        (category.entries || [])
+          .filter(entry => String(entry.name || '').trim())
+          .map(entry => ({
+            id: String(entry.id),
+            branch: category.branch,
+            categoryId: category.id,
+            categoryLabel: category.label,
+            name: String(entry.name || '').trim(),
+            regimentNumber: category.branch === 'infantry'
+              ? String(entry.regimentNumber || '').trim()
+              : '',
+            displayName: category.branch === 'infantry' && String(entry.regimentNumber || '').trim()
+              ? `${String(entry.regimentNumber).trim()}/${String(entry.name || '').trim()}`
+              : String(entry.name || '').trim()
+          }))
+      );
+    }
+
     function ParliamentaryEngine() {
       const [gameState, setGameState] = React.useState('TIMETABLE_BUILDER');
       const [selectedYear, setSelectedYear] = React.useState(1820);
@@ -587,6 +622,28 @@
         londonLowerPatrioticFervour: 0
       });
 
+      const [navalAnnualCycle, setNavalAnnualCycle] = React.useState(() => ({
+        openingShipCount: flattenNavyRegister(navyRates).length,
+        commissionedShips: [],
+        removedShips: [],
+        engagementRecords: [],
+        cycleStartedYear: selectedYear,
+        cycleStartedTurn: currentTurn
+      }));
+
+      const [armyAnnualCycle, setArmyAnnualCycle] = React.useState(() => ({
+        openingUnitCount: flattenArmyRegister(armyListCategories).length,
+        raisedUnits: [],
+        disbandedUnits: [],
+        engagementRecords: [],
+        cycleStartedYear: selectedYear,
+        cycleStartedTurn: currentTurn
+      }));
+
+      const [crownPossessions, setCrownPossessions] = React.useState([]);
+
+      const [mobilisationsAuthorised, setMobilisationsAuthorised] = React.useState(0);
+
       const [cabinetForm, setCabinetForm] = React.useState({
         pmNotes: 'Prime Minister directive: Preserve Tory majority and monitor civil agitation.',
         keyDirectives: '1. Secure Treasury appropriations.\n2. Maintain public tranquility via local garrisons.\n3. Oversee diplomatic posture with the Quadruple Alliance.',
@@ -694,27 +751,86 @@
       };
 
       const updateArmyUnitEntry = (categoryId, entryId, field, value) => {
-        setArmyListCategories(prev => prev.map(category =>
-          category.id === categoryId
-            ? {
-                ...category,
-                entries: category.entries.map(entry =>
-                  entry.id === entryId ? { ...entry, [field]: value } : entry
-                )
-              }
-            : category
-        ));
+        setArmyListCategories(prev => {
+          const category = prev.find(item => item.id === categoryId);
+          const existingEntry = category?.entries.find(entry => entry.id === entryId);
+          const previousName = String(existingEntry?.name || '').trim();
+
+          const updatedCategories = prev.map(item =>
+            item.id === categoryId
+              ? {
+                  ...item,
+                  entries: item.entries.map(entry =>
+                    entry.id === entryId ? { ...entry, [field]: value } : entry
+                  )
+                }
+              : item
+          );
+
+          const updatedUnit = flattenArmyRegister(updatedCategories)
+            .find(unit => unit.id === String(entryId));
+
+          if (field === 'name' && !previousName && updatedUnit) {
+            setArmyAnnualCycle(cycle => (
+              cycle.raisedUnits.some(unit => unit.id === updatedUnit.id)
+                ? cycle
+                : {
+                    ...cycle,
+                    raisedUnits: [
+                      ...cycle.raisedUnits,
+                      {
+                        ...updatedUnit,
+                        recordedYear: selectedYear,
+                        recordedTurn: currentTurn
+                      }
+                    ]
+                  }
+            ));
+          } else if (updatedUnit) {
+            setArmyAnnualCycle(cycle => ({
+              ...cycle,
+              raisedUnits: cycle.raisedUnits.map(unit =>
+                unit.id === updatedUnit.id ? { ...unit, ...updatedUnit } : unit
+              )
+            }));
+          }
+
+          return updatedCategories;
+        });
       };
 
       const removeArmyUnitEntry = (categoryId, entryId) => {
-        setArmyListCategories(prev => prev.map(category =>
-          category.id === categoryId
-            ? {
-                ...category,
-                entries: category.entries.filter(entry => entry.id !== entryId)
-              }
-            : category
-        ));
+        setArmyListCategories(prev => {
+          const removedUnit = flattenArmyRegister(prev)
+            .find(unit => unit.id === String(entryId));
+
+          if (removedUnit) {
+            setArmyAnnualCycle(cycle => (
+              cycle.disbandedUnits.some(unit => unit.id === removedUnit.id)
+                ? cycle
+                : {
+                    ...cycle,
+                    disbandedUnits: [
+                      ...cycle.disbandedUnits,
+                      {
+                        ...removedUnit,
+                        recordedYear: selectedYear,
+                        recordedTurn: currentTurn
+                      }
+                    ]
+                  }
+            ));
+          }
+
+          return prev.map(category =>
+            category.id === categoryId
+              ? {
+                  ...category,
+                  entries: category.entries.filter(entry => entry.id !== entryId)
+                }
+              : category
+          );
+        });
       };
 
       const addArmyCategory = (categoryId) => {
@@ -728,7 +844,32 @@
       };
 
       const removeArmyCategory = (categoryId) => {
-        setArmyListCategories(prev => prev.filter(category => category.id !== categoryId));
+        setArmyListCategories(prev => {
+          const removedUnits = flattenArmyRegister(
+            prev.filter(category => category.id === categoryId)
+          );
+
+          if (removedUnits.length > 0) {
+            setArmyAnnualCycle(cycle => {
+              const existingIds = new Set(cycle.disbandedUnits.map(unit => unit.id));
+              return {
+                ...cycle,
+                disbandedUnits: [
+                  ...cycle.disbandedUnits,
+                  ...removedUnits
+                    .filter(unit => !existingIds.has(unit.id))
+                    .map(unit => ({
+                      ...unit,
+                      recordedYear: selectedYear,
+                      recordedTurn: currentTurn
+                    }))
+                ]
+              };
+            });
+          }
+
+          return prev.filter(category => category.id !== categoryId);
+        });
       };
 
       const availableArmyCategories = WAR_OFFICE_UNIT_CATALOGUE.filter(
@@ -829,13 +970,53 @@
       };
 
       const removeNavyRate = (rateId) => {
-        setNavyRates(prev => prev.filter(rate => rate.id !== rateId));
+        setNavyRates(prev => {
+          const removedShips = flattenNavyRegister(
+            prev.filter(rate => rate.id === rateId)
+          );
+
+          if (removedShips.length > 0) {
+            setNavalAnnualCycle(cycle => {
+              const existingIds = new Set(cycle.removedShips.map(ship => ship.id));
+              return {
+                ...cycle,
+                removedShips: [
+                  ...cycle.removedShips,
+                  ...removedShips
+                    .filter(ship => !existingIds.has(ship.id))
+                    .map(ship => ({
+                      ...ship,
+                      recordedYear: selectedYear,
+                      recordedTurn: currentTurn
+                    }))
+                ]
+              };
+            });
+          }
+
+          return prev.filter(rate => rate.id !== rateId);
+        });
       };
 
       const updateNavyRate = (rateId, field, value) => {
-        setNavyRates(prev => prev.map(rate =>
-          rate.id === rateId ? { ...rate, [field]: value } : rate
-        ));
+        setNavyRates(prev => {
+          const updatedRates = prev.map(rate =>
+            rate.id === rateId ? { ...rate, [field]: value } : rate
+          );
+          const registerById = new Map(
+            flattenNavyRegister(updatedRates).map(ship => [ship.id, ship])
+          );
+
+          setNavalAnnualCycle(cycle => ({
+            ...cycle,
+            commissionedShips: cycle.commissionedShips.map(ship => ({
+              ...ship,
+              ...(registerById.get(ship.id) || {})
+            }))
+          }));
+
+          return updatedRates;
+        });
       };
 
       const addNavyClass = (rateId) => {
@@ -854,24 +1035,69 @@
       };
 
       const removeNavyClass = (rateId, classId) => {
-        setNavyRates(prev => prev.map(rate =>
-          rate.id === rateId
-            ? { ...rate, classes: rate.classes.filter(shipClass => shipClass.id !== classId) }
-            : rate
-        ));
+        setNavyRates(prev => {
+          const removedShips = flattenNavyRegister(
+            prev
+              .filter(rate => rate.id === rateId)
+              .map(rate => ({
+                ...rate,
+                classes: rate.classes.filter(shipClass => shipClass.id === classId)
+              }))
+          );
+
+          if (removedShips.length > 0) {
+            setNavalAnnualCycle(cycle => {
+              const existingIds = new Set(cycle.removedShips.map(ship => ship.id));
+              return {
+                ...cycle,
+                removedShips: [
+                  ...cycle.removedShips,
+                  ...removedShips
+                    .filter(ship => !existingIds.has(ship.id))
+                    .map(ship => ({
+                      ...ship,
+                      recordedYear: selectedYear,
+                      recordedTurn: currentTurn
+                    }))
+                ]
+              };
+            });
+          }
+
+          return prev.map(rate =>
+            rate.id === rateId
+              ? { ...rate, classes: rate.classes.filter(shipClass => shipClass.id !== classId) }
+              : rate
+          );
+        });
       };
 
       const updateNavyClass = (rateId, classId, value) => {
-        setNavyRates(prev => prev.map(rate =>
-          rate.id === rateId
-            ? {
-                ...rate,
-                classes: rate.classes.map(shipClass =>
-                  shipClass.id === classId ? { ...shipClass, className: value } : shipClass
-                )
-              }
-            : rate
-        ));
+        setNavyRates(prev => {
+          const updatedRates = prev.map(rate =>
+            rate.id === rateId
+              ? {
+                  ...rate,
+                  classes: rate.classes.map(shipClass =>
+                    shipClass.id === classId ? { ...shipClass, className: value } : shipClass
+                  )
+                }
+              : rate
+          );
+          const registerById = new Map(
+            flattenNavyRegister(updatedRates).map(ship => [ship.id, ship])
+          );
+
+          setNavalAnnualCycle(cycle => ({
+            ...cycle,
+            commissionedShips: cycle.commissionedShips.map(ship => ({
+              ...ship,
+              ...(registerById.get(ship.id) || {})
+            }))
+          }));
+
+          return updatedRates;
+        });
       };
 
       const addNavyShip = (rateId, classId) => {
@@ -891,38 +1117,97 @@
       };
 
       const updateNavyShip = (rateId, classId, shipId, value) => {
-        setNavyRates(prev => prev.map(rate =>
-          rate.id === rateId
-            ? {
-                ...rate,
-                classes: rate.classes.map(shipClass =>
-                  shipClass.id === classId
-                    ? {
-                        ...shipClass,
-                        ships: shipClass.ships.map(ship =>
-                          ship.id === shipId ? { ...ship, name: value } : ship
-                        )
+        setNavyRates(prev => {
+          const existingShip = flattenNavyRegister(prev)
+            .find(ship => ship.id === String(shipId));
+          const previousName = String(existingShip?.name || '').trim();
+
+          const updatedRates = prev.map(rate =>
+            rate.id === rateId
+              ? {
+                  ...rate,
+                  classes: rate.classes.map(shipClass =>
+                    shipClass.id === classId
+                      ? {
+                          ...shipClass,
+                          ships: shipClass.ships.map(ship =>
+                            ship.id === shipId ? { ...ship, name: value } : ship
+                          )
+                        }
+                      : shipClass
+                  )
+                }
+              : rate
+          );
+
+          const updatedShip = flattenNavyRegister(updatedRates)
+            .find(ship => ship.id === String(shipId));
+
+          if (!previousName && updatedShip) {
+            setNavalAnnualCycle(cycle => (
+              cycle.commissionedShips.some(ship => ship.id === updatedShip.id)
+                ? cycle
+                : {
+                    ...cycle,
+                    commissionedShips: [
+                      ...cycle.commissionedShips,
+                      {
+                        ...updatedShip,
+                        recordedYear: selectedYear,
+                        recordedTurn: currentTurn
                       }
-                    : shipClass
-                )
-              }
-            : rate
-        ));
+                    ]
+                  }
+            ));
+          } else if (updatedShip) {
+            setNavalAnnualCycle(cycle => ({
+              ...cycle,
+              commissionedShips: cycle.commissionedShips.map(ship =>
+                ship.id === updatedShip.id ? { ...ship, ...updatedShip } : ship
+              )
+            }));
+          }
+
+          return updatedRates;
+        });
       };
 
       const removeNavyShip = (rateId, classId, shipId) => {
-        setNavyRates(prev => prev.map(rate =>
-          rate.id === rateId
-            ? {
-                ...rate,
-                classes: rate.classes.map(shipClass =>
-                  shipClass.id === classId
-                    ? { ...shipClass, ships: shipClass.ships.filter(ship => ship.id !== shipId) }
-                    : shipClass
-                )
-              }
-            : rate
-        ));
+        setNavyRates(prev => {
+          const removedShip = flattenNavyRegister(prev)
+            .find(ship => ship.id === String(shipId));
+
+          if (removedShip) {
+            setNavalAnnualCycle(cycle => (
+              cycle.removedShips.some(ship => ship.id === removedShip.id)
+                ? cycle
+                : {
+                    ...cycle,
+                    removedShips: [
+                      ...cycle.removedShips,
+                      {
+                        ...removedShip,
+                        recordedYear: selectedYear,
+                        recordedTurn: currentTurn
+                      }
+                    ]
+                  }
+            ));
+          }
+
+          return prev.map(rate =>
+            rate.id === rateId
+              ? {
+                  ...rate,
+                  classes: rate.classes.map(shipClass =>
+                    shipClass.id === classId
+                      ? { ...shipClass, ships: shipClass.ships.filter(ship => ship.id !== shipId) }
+                      : shipClass
+                  )
+                }
+              : rate
+          );
+        });
       };
 
       const navyShipOptions = navyRates.flatMap(rate =>
@@ -1147,6 +1432,237 @@
           }
         }
         return 'No territorial region recorded';
+      };
+
+      const recordNavalEngagementForAnnualReturn = () => {
+        const record = {
+          ...navalEngagementReport,
+          id: `${Date.now()}-${Math.random()}`,
+          year: selectedYear,
+          turn: currentTurn,
+          period: MONTH_NAMES[currentTurn - 1]
+        };
+
+        setNavalAnnualCycle(cycle => ({
+          ...cycle,
+          engagementRecords: [...cycle.engagementRecords, record]
+        }));
+
+        setNavalEngagementReport(prev => ({
+          ...prev,
+          capturedShips: 0,
+          lostShips: 0,
+          remainingShips: 0,
+          prizeMoney: 0,
+          shipIds: []
+        }));
+
+        alert('Naval Engagement Report recorded for the current Annual Naval Return cycle.');
+      };
+
+      const recordArmyEngagementForAnnualReturn = () => {
+        const record = {
+          ...armyEngagementReport,
+          id: `${Date.now()}-${Math.random()}`,
+          year: selectedYear,
+          turn: currentTurn,
+          period: MONTH_NAMES[currentTurn - 1]
+        };
+
+        setArmyAnnualCycle(cycle => ({
+          ...cycle,
+          engagementRecords: [...cycle.engagementRecords, record]
+        }));
+
+        setArmyEngagementReport(prev => ({
+          ...prev,
+          commanderInChief: '',
+          unitIds: []
+        }));
+
+        alert('Army Engagement Report recorded for the current Annual Military Return cycle.');
+      };
+
+      const groupShipsByRateAndClass = (ships) => {
+        const grouped = new Map();
+
+        (ships || []).forEach(ship => {
+          const rateTitle = ship.rateTitle || 'Unrecorded Rate';
+          const className = ship.className || 'Unrecorded Class';
+          const key = `${rateTitle}::${className}`;
+
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              key,
+              rateTitle,
+              className,
+              ships: []
+            });
+          }
+
+          grouped.get(key).ships.push(ship);
+        });
+
+        return Array.from(grouped.values());
+      };
+
+      const navalCommissionedGroups = groupShipsByRateAndClass(
+        navalAnnualCycle.commissionedShips
+      );
+
+      const navalRemovedGroups = groupShipsByRateAndClass(
+        navalAnnualCycle.removedShips
+      );
+
+      const currentNavyRegister = flattenNavyRegister(navyRates);
+
+      const currentArmyRegister = flattenArmyRegister(armyListCategories);
+
+      const navalVictoryCount = navalAnnualCycle.engagementRecords
+        .filter(record => record.outcome === 'Victory').length;
+
+      const navalDefeatCount = navalAnnualCycle.engagementRecords
+        .filter(record => record.outcome === 'Defeat').length;
+
+      const navalPrizeMoneyTotal = navalAnnualCycle.engagementRecords
+        .reduce((total, record) => total + (Number(record.prizeMoney) || 0), 0);
+
+      const armyVictoryCount = armyAnnualCycle.engagementRecords
+        .filter(record => record.outcome === 'Victory').length;
+
+      const armyDefeatCount = armyAnnualCycle.engagementRecords
+        .filter(record => record.outcome === 'Defeat').length;
+
+      const raisedArmyUnitsByBranch = {
+        infantry: armyAnnualCycle.raisedUnits.filter(unit => unit.branch === 'infantry'),
+        cavalry: armyAnnualCycle.raisedUnits.filter(unit => unit.branch === 'cavalry'),
+        artillery: armyAnnualCycle.raisedUnits.filter(unit => unit.branch === 'artillery')
+      };
+
+      const disbandedArmyUnitsByBranch = {
+        infantry: armyAnnualCycle.disbandedUnits.filter(unit => unit.branch === 'infantry'),
+        cavalry: armyAnnualCycle.disbandedUnits.filter(unit => unit.branch === 'cavalry'),
+        artillery: armyAnnualCycle.disbandedUnits.filter(unit => unit.branch === 'artillery')
+      };
+
+      const addCrownPossession = () => {
+        setCrownPossessions(prev => [
+          ...prev,
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            region: '',
+            status: 'Secure',
+            victoriesOverForeignInvasion: 0,
+            totalGarrisonUnits: 0,
+            rulingClassPublicOrder: 0,
+            lowerClassPublicOrder: 0
+          }
+        ]);
+      };
+
+      const updateCrownPossession = (id, field, value) => {
+        const numericFields = new Set([
+          'victoriesOverForeignInvasion',
+          'totalGarrisonUnits',
+          'rulingClassPublicOrder',
+          'lowerClassPublicOrder'
+        ]);
+
+        setCrownPossessions(prev => prev.map(possession =>
+          possession.id === id
+            ? {
+                ...possession,
+                [field]: numericFields.has(field)
+                  ? (Number.isNaN(parseFloat(value)) ? 0 : parseFloat(value))
+                  : value
+              }
+            : possession
+        ));
+      };
+
+      const removeCrownPossession = (id) => {
+        setCrownPossessions(prev => prev.filter(possession => possession.id !== id));
+      };
+
+      const submitAnnualNavalReturn = () => {
+        const context = [
+          `Reporting cycle: ${MONTH_NAMES[navalAnnualCycle.cycleStartedTurn - 1]} ${navalAnnualCycle.cycleStartedYear} to ${MONTH_NAMES[currentTurn - 1]} ${selectedYear}.`,
+          `New commissioned ships: ${navalAnnualCycle.commissionedShips.length}.`,
+          `Scrapped or captured ships: ${navalAnnualCycle.removedShips.length}.`,
+          `Opening ships: ${navalAnnualCycle.openingShipCount}.`,
+          `Closing ships: ${currentNavyRegister.length}.`,
+          `Naval engagement victories: ${navalVictoryCount}.`,
+          `Naval engagement defeats: ${navalDefeatCount}.`,
+          `Prize money: £${navalPrizeMoneyTotal}.`
+        ].join('\n');
+
+        setNationalArchive(prev => [
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            title: `${selectedYear} Annual Naval Return`,
+            instrumentType: 'Annual Naval Return',
+            context,
+            year: selectedYear,
+            turn: currentTurn,
+            period: MONTH_NAMES[currentTurn - 1],
+            sealedPhrase: 'The Great Seal of Great Britain',
+            sealedAt: new Date().toISOString()
+          },
+          ...prev
+        ]);
+
+        setNavalAnnualCycle({
+          openingShipCount: currentNavyRegister.length,
+          commissionedShips: [],
+          removedShips: [],
+          engagementRecords: [],
+          cycleStartedYear: selectedYear,
+          cycleStartedTurn: currentTurn
+        });
+
+        alert('Annual Naval Return submitted, archived and reset for a new reporting cycle.');
+      };
+
+      const submitAnnualMilitaryReturn = () => {
+        const context = [
+          `Reporting cycle: ${MONTH_NAMES[armyAnnualCycle.cycleStartedTurn - 1]} ${armyAnnualCycle.cycleStartedYear} to ${MONTH_NAMES[currentTurn - 1]} ${selectedYear}.`,
+          `New raised units: ${armyAnnualCycle.raisedUnits.length}.`,
+          `Disbanded units: ${armyAnnualCycle.disbandedUnits.length}.`,
+          `Opening units: ${armyAnnualCycle.openingUnitCount}.`,
+          `Closing units: ${currentArmyRegister.length}.`,
+          `Mobilisations authorised: ${mobilisationsAuthorised}.`,
+          `Land engagement victories: ${armyVictoryCount}.`,
+          `Land engagement defeats: ${armyDefeatCount}.`,
+          `Crown possessions recorded: ${crownPossessions.length}.`
+        ].join('\n');
+
+        setNationalArchive(prev => [
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            title: `${selectedYear} Annual Military Return`,
+            instrumentType: 'Annual Military Return',
+            context,
+            year: selectedYear,
+            turn: currentTurn,
+            period: MONTH_NAMES[currentTurn - 1],
+            sealedPhrase: 'The Great Seal of Great Britain',
+            sealedAt: new Date().toISOString()
+          },
+          ...prev
+        ]);
+
+        setArmyAnnualCycle({
+          openingUnitCount: currentArmyRegister.length,
+          raisedUnits: [],
+          disbandedUnits: [],
+          engagementRecords: [],
+          cycleStartedYear: selectedYear,
+          cycleStartedTurn: currentTurn
+        });
+        setCrownPossessions([]);
+        setMobilisationsAuthorised(0);
+
+        alert('Annual Military Return submitted, archived and reset for a new reporting cycle.');
       };
 
       // Traits Handlers
@@ -1515,6 +2031,7 @@
           peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           governmentPopularity, navalEngagementReport, armyEngagementReport,
+          navalAnnualCycle, armyAnnualCycle, crownPossessions, mobilisationsAuthorised,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
           warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
           greatSealDraft, nationalArchive
@@ -1553,11 +2070,27 @@
             if (parsed.governmentPopularity !== undefined) setGovernmentPopularity(parsed.governmentPopularity);
             if (parsed.navalEngagementReport) setNavalEngagementReport(parsed.navalEngagementReport);
             if (parsed.armyEngagementReport) setArmyEngagementReport(parsed.armyEngagementReport);
-            if (parsed.admiraltySubTab) setAdmiraltySubTab(parsed.admiraltySubTab);
+            if (parsed.navalAnnualCycle) setNavalAnnualCycle(parsed.navalAnnualCycle);
+            if (parsed.armyAnnualCycle) setArmyAnnualCycle(parsed.armyAnnualCycle);
+            if (parsed.crownPossessions) setCrownPossessions(parsed.crownPossessions);
+            if (parsed.mobilisationsAuthorised !== undefined) setMobilisationsAuthorised(parsed.mobilisationsAuthorised);
+            if (parsed.admiraltySubTab) {
+              setAdmiraltySubTab(
+                parsed.admiraltySubTab === 'MARITIME_EXPENDITURE'
+                  ? 'ANNUAL_NAVAL_RETURN'
+                  : parsed.admiraltySubTab
+              );
+            }
             if (parsed.navyRates) setNavyRates(parsed.navyRates);
             if (parsed.fleetDisposition) setFleetDisposition(parsed.fleetDisposition);
             if (parsed.maritimeExpenditure) setMaritimeExpenditure(parsed.maritimeExpenditure);
-            if (parsed.warOfficeSubTab) setWarOfficeSubTab(parsed.warOfficeSubTab);
+            if (parsed.warOfficeSubTab) {
+              setWarOfficeSubTab(
+                parsed.warOfficeSubTab === 'ARMY_EXPENDITURE'
+                  ? 'ANNUAL_MILITARY_RETURN'
+                  : parsed.warOfficeSubTab
+              );
+            }
             if (parsed.armyListCategories) setArmyListCategories(parsed.armyListCategories);
             if (parsed.territorialOrganisation) setTerritorialOrganisation(parsed.territorialOrganisation);
             if (parsed.armyExpenditure) setArmyExpenditure(parsed.armyExpenditure);
@@ -3813,7 +4346,7 @@
                     { key: 'NAVY_LIST', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List' },
                     { key: 'FLEET_DISPOSITION', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List' },
                     { key: 'NAVAL_ENGAGEMENT_REPORT', label: '⚓️ Naval Engagement Report' },
-                    { key: 'MARITIME_EXPENDITURE', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Maritime Expenditure' }
+                    { key: 'ANNUAL_NAVAL_RETURN', label: '⚓️ Annual Naval Return' }
                   ].map((subTab) => (
                     <button
                       key={subTab.key}
@@ -4262,6 +4795,18 @@
                       ))}
                     </div>
 
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-[#E5C158]/40 pt-4">
+                      <div className="text-slate-400">
+                        Engagement reports recorded in current cycle: {navalAnnualCycle.engagementRecords.length}
+                      </div>
+                      <button
+                        onClick={recordNavalEngagementForAnnualReturn}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-3 rounded hover:bg-yellow-300"
+                      >
+                        Record Naval Engagement Report
+                      </button>
+                    </div>
+
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">
@@ -4272,68 +4817,158 @@
                   </div>
                 )}
 
-                {admiraltySubTab === 'MARITIME_EXPENDITURE' && (
+                {admiraltySubTab === 'ANNUAL_NAVAL_RETURN' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-[#E5C158] font-bold text-base">
+                      ⚓️ Annual Naval Return — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                    </div>
+
                     <div className="text-center space-y-1">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Maritime Expenditure</div>
-                      <div className="text-white font-bold tracking-wide">ADMIRALTY // NAVAL ESTIMATES &amp; MARITIME SERVICES</div>
+                      <div className="text-white font-bold tracking-wider text-lg">
+                        FIRST LORD OF THE ADMIRALTY // ANNUAL NAVAL RETURN
+                      </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
 
-                    <div className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-3">
-                      {[
-                        ['dockyardMaintenance', 'Royal Dockyards & Maintenance'],
-                        ['victuallingAndStores', 'Victualling, Stores & Provisions'],
-                        ['seamenAndMarines', 'Wages of Seamen & Royal Marines'],
-                        ['shipConstruction', 'Construction of New Ships'],
-                        ['repairsAndRefits', 'Repairs, Refits & Coppering'],
-                        ['ordnanceAndPowder', 'Naval Ordnance, Guns & Powder'],
-                        ['overseasStations', 'Overseas Stations & Fleet Supply'],
-                        ['pensionsAndHalfPay', 'Pensions, Widows & Half-Pay'],
-                        ['extraordinaryServices', 'Extraordinary Maritime Services']
-                      ].map(([field, label]) => (
-                        <div key={field} className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-                          <label className="text-slate-300">{label} :</label>
-                          <div className="flex items-center gap-1">
-                            <span className="text-emerald-400">£</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={maritimeExpenditure[field]}
-                              onChange={(e) => handleMaritimeExpenditureChange(field, e.target.value)}
-                              className="bg-[#0B192C] border border-slate-700 text-emerald-400 font-bold p-2 rounded w-full"
-                            />
-                          </div>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="text-slate-300 font-bold">Date :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[currentTurn - 1]} {selectedYear} — Turn {currentTurn}
+                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center border-t border-[#E5C158]/40 pt-4 text-base font-bold">
-                        <span className="text-[#E5C158]">TOTAL MARITIME EXPENDITURE :</span>
-                        <span className="text-emerald-400 bg-[#0B192C] border border-[#E5C158] p-2 rounded">
-                          £{maritimeExpenditureTotal.toLocaleString()}
+                      <div className="text-slate-300 font-bold">Report Cycle Commenced :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[navalAnnualCycle.cycleStartedTurn - 1]} {navalAnnualCycle.cycleStartedYear}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border border-[#E5C158]/40 bg-[#0F223D] p-4 rounded">
+                        <span className="text-[#E5C158] font-bold">Total New Commissioned Ship(s) :</span>
+                        <span className="text-emerald-400 font-bold text-lg">
+                          {navalAnnualCycle.commissionedShips.length}
                         </span>
                       </div>
 
-                      <div className="pt-3">
-                        <label className="text-slate-300 block mb-2">First Lord's Notes &amp; Naval Estimate Remarks :</label>
-                        <textarea
-                          value={maritimeExpenditure.notes}
-                          onChange={(e) => handleMaritimeExpenditureChange('notes', e.target.value)}
-                          rows="6"
-                          className="w-full bg-[#0B192C] border border-slate-700 text-white p-3 rounded resize-y"
-                          placeholder="Enter maritime expenditure notes..."
-                        />
+                      <div className="space-y-3">
+                        <div className="text-slate-200 font-bold">&gt; New Commissioned Ship(s) :</div>
+
+                        {navalCommissionedGroups.length === 0 ? (
+                          <div className="bg-[#0F223D] border border-slate-700 p-4 rounded text-slate-500 italic">
+                            No new commissioned ships have been recorded during the current report cycle.
+                          </div>
+                        ) : (
+                          navalCommissionedGroups.map(group => (
+                            <div key={group.key} className="bg-[#0F223D] border border-slate-700 p-4 rounded space-y-2">
+                              <div className="text-[#E5C158] font-bold">
+                                {group.rateTitle} // {group.className}
+                              </div>
+                              <div className="pl-4 space-y-1">
+                                {group.ships.map(ship => (
+                                  <div key={`${group.key}-${ship.id}`} className="text-white">
+                                    • HMS {ship.name}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border border-[#E5C158]/40 bg-[#0F223D] p-4 rounded">
+                        <span className="text-[#E5C158] font-bold">Total Scrapped or Captured Ship(s) :</span>
+                        <span className="text-rose-400 font-bold text-lg">
+                          {navalAnnualCycle.removedShips.length}
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="text-slate-200 font-bold">&gt; New Scrapped or Captured Ship(s) :</div>
+
+                        {navalRemovedGroups.length === 0 ? (
+                          <div className="bg-[#0F223D] border border-slate-700 p-4 rounded text-slate-500 italic">
+                            No scrapped or captured ships have been recorded during the current report cycle.
+                          </div>
+                        ) : (
+                          navalRemovedGroups.map(group => (
+                            <div key={group.key} className="bg-[#0F223D] border border-slate-700 p-4 rounded space-y-2">
+                              <div className="text-[#E5C158] font-bold">
+                                {group.rateTitle} // {group.className}
+                              </div>
+                              <div className="pl-4 space-y-1">
+                                {group.ships.map(ship => (
+                                  <div key={`${group.key}-${ship.id}`} className="text-white">
+                                    • HMS {ship.name}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">
+                            Total Ship(s) at the Beginning of the Report Cycle :
+                          </div>
+                          <div className="text-white font-bold text-xl mt-2">
+                            {navalAnnualCycle.openingShipCount}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">
+                            Total Ship(s) at the End of the Report Cycle :
+                          </div>
+                          <div className="text-white font-bold text-xl mt-2">
+                            {currentNavyRegister.length}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-center text-slate-400 italic">
-                      Annual naval return scheduled for Turn {admiraltyTurn || 'Unscheduled'}.
+                    <div className="border-t border-b border-[#E5C158]/40 py-5 space-y-4">
+                      <div className="text-[#E5C158] font-bold text-base">Operational Summary</div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">&gt; Land Engagement Victory(s) :</div>
+                          <div className="text-emerald-400 font-bold text-xl mt-2">{navalVictoryCount}</div>
+                        </div>
+
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">&gt; Land Engagement Defeat(s) :</div>
+                          <div className="text-rose-400 font-bold text-xl mt-2">{navalDefeatCount}</div>
+                        </div>
+
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded md:col-span-2">
+                          <div className="text-slate-300 font-bold">&gt; Prize Money :</div>
+                          <div className="text-emerald-400 font-bold text-xl mt-2">
+                            £{navalPrizeMoneyTotal.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                      <div className="text-slate-400 italic">
+                        The working return resets only after it is submitted and archived.
+                      </div>
+                      <button
+                        onClick={submitAnnualNavalReturn}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-3 rounded hover:bg-yellow-300"
+                      >
+                        Submit Annual Naval Return &amp; Reset Report Cycle
+                      </button>
                     </div>
 
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-200 text-base tracking-wide">
+                        DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
+                      </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
@@ -4377,14 +5012,14 @@
                   </button>
 
                   <button
-                    onClick={() => setWarOfficeSubTab('ARMY_EXPENDITURE')}
+                    onClick={() => setWarOfficeSubTab('ANNUAL_MILITARY_RETURN')}
                     className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'ARMY_EXPENDITURE'
+                      warOfficeSubTab === 'ANNUAL_MILITARY_RETURN'
                         ? 'bg-[#E5C158] text-[#0F223D]'
                         : 'text-slate-200 hover:text-[#E5C158]'
                     }`}
                   >
-                    Army Expenditure
+                    ⚔️ Annual Military Return
                   </button>
                 </div>
 
@@ -4693,6 +5328,18 @@
                       ))}
                     </div>
 
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-[#E5C158]/40 pt-4">
+                      <div className="text-slate-400">
+                        Engagement reports recorded in current cycle: {armyAnnualCycle.engagementRecords.length}
+                      </div>
+                      <button
+                        onClick={recordArmyEngagementForAnnualReturn}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-3 rounded hover:bg-yellow-300"
+                      >
+                        Record Army Engagement Report
+                      </button>
+                    </div>
+
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">
@@ -4703,60 +5350,225 @@
                   </div>
                 )}
 
-                {warOfficeSubTab === 'ARMY_EXPENDITURE' && (
+                {warOfficeSubTab === 'ANNUAL_MILITARY_RETURN' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-[#E5C158] font-bold text-base">
+                      ⚔️ Annual Military Return — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                    </div>
+
                     <div className="text-center space-y-1">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Army Expenditure</div>
+                      <div className="text-white font-bold tracking-wider text-lg">
+                        SECRETARY AT WAR // ANNUAL MILITARY RETURN
+                      </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="text-slate-300 font-bold">Date :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[currentTurn - 1]} {selectedYear} — Turn {currentTurn}
+                      </div>
+
+                      <div className="text-slate-300 font-bold">Report Cycle Commenced :</div>
+                      <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-white">
+                        {MONTH_NAMES[armyAnnualCycle.cycleStartedTurn - 1]} {armyAnnualCycle.cycleStartedYear}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border border-[#E5C158]/40 bg-[#0F223D] p-4 rounded">
+                        <span className="text-[#E5C158] font-bold">Total New Raised Unit(s) :</span>
+                        <span className="text-emerald-400 font-bold text-lg">
+                          {armyAnnualCycle.raisedUnits.length}
+                        </span>
+                      </div>
+
                       {[
-                        ['infantryPayAndAllowances', 'Infantry Pay & Allowances'],
-                        ['cavalryPayAndRemounts', 'Cavalry Pay & Remounts'],
-                        ['artilleryAndOrdnance', 'Artillery & Ordnance'],
-                        ['recruitmentAndBounties', 'Recruitment & Bounties'],
-                        ['uniformsAndEquipment', 'Uniforms & Equipment'],
-                        ['barracksAndGarrisons', 'Barracks & Garrisons'],
-                        ['transportAndCommissariat', 'Transport & Commissariat'],
-                        ['pensionsAndHalfPay', 'Pensions & Half Pay'],
-                        ['extraordinaryOperations', 'Extraordinary Operations']
-                      ].map(([field, label]) => (
-                        <div key={field} className="grid grid-cols-2 gap-2 items-center">
-                          <label className="text-slate-300">{label} :</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={armyExpenditure[field]}
-                            onChange={(e) => handleArmyExpenditureChange(field, e.target.value)}
-                            className="bg-[#0F223D] border border-slate-700 text-emerald-400 font-bold p-2 rounded w-full"
-                          />
+                        ['infantry', 'New Raised Infantry Unit(s)'],
+                        ['cavalry', 'New Raised Cavalry Unit(s)'],
+                        ['artillery', 'New Raised Artillery Unit(s)']
+                      ].map(([branch, label]) => (
+                        <div key={`raised-${branch}`} className="space-y-2">
+                          <div className="text-slate-200 font-bold">&gt; {label} :</div>
+                          <div className="bg-[#0F223D] border border-slate-700 p-4 rounded space-y-1">
+                            {raisedArmyUnitsByBranch[branch].length === 0 ? (
+                              <div className="text-slate-500 italic">No units recorded.</div>
+                            ) : (
+                              raisedArmyUnitsByBranch[branch].map(unit => (
+                                <div key={`raised-${unit.id}`} className="text-white">
+                                  • {unit.displayName}
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                       ))}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border border-[#E5C158]/40 bg-[#0F223D] p-4 rounded">
+                        <span className="text-[#E5C158] font-bold">Total Disbanded Unit(s) :</span>
+                        <span className="text-rose-400 font-bold text-lg">
+                          {armyAnnualCycle.disbandedUnits.length}
+                        </span>
+                      </div>
+
+                      {[
+                        ['infantry', 'Disbanded Infantry Unit(s)'],
+                        ['cavalry', 'Disbanded Cavalry Unit(s)'],
+                        ['artillery', 'Disbanded Artillery Unit(s)']
+                      ].map(([branch, label]) => (
+                        <div key={`disbanded-${branch}`} className="space-y-2">
+                          <div className="text-slate-200 font-bold">&gt; {label} :</div>
+                          <div className="bg-[#0F223D] border border-slate-700 p-4 rounded space-y-1">
+                            {disbandedArmyUnitsByBranch[branch].length === 0 ? (
+                              <div className="text-slate-500 italic">No units recorded.</div>
+                            ) : (
+                              disbandedArmyUnitsByBranch[branch].map(unit => (
+                                <div key={`disbanded-${unit.id}`} className="text-white">
+                                  • {unit.displayName}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">
+                            Total Unit(s) at the Beginning of the Report Cycle :
+                          </div>
+                          <div className="text-white font-bold text-xl mt-2">
+                            {armyAnnualCycle.openingUnitCount}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded">
+                          <div className="text-slate-300 font-bold">
+                            Total Unit(s) at the End of the Report Cycle :
+                          </div>
+                          <div className="text-white font-bold text-xl mt-2">
+                            {currentArmyRegister.length}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center border-t border-[#E5C158]/40 pt-4 text-base font-bold">
-                      <span className="text-[#E5C158]">TOTAL ARMY EXPENDITURE :</span>
-                      <span className="text-emerald-400 bg-[#0F223D] border border-[#E5C158] p-2 rounded">
-                        £{armyExpenditureTotal.toLocaleString()}
-                      </span>
+                    <div className="border-t border-b border-[#E5C158]/40 py-5 space-y-4">
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                        <div className="text-[#E5C158] font-bold text-base">Crown Possession(s)</div>
+                        <button
+                          onClick={addCrownPossession}
+                          className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded hover:bg-yellow-300"
+                        >
+                          + Region
+                        </button>
+                      </div>
+
+                      {crownPossessions.length === 0 ? (
+                        <div className="bg-[#0F223D] border border-slate-700 p-4 rounded text-slate-500 italic">
+                          No Crown Possessions have been added to the current return.
+                        </div>
+                      ) : (
+                        crownPossessions.map((possession, index) => (
+                          <div key={possession.id} className="bg-[#0F223D] border border-[#E5C158]/40 p-4 rounded space-y-4">
+                            <div className="flex items-center gap-3">
+                              <div className="text-[#E5C158] font-bold">Crown Possession {index + 1}</div>
+                              <button
+                                onClick={() => removeCrownPossession(possession.id)}
+                                className="ml-auto text-rose-400 hover:text-rose-200 font-bold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                              <label className="text-slate-300 font-bold">Region :</label>
+                              <input
+                                type="text"
+                                value={possession.region}
+                                onChange={(e) => updateCrownPossession(possession.id, 'region', e.target.value)}
+                                className="bg-[#0B192C] border border-slate-700 text-white p-3 rounded"
+                              />
+
+                              <label className="text-slate-300 font-bold">Status :</label>
+                              <select
+                                value={possession.status}
+                                onChange={(e) => updateCrownPossession(possession.id, 'status', e.target.value)}
+                                className="bg-[#0B192C] border border-slate-700 text-white p-3 rounded"
+                              >
+                                <option value="Secure">Secure</option>
+                                <option value="Captured">Captured</option>
+                              </select>
+
+                              {[
+                                ['victoriesOverForeignInvasion', 'Victory over Foreign Invasion'],
+                                ['totalGarrisonUnits', 'Total Garrison Unit(s)'],
+                                ['rulingClassPublicOrder', 'Ruling Class Public Order'],
+                                ['lowerClassPublicOrder', 'Lower Class Public Order']
+                              ].map(([field, label]) => (
+                                <React.Fragment key={`${possession.id}-${field}`}>
+                                  <label className="text-slate-300 font-bold">{label} :</label>
+                                  <input
+                                    type="number"
+                                    value={possession[field]}
+                                    onChange={(e) => updateCrownPossession(possession.id, field, e.target.value)}
+                                    className="bg-[#0B192C] border border-slate-700 text-white p-3 rounded"
+                                  />
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
 
-                    <div>
-                      <label className="text-slate-300 block mb-2">Secretary at War's Notes &amp; Army Estimate Remarks :</label>
-                      <textarea
-                        value={armyExpenditure.notes}
-                        onChange={(e) => handleArmyExpenditureChange('notes', e.target.value)}
-                        rows="6"
-                        className="w-full bg-[#0F223D] border border-slate-700 text-white p-3 rounded resize-y"
-                        placeholder="Enter army expenditure notes..."
-                      />
+                    <div className="space-y-4">
+                      <div className="text-[#E5C158] font-bold text-base">Operational Summary</div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <label className="text-slate-300 font-bold">
+                          Total Mobilisation Authorised by Parliament :
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={mobilisationsAuthorised}
+                          onChange={(e) => setMobilisationsAuthorised(
+                            Number.isNaN(parseFloat(e.target.value)) ? 0 : parseFloat(e.target.value)
+                          )}
+                          className="bg-[#0F223D] border border-slate-700 text-white p-3 rounded"
+                        />
+
+                        <div className="text-slate-300 font-bold">&gt; Land Engagement Victory(s) :</div>
+                        <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-emerald-400 font-bold text-lg">
+                          {armyVictoryCount}
+                        </div>
+
+                        <div className="text-slate-300 font-bold">&gt; Land Engagement Defeat(s) :</div>
+                        <div className="bg-[#0F223D] border border-slate-700 p-3 rounded text-rose-400 font-bold text-lg">
+                          {armyDefeatCount}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-[#E5C158]/40 pt-4">
+                      <div className="text-slate-400 italic">
+                        The working return resets only after it is submitted and archived.
+                      </div>
+                      <button
+                        onClick={submitAnnualMilitaryReturn}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-5 py-3 rounded hover:bg-yellow-300"
+                      >
+                        Submit Annual Military Return &amp; Reset Report Cycle
+                      </button>
                     </div>
 
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
-                      <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-200 text-base tracking-wide">
+                        DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
+                      </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
