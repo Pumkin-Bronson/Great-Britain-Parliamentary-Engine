@@ -594,6 +594,28 @@
 
       const [governmentPopularity, setGovernmentPopularity] = React.useState(0);
 
+      const [patronageRecords, setPatronageRecords] = React.useState({
+        duke: [],
+        marquess: [],
+        earl: [],
+        viscount: [],
+        baron: [],
+        baronet: [],
+        gcb: [],
+        kcb: [],
+        cb: [],
+        kb: [],
+        kg: []
+      });
+
+      const [governorOffices, setGovernorOffices] = React.useState([
+        { id: 'governor-ireland', region: 'Ireland', titleRecordId: '', occupantName: '' },
+        { id: 'governor-scotland', region: 'Scotland', titleRecordId: '', occupantName: '' },
+        { id: 'governor-wales', region: 'Wales', titleRecordId: '', occupantName: '' }
+      ]);
+
+      const [newGovernorRegion, setNewGovernorRegion] = React.useState('');
+
       const [navalEngagementReport, setNavalEngagementReport] = React.useState({
         outcome: 'Victory',
         opponentNation: '',
@@ -695,6 +717,127 @@
       };
 
 
+
+      const patronageTitleDefinitions = [
+        { key: 'duke', section: 'hereditary', label: '📌 Duke', prefix: 'Duke of', requiresTerritory: true },
+        { key: 'marquess', section: 'hereditary', label: '📌 Marquess', prefix: 'Marquess of', requiresTerritory: true },
+        { key: 'earl', section: 'hereditary', label: '📌 Earl', prefix: 'Earl of', requiresTerritory: true },
+        { key: 'viscount', section: 'hereditary', label: '📌 Viscount', prefix: 'Viscount of', requiresTerritory: true },
+        { key: 'baron', section: 'hereditary', label: '📌 Baron', prefix: 'Baron', requiresTerritory: true },
+        { key: 'baronet', section: 'hereditary', label: '📌 Baronet', prefix: 'Sir', requiresTerritory: false },
+        { key: 'gcb', section: 'merit', label: '1st Class : Knight Grand Cross (GCB)', prefix: 'Sir', requiresTerritory: false },
+        { key: 'kcb', section: 'merit', label: '2nd Class : Knight Commander (KCB)', prefix: 'Sir', requiresTerritory: false },
+        { key: 'cb', section: 'merit', label: '1st Class : Companion of the Order of the Bath (CB)', prefix: '', requiresTerritory: false },
+        { key: 'kb', section: 'merit', label: 'Single Class : Knight Bachelor (KB)', prefix: 'Sir', requiresTerritory: false },
+        { key: 'kg', section: 'merit', label: 'Single Class : Knight Companion (KG)', prefix: 'Sir', requiresTerritory: false }
+      ];
+
+      const addPatronageRecord = (titleKey) => {
+        const definition = patronageTitleDefinitions.find(item => item.key === titleKey);
+        if (!definition) return;
+        setPatronageRecords(prev => ({
+          ...prev,
+          [titleKey]: [
+            ...(prev[titleKey] || []),
+            {
+              id: `${titleKey}-${Date.now()}-${Math.random()}`,
+              territory: '',
+              firstName: '',
+              middleName: '',
+              lastName: ''
+            }
+          ]
+        }));
+      };
+
+      const updatePatronageRecord = (titleKey, recordId, field, value) => {
+        setPatronageRecords(prev => ({
+          ...prev,
+          [titleKey]: (prev[titleKey] || []).map(record =>
+            record.id === recordId ? { ...record, [field]: value } : record
+          )
+        }));
+      };
+
+      const removePatronageRecord = (titleKey, recordId) => {
+        setPatronageRecords(prev => ({
+          ...prev,
+          [titleKey]: (prev[titleKey] || []).filter(record => record.id !== recordId)
+        }));
+        setGovernorOffices(prev => prev.map(office =>
+          office.titleRecordId === recordId
+            ? { ...office, titleRecordId: '', occupantName: '' }
+            : office
+        ));
+      };
+
+      const patronageRecordDisplay = (definition, record) => {
+        const fullName = [record.firstName, record.middleName, record.lastName]
+          .map(value => String(value || '').trim())
+          .filter(Boolean)
+          .join(' ');
+        const titleText = definition.requiresTerritory
+          ? [definition.prefix, String(record.territory || '').trim()].filter(Boolean).join(' ')
+          : definition.prefix;
+        return [titleText, fullName].filter(Boolean).join(' - ');
+      };
+
+      const allPatronageChoices = patronageTitleDefinitions.flatMap(definition =>
+        (patronageRecords[definition.key] || [])
+          .map(record => ({
+            id: record.id,
+            titleKey: definition.key,
+            display: patronageRecordDisplay(definition, record),
+            fullName: [record.firstName, record.middleName, record.lastName]
+              .map(value => String(value || '').trim())
+              .filter(Boolean)
+              .join(' ')
+          }))
+          .filter(choice => choice.fullName)
+      );
+
+      const addGovernorOffice = () => {
+        const region = String(newGovernorRegion || '').trim();
+        if (!region) return;
+        const alreadyExists = governorOffices.some(office =>
+          String(office.region || '').trim().toLowerCase() === region.toLowerCase()
+        );
+        if (alreadyExists) {
+          alert('That Governor position already exists.');
+          return;
+        }
+        setGovernorOffices(prev => [
+          ...prev,
+          { id: `governor-${Date.now()}-${Math.random()}`, region, titleRecordId: '', occupantName: '' }
+        ]);
+        setNewGovernorRegion('');
+      };
+
+      const assignGovernor = (officeId, titleRecordId) => {
+        const duplicateOffice = governorOffices.find(office =>
+          office.id !== officeId && office.titleRecordId === titleRecordId && titleRecordId
+        );
+        if (duplicateOffice) {
+          alert('This person already occupies another Governor position.');
+          return;
+        }
+        const selectedChoice = allPatronageChoices.find(choice => choice.id === titleRecordId);
+        setGovernorOffices(prev => prev.map(office =>
+          office.id === officeId
+            ? {
+                ...office,
+                titleRecordId,
+                occupantName: selectedChoice?.fullName || ''
+              }
+            : office
+        ));
+      };
+
+      const removeGovernorOffice = (officeId) => {
+        setGovernorOffices(prev => prev.filter(office =>
+          office.id !== officeId || ['governor-ireland', 'governor-scotland', 'governor-wales'].includes(office.id)
+        ));
+      };
 
       // Chancery Office Great Seal and National Archive Handlers
       const handleGreatSealDraftChange = (field, value) => {
@@ -2047,7 +2190,7 @@
           navalAnnualCycle, armyAnnualCycle, crownPossessions, mobilisationsAuthorised,
           admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
           warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
-          greatSealDraft, nationalArchive
+          greatSealDraft, nationalArchive, patronageRecords, governorOffices
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
         alert('Game saved successfully!');
@@ -2080,6 +2223,8 @@
             if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
+            if (parsed.patronageRecords) setPatronageRecords(parsed.patronageRecords);
+            if (parsed.governorOffices) setGovernorOffices(parsed.governorOffices);
             if (parsed.governmentPopularity !== undefined) setGovernmentPopularity(parsed.governmentPopularity);
             if (parsed.navalEngagementReport) setNavalEngagementReport(parsed.navalEngagementReport);
             if (parsed.armyEngagementReport) setArmyEngagementReport(parsed.armyEngagementReport);
@@ -2489,8 +2634,8 @@
         if (!minister) return null;
 
         return (
-          <div className="flex justify-end">
-            <div className="w-44 bg-[#0B192C] border border-[#E5C158]/70 rounded-lg p-3 shadow-xl text-center font-sans">
+          <div className="flex justify-end mt-2 mb-2 font-sans">
+            <div className="w-36 text-center">
               <div className="w-20 h-24 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
                 <MinisterPortrait
                   portraitData={minister.portraitData}
@@ -2757,8 +2902,6 @@
                   ))}
                 </div>
 
-                {renderDepartmentMinisterPortrait('exchequer')}
-
                 {exchequerSubTab === 'FINANCIAL_STATEMENT' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-[#E5C158] font-bold text-base">💰 {MONTH_NAMES[currentTurn - 1]} {selectedYear} Consolidated Funds</div>
@@ -2767,6 +2910,8 @@
                       <div className="text-white font-bold tracking-wider text-lg">HM TREASURY // THE CHANCELLOR'S ANNUAL FINANCIAL STATEMENT</div>
                       <div className="text-slate-400">=======================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('exchequer')}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                       <div className="text-slate-300 font-bold">Date :</div>
@@ -2833,6 +2978,8 @@
                         DATE: {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
                       </div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('exchequer')}
 
                     <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4">
                       {/* INFLOWS SECTION */}
@@ -3127,6 +3274,8 @@
                         DATE: {MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})
                       </div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('exchequer')}
 
                     {/* INPUT SECTION */}
                     <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4">
@@ -3595,29 +3744,176 @@
                 {cabinetSubTab === 'PATRONAGE' && (
                   <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
                     <div className="border-b border-[#E5C158]/40 pb-4">
-                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">👑 Patronage & Crown Offices</h2>
-                      <p className="text-xs text-slate-400 italic">Royal Favor, Ministerial Appointments & Crown Preferment</p>
+                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🎩 Patronage</h2>
+                      <p className="text-xs text-slate-400 italic">Hereditary dignities, orders of merit and Crown governorships</p>
                     </div>
 
-                    <div className="bg-[#0F223D] p-5 rounded border border-slate-700 space-y-4 text-xs">
-                      <div className="text-[#E5C158] font-bold text-sm">Crown Preferments & Executive Appointments</div>
-                      <p className="text-slate-300 leading-relaxed">
-                        Manage crown sinecures, government appointments, colonial governorships, and judicial commissions to preserve party loyalty and secure parliamentary support.
-                      </p>
+                    <div className="space-y-5">
+                      <h3 className="text-xl font-bold text-[#E5C158]">🎩 Hereditary Titles</h3>
+                      {patronageTitleDefinitions.filter(item => item.section === 'hereditary').map(definition => (
+                        <div key={definition.key} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-bold text-white">{definition.label}</div>
+                            <button
+                              onClick={() => addPatronageRecord(definition.key)}
+                              className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded hover:bg-yellow-300"
+                            >
+                              ＋ Add
+                            </button>
+                          </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">🏛️ Treasury Sinecures</div>
-                          <div className="text-slate-400 text-[11px]">3 Offices Available for Distribution</div>
+                          {(patronageRecords[definition.key] || []).map(record => (
+                            <div key={record.id} className="bg-[#0B192C] border border-slate-800 rounded p-3 space-y-2">
+                              <div className={`grid grid-cols-1 ${definition.requiresTerritory ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2`}>
+                                {definition.requiresTerritory && (
+                                  <input
+                                    type="text"
+                                    value={record.territory}
+                                    onChange={(e) => updatePatronageRecord(definition.key, record.id, 'territory', e.target.value)}
+                                    placeholder="Title territory"
+                                    className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded"
+                                  />
+                                )}
+                                <input
+                                  type="text"
+                                  value={record.firstName}
+                                  onChange={(e) => updatePatronageRecord(definition.key, record.id, 'firstName', e.target.value)}
+                                  placeholder="First Name"
+                                  className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded"
+                                />
+                                <input
+                                  type="text"
+                                  value={record.middleName}
+                                  onChange={(e) => updatePatronageRecord(definition.key, record.id, 'middleName', e.target.value)}
+                                  placeholder="Middle Name (optional)"
+                                  className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded"
+                                />
+                                <input
+                                  type="text"
+                                  value={record.lastName}
+                                  onChange={(e) => updatePatronageRecord(definition.key, record.id, 'lastName', e.target.value)}
+                                  placeholder="Last Name"
+                                  className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-[#E5C158] font-bold text-xs">
+                                  {patronageRecordDisplay(definition, record) || 'Complete the record above'}
+                                </div>
+                                <button
+                                  onClick={() => removePatronageRecord(definition.key, record.id)}
+                                  className="text-rose-400 hover:text-rose-200 font-bold"
+                                >
+                                  ✕ Remove
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">🌍 Colonial Governorships</div>
-                          <div className="text-slate-400 text-[11px]">2 Key Posts Open for Nomination</div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-5 border-t border-[#E5C158]/40 pt-6">
+                      <h3 className="text-xl font-bold text-[#E5C158]">🎓 Merit Titles</h3>
+
+                      <div className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-4">
+                        <div className="font-bold text-white text-base">🔴 Order of the Bath</div>
+                        {patronageTitleDefinitions.filter(item => ['gcb', 'kcb', 'cb'].includes(item.key)).map(definition => (
+                          <div key={definition.key} className="bg-[#0B192C] border border-slate-800 rounded p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="font-bold text-slate-200">{definition.label}</div>
+                              <button onClick={() => addPatronageRecord(definition.key)} className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded">＋ Add</button>
+                            </div>
+                            {(patronageRecords[definition.key] || []).map(record => (
+                              <div key={record.id} className="space-y-2 border-t border-slate-800 pt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                  <input type="text" value={record.firstName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'firstName', e.target.value)} placeholder="First Name" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                  <input type="text" value={record.middleName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'middleName', e.target.value)} placeholder="Middle Name (optional)" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                  <input type="text" value={record.lastName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'lastName', e.target.value)} placeholder="Last Name" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                  <div className="text-[#E5C158] font-bold text-xs">{patronageRecordDisplay(definition, record) || 'Complete the record above'}</div>
+                                  <button onClick={() => removePatronageRecord(definition.key, record.id)} className="text-rose-400 font-bold">✕ Remove</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+
+                      {[
+                        { title: '🔵 Knight Bachelor', keys: ['kb'] },
+                        { title: '🟡 Order of the Garter', keys: ['kg'] }
+                      ].map(group => (
+                        <div key={group.title} className="bg-[#0F223D] border border-slate-700 rounded p-4 space-y-3">
+                          <div className="font-bold text-white text-base">{group.title}</div>
+                          {patronageTitleDefinitions.filter(item => group.keys.includes(item.key)).map(definition => (
+                            <div key={definition.key} className="bg-[#0B192C] border border-slate-800 rounded p-3 space-y-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="font-bold text-slate-200">{definition.label}</div>
+                                <button onClick={() => addPatronageRecord(definition.key)} className="bg-[#E5C158] text-[#0F223D] font-bold px-3 py-1 rounded">＋ Add</button>
+                              </div>
+                              {(patronageRecords[definition.key] || []).map(record => (
+                                <div key={record.id} className="space-y-2 border-t border-slate-800 pt-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <input type="text" value={record.firstName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'firstName', e.target.value)} placeholder="First Name" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                    <input type="text" value={record.middleName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'middleName', e.target.value)} placeholder="Middle Name (optional)" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                    <input type="text" value={record.lastName} onChange={(e) => updatePatronageRecord(definition.key, record.id, 'lastName', e.target.value)} placeholder="Last Name" className="bg-[#0F223D] border border-slate-700 text-white p-2 rounded" />
+                                  </div>
+                                  <div className="flex justify-between gap-3">
+                                    <div className="text-[#E5C158] font-bold text-xs">{patronageRecordDisplay(definition, record) || 'Complete the record above'}</div>
+                                    <button onClick={() => removePatronageRecord(definition.key, record.id)} className="text-rose-400 font-bold">✕ Remove</button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
                         </div>
-                        <div className="bg-[#0B192C] p-3 rounded border border-slate-800">
-                          <div className="font-bold text-[#E5C158] mb-1">⚖️ Church & Judicial Preferments</div>
-                          <div className="text-slate-400 text-[11px]">1 Crown Bishopric Vacant</div>
-                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-4 border-t border-[#E5C158]/40 pt-6">
+                      <h3 className="text-xl font-bold text-[#E5C158]">Crown Governors</h3>
+                      {governorOffices.map(office => {
+                        const isPermanent = ['governor-ireland', 'governor-scotland', 'governor-wales'].includes(office.id);
+                        const flag = office.region === 'Ireland' ? '🇮🇪' : office.region === 'Scotland' ? '🏴󠁧󠁢󠁳󠁣󠁴󠁿' : office.region === 'Wales' ? '🏴󠁧󠁢󠁷󠁬󠁳󠁿' : '🏛️';
+                        return (
+                          <div key={office.id} className="bg-[#0F223D] border border-slate-700 rounded p-4 grid grid-cols-1 lg:grid-cols-[1fr_2fr_auto] gap-3 items-center">
+                            <div className="font-bold text-white">{flag} Governor of {office.region}</div>
+                            <select
+                              value={office.titleRecordId}
+                              onChange={(e) => assignGovernor(office.id, e.target.value)}
+                              className="bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
+                            >
+                              <option value="">Choose a titled person</option>
+                              {allPatronageChoices.map(choice => (
+                                <option
+                                  key={choice.id}
+                                  value={choice.id}
+                                  disabled={governorOffices.some(other => other.id !== office.id && other.titleRecordId === choice.id)}
+                                >
+                                  {choice.display}
+                                </option>
+                              ))}
+                            </select>
+                            {!isPermanent && (
+                              <button onClick={() => removeGovernorOffice(office.id)} className="text-rose-400 font-bold">✕ Remove</button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      <div className="bg-[#0F223D] border border-dashed border-[#E5C158]/70 rounded p-4 flex flex-col md:flex-row gap-3">
+                        <input
+                          type="text"
+                          value={newGovernorRegion}
+                          onChange={(e) => setNewGovernorRegion(e.target.value)}
+                          placeholder="Region name"
+                          className="flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
+                        />
+                        <button onClick={addGovernorOffice} className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded">
+                          ＋ Governor of Region
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -4402,8 +4698,6 @@
                   ))}
                 </div>
 
-                {renderDepartmentMinisterPortrait('admiralty')}
-
                 {admiraltySubTab === 'NAVY_LIST' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-center space-y-1">
@@ -4411,6 +4705,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('admiralty')}
 
                     <div className="flex justify-end">
                       <button
@@ -4558,6 +4854,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('admiralty')}
 
                     <div className="bg-[#0F223D] border border-slate-700 rounded p-3 text-slate-300">
                       Only ships entered in the Royal Navy - Navy List may be assigned below.
@@ -4713,6 +5011,8 @@
                       </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('admiralty')}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                       <div className="text-slate-300 font-bold">Date :</div>
@@ -4872,6 +5172,8 @@
                       </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('admiralty')}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                       <div className="text-slate-300 font-bold">Date :</div>
@@ -5065,8 +5367,6 @@
                   </button>
                 </div>
 
-                {renderDepartmentMinisterPortrait('war')}
-
                 {warOfficeSubTab === 'ARMY_LIST' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                     <div className="text-center space-y-1">
@@ -5074,6 +5374,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Army List</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('war')}
 
                     {availableArmyCategories.length > 0 && (
                       <div className="flex justify-end">
@@ -5192,6 +5494,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : Territorial Organisation</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('war')}
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
                       {[
                         ['England', '🏴󠁧󠁢󠁥󠁮󠁧󠁿'], ['Wales', '🏴󠁧󠁢󠁷󠁬󠁳󠁿'], ['Scotland', '🏴󠁧󠁢󠁳󠁣󠁴󠁿'], ['Ireland', '🇮🇪']
@@ -5259,6 +5563,8 @@
                       </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('war')}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                       <div className="text-slate-300 font-bold">Date :</div>
@@ -5407,6 +5713,8 @@
                       </div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('war')}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                       <div className="text-slate-300 font-bold">Date :</div>
@@ -5646,8 +5954,6 @@
                   </button>
                 </div>
 
-                {renderDepartmentMinisterPortrait('lordChancellor')}
-
                 {chancerySubTab === 'GREAT_SEAL_REGISTER' && (
                   <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-8 font-mono text-xs">
                     <div className="text-center space-y-1">
@@ -5655,6 +5961,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">⚖️ Chancery Office : Great Seal Register</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('lordChancellor')}
 
                     <div className="max-w-3xl mx-auto space-y-5">
                       <div>
@@ -5718,6 +6026,8 @@
                       <div className="text-[#E5C158] font-bold tracking-wider text-xl">⚖️ Chancery Office : National Archive</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
+
+                    {renderDepartmentMinisterPortrait('lordChancellor')}
 
                     {nationalArchive.length === 0 ? (
                       <div className="bg-[#0F223D] border border-slate-700 rounded p-8 text-center text-slate-400 italic">
