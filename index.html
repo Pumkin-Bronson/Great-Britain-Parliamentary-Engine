@@ -439,6 +439,7 @@
         context: ''
       });
       const [nationalArchive, setNationalArchive] = React.useState([]);
+      const [expandedArchiveContexts, setExpandedArchiveContexts] = React.useState({});
 
       const [currentTurn, setCurrentTurn] = React.useState(1);
       const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -730,6 +731,18 @@
 
       const removeNationalArchiveRecord = (recordId) => {
         setNationalArchive(prev => prev.filter(record => record.id !== recordId));
+        setExpandedArchiveContexts(prev => {
+          const next = { ...prev };
+          delete next[recordId];
+          return next;
+        });
+      };
+
+      const toggleNationalArchiveContext = (recordId) => {
+        setExpandedArchiveContexts(prev => ({
+          ...prev,
+          [recordId]: !prev[recordId]
+        }));
       };
 
       // War Office Army List Handlers
@@ -2471,6 +2484,27 @@
         );
       };
 
+      const renderDepartmentMinisterPortrait = (ministerKey) => {
+        const minister = cabinetMinisters[ministerKey];
+        if (!minister) return null;
+
+        return (
+          <div className="flex justify-end">
+            <div className="w-44 bg-[#0B192C] border border-[#E5C158]/70 rounded-lg p-3 shadow-xl text-center font-sans">
+              <div className="w-20 h-24 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
+                <MinisterPortrait
+                  portraitData={minister.portraitData}
+                  name={minister.portraitGeneratedFromName || minister.portraitData?.safeName || minister.name}
+                  ministerKey={ministerKey}
+                />
+              </div>
+              <div className="mt-2 text-white font-bold text-xs leading-tight">{minister.name}</div>
+              <div className="mt-1 text-[#E5C158] font-semibold text-[10px] leading-tight">{minister.role}</div>
+            </div>
+          </div>
+        );
+      };
+
       if (gameState === 'MAIN_MENU') {
         return (
           <div className="min-h-screen bg-[#0F223D] text-[#E2E8F0] flex flex-col items-center justify-center p-6 font-serif">
@@ -2703,6 +2737,7 @@
             {/* EXCHEQUER TAB */}
             {activeTab === 'Exchequer' && (
               <div className="space-y-4">
+                {renderDepartmentMinisterPortrait('exchequer')}
                 <div className="flex border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
                   {[
                     { key: 'CONSOLIDATED_FUNDS', label: 'Consolidated Funds' },
@@ -3449,7 +3484,7 @@
 
                       <div className="mt-4 lg:mt-0 lg:absolute lg:right-0 lg:top-0 flex items-center justify-center lg:justify-end gap-2">
                         <label className="text-[#E5C158] font-bold text-xs whitespace-nowrap">
-                          Government Popularity :
+                          Government Popularity ({governmentPopularity})%
                         </label>
                         <input
                           type="number"
@@ -3592,6 +3627,7 @@
             {/* FOREIGN OFFICE TAB */}
             {activeTab === 'Foreign Office' && (
               <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                {renderDepartmentMinisterPortrait('foreign')}
                 <div className="text-center space-y-1">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
@@ -3951,6 +3987,7 @@
             {/* HOME OFFICE TAB */}
             {activeTab === 'Home Office' && (
               <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                {renderDepartmentMinisterPortrait('home')}
                 <div className="text-center space-y-1">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-[#E5C158] font-bold tracking-wider text-sm">📌 Report on the State of the Public Peace & Domestic Tranquility</div>
@@ -4341,6 +4378,7 @@
             {/* ADMIRALTY TAB */}
             {activeTab === 'Admiralty' && (
               <div className="space-y-4">
+                {renderDepartmentMinisterPortrait('admiralty')}
                 <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
                   {[
                     { key: 'NAVY_LIST', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List' },
@@ -4979,6 +5017,7 @@
             {/* WAR OFFICE TAB */}
             {activeTab === 'War Office' && (
               <div className="space-y-4">
+                {renderDepartmentMinisterPortrait('war')}
                 <div className="flex flex-wrap gap-2 bg-[#0B192C] border-b border-[#E5C158]/50 p-2">
                   <button
                     onClick={() => setWarOfficeSubTab('ARMY_LIST')}
@@ -5579,6 +5618,7 @@
             {/* CHANCERY OFFICE TAB */}
             {activeTab === "Chancery Office" && (
               <div className="space-y-4">
+                {renderDepartmentMinisterPortrait('lordChancellor')}
                 <div className="flex flex-wrap gap-2 bg-[#0B192C] border-b border-[#E5C158]/50 p-2">
                   <button
                     onClick={() => setChancerySubTab('GREAT_SEAL_REGISTER')}
@@ -5703,8 +5743,21 @@
                               </div>
                             </div>
                             {record.context && (
-                              <div className="border-t border-slate-700 pt-3 whitespace-pre-wrap text-slate-200 leading-relaxed">
-                                {record.context}
+                              <div className="border-t border-slate-700 pt-3">
+                                <button
+                                  onClick={() => toggleNationalArchiveContext(record.id)}
+                                  className="w-full flex items-center justify-between text-left text-[#E5C158] font-bold hover:text-yellow-300"
+                                  aria-expanded={Boolean(expandedArchiveContexts[record.id])}
+                                >
+                                  <span>Context</span>
+                                  <span>{expandedArchiveContexts[record.id] ? '▲ Close' : '▼ Expand'}</span>
+                                </button>
+
+                                {expandedArchiveContexts[record.id] && (
+                                  <div className="mt-3 whitespace-pre-wrap text-slate-200 leading-relaxed">
+                                    {record.context}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
