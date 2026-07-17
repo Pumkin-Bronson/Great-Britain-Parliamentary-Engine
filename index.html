@@ -2635,16 +2635,25 @@
 
         return (
           <div className="flex justify-end mt-2 mb-2 font-sans">
-            <div className="w-36 text-center">
-              <div className="w-20 h-24 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
-                <MinisterPortrait
-                  portraitData={minister.portraitData}
-                  name={minister.portraitGeneratedFromName || minister.portraitData?.safeName || minister.name}
-                  ministerKey={ministerKey}
-                />
+            <div className="flex items-center justify-end gap-4">
+              <div className="flex items-center gap-2 text-xs whitespace-nowrap">
+                <strong className="text-white">Reporting Officer :</strong>
+                <span className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded">
+                  {minister.name}
+                </span>
               </div>
-              <div className="mt-2 text-white font-bold text-xs leading-tight">{minister.name}</div>
-              <div className="mt-1 text-[#E5C158] font-semibold text-[10px] leading-tight">{minister.role}</div>
+
+              <div className="w-36 text-center">
+                <div className="w-20 h-24 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
+                  <MinisterPortrait
+                    portraitData={minister.portraitData}
+                    name={minister.portraitGeneratedFromName || minister.portraitData?.safeName || minister.name}
+                    ministerKey={ministerKey}
+                  />
+                </div>
+                <div className="mt-2 text-white font-bold text-xs leading-tight">{minister.name}</div>
+                <div className="mt-1 text-[#E5C158] font-semibold text-[10px] leading-tight">{minister.role}</div>
+              </div>
             </div>
           </div>
         );
@@ -3930,20 +3939,20 @@
                   <div className="text-[#E5C158] font-bold tracking-wide">LEGAL & CONSTITUTIONAL AUDIT — {MONTH_NAMES[currentTurn - 1]} {selectedYear}</div>
                   <div className="text-slate-400">========================================================================================</div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
-                    <div className="flex items-center gap-2">
-                      <strong className="text-white">Reporting Officer :</strong>
-                      <input
-                        type="text"
-                        value={foreignOfficeForm.reportingOfficer}
-                        onChange={(e) => setForeignOfficeForm({ ...foreignOfficeForm, reportingOfficer: e.target.value })}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158]"
-                      />
-                    </div>
-                    <div>
-                      <strong className="text-white">Authority :</strong> The Foreign Department
-                    </div>
-                  </div>
+                  {/* Reporting Officer and Authority were removed from this header.
+                      The synchronised Reporting Officer now appears beside the minister portrait below. */}
+
+
+
+
+
+
+
+
+
+
+
+
                 </div>
 
                 {renderDepartmentMinisterPortrait('foreign')}
@@ -4296,21 +4305,21 @@
                   </div>
                   <div className="text-slate-400">========================================================================================</div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-3 font-sans text-xs">
+                  <div className="grid grid-cols-1 gap-4 text-left pt-3 font-sans text-xs">
                     <div className="flex items-center gap-2">
                       <strong className="text-white">Date of Audit :</strong>
                       <span className="text-[#E5C158] font-mono">{MONTH_NAMES[currentTurn - 1]} {selectedYear} (Turn {currentTurn})</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <strong className="text-white">Reporting Officer :</strong>
-                      <input
-                        type="text"
-                        value={homeOfficeForm.reportingOfficer}
-                        onChange={(e) => setHomeOfficeForm({ ...homeOfficeForm, reportingOfficer: e.target.value })}
-                        className="bg-[#0F223D] border border-slate-700 text-white font-mono px-2 py-1 rounded text-xs focus:border-[#E5C158]"
-                      />
-                    </div>
                   </div>
+
+                  {/* The former Home Office Reporting Officer field was removed from this header.
+                      The synchronised Reporting Officer now appears beside the minister portrait below. */}
+
+
+
+
+
+
                 </div>
 
                 {renderDepartmentMinisterPortrait('home')}
