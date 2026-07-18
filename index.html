@@ -844,6 +844,110 @@
         setGreatSealDraft(prev => ({ ...prev, [field]: value }));
       };
 
+
+      const buildChanceryReferralDraft = (instrumentType) => {
+        if (instrumentType === 'Financial Statement') {
+          return {
+            instrumentType,
+            title: `${selectedYear} Annual Financial Statement`,
+            context: [
+              `Date: ${MONTH_NAMES[currentTurn - 1]} ${selectedYear} (Turn ${currentTurn}).`,
+              `Estimated annual revenue: £${Math.round(projectedAnnualRevenue).toLocaleString()}.`,
+              `Late April Treasury balance: £${Number(financialStatement.lateAprilTreasuryBalance || 0).toLocaleString()}.`,
+              `Estimated annual surplus: £${Math.round(estimatedAnnualSurplus).toLocaleString()}.`,
+              `Estimated annual surplus with reserve fund: £${Math.round(estimatedAnnualSurplusWithReserve).toLocaleString()}.`,
+              `Predicted maximum Treasury balance: £${Math.round(predictedMaximumTreasuryBalance).toLocaleString()}.`,
+              `Predicted minimum Treasury balance: £${Math.round(predictedMinimumTreasuryBalance).toLocaleString()}.`
+            ].join('\n')
+          };
+        }
+
+        if (instrumentType === 'Diplomatic Statement') {
+          const actionSummary = foreignOfficeForm.selectedActions.length > 0
+            ? foreignOfficeForm.selectedActions
+                .map(actionId => DIPLOMATIC_ACTION_TYPES.find(action => action.id === actionId)?.label || actionId)
+                .join(', ')
+            : 'No diplomatic actions selected.';
+          return {
+            instrumentType,
+            title: foreignOfficeForm.treatyName || `${selectedYear} Diplomatic Statement`,
+            context: [
+              `Date: ${MONTH_NAMES[currentTurn - 1]} ${selectedYear} (Turn ${currentTurn}).`,
+              `Treaty or diplomatic matter: ${foreignOfficeForm.treatyName || 'Not specified'}.`,
+              `Nature: ${foreignOfficeForm.treatyNature || 'Not specified'}.`,
+              `Diplomatic actions: ${actionSummary}`
+            ].join('\n')
+          };
+        }
+
+        if (instrumentType === 'Home Office Report') {
+          const regions = ['london', 'wales', 'scotland', 'ireland'];
+          const regionSummary = regions.map(region =>
+            `${region.toUpperCase()}: Public Order ${homeOfficeForm.publicOrder[region]}, Clamour ${homeOfficeForm.clamour[region]}, Garrisons ${homeOfficeForm.garrisons[region]}, Religious Unrest ${homeOfficeForm.religiousUnrest[region]}`
+          );
+          return {
+            instrumentType,
+            title: `${selectedYear} Home Office Report on the State of the Public Peace`,
+            context: [
+              `Date of audit: ${MONTH_NAMES[currentTurn - 1]} ${selectedYear} (Turn ${currentTurn}).`,
+              ...regionSummary,
+              `Foreign agents recorded: ${homeOfficeForm.foreignAgents.length}.`
+            ].join('\n')
+          };
+        }
+
+        if (instrumentType === 'Annual Naval Return') {
+          return {
+            instrumentType,
+            title: `${selectedYear} Annual Naval Return`,
+            context: [
+              `Reporting cycle: ${MONTH_NAMES[navalAnnualCycle.cycleStartedTurn - 1]} ${navalAnnualCycle.cycleStartedYear} to ${MONTH_NAMES[currentTurn - 1]} ${selectedYear}.`,
+              `New commissioned ships: ${navalAnnualCycle.commissionedShips.length}.`,
+              `Scrapped or captured ships: ${navalAnnualCycle.removedShips.length}.`,
+              `Opening ships: ${navalAnnualCycle.openingShipCount}.`,
+              `Closing ships: ${currentNavyRegister.length}.`,
+              `Naval engagement victories: ${navalVictoryCount}.`,
+              `Naval engagement defeats: ${navalDefeatCount}.`,
+              `Prize money: £${navalPrizeMoneyTotal}.`
+            ].join('\n')
+          };
+        }
+
+        if (instrumentType === 'Annual Military Return') {
+          return {
+            instrumentType,
+            title: `${selectedYear} Annual Military Return`,
+            context: [
+              `Reporting cycle: ${MONTH_NAMES[armyAnnualCycle.cycleStartedTurn - 1]} ${armyAnnualCycle.cycleStartedYear} to ${MONTH_NAMES[currentTurn - 1]} ${selectedYear}.`,
+              `New raised units: ${armyAnnualCycle.raisedUnits.length}.`,
+              `Disbanded units: ${armyAnnualCycle.disbandedUnits.length}.`,
+              `Opening units: ${armyAnnualCycle.openingUnitCount}.`,
+              `Closing units: ${currentArmyRegister.length}.`,
+              `Mobilisations authorised: ${mobilisationsAuthorised}.`,
+              `Land engagement victories: ${armyVictoryCount}.`,
+              `Land engagement defeats: ${armyDefeatCount}.`,
+              `Crown possessions recorded: ${crownPossessions.length}.`
+            ].join('\n')
+          };
+        }
+
+        return {
+          instrumentType: 'Act of Parliament',
+          title: '',
+          context: ''
+        };
+      };
+
+      const syncGreatSealInstrumentType = (instrumentType) => {
+        setGreatSealDraft(buildChanceryReferralDraft(instrumentType));
+      };
+
+      const referReportToChancery = (instrumentType) => {
+        setGreatSealDraft(buildChanceryReferralDraft(instrumentType));
+        setChancerySubTab('GREAT_SEAL_REGISTER');
+        setActiveTab('Chancery Office');
+      };
+
       const stampGreatSealInstrument = () => {
         const title = String(greatSealDraft.title || '').trim();
         const context = String(greatSealDraft.context || '').trim();
@@ -2968,7 +3072,16 @@
                       <div className={`bg-[#0F223D] border border-[#E5C158]/60 p-3 rounded font-bold ${predictedMinimumTreasuryBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>£{Math.round(predictedMinimumTreasuryBalance).toLocaleString()}</div>
                     </div>
 
-                    <div className="text-center space-y-1 pt-4">
+    
+                    <div className="flex justify-end border-t border-[#E5C158]/40 pt-5">
+                      <button
+                        onClick={() => referReportToChancery('Financial Statement')}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-6 py-3 rounded hover:bg-yellow-300 cursor-pointer"
+                      >
+                        Refer to the Chancery Office
+                      </button>
+                    </div>
+                <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
                       <div className="text-slate-400">========================================================================================</div>
@@ -4283,6 +4396,15 @@
                   </div>
                 )}
 
+
+                    <div className="flex justify-end border-t border-[#E5C158]/40 pt-5">
+                      <button
+                        onClick={() => referReportToChancery('Diplomatic Statement')}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-6 py-3 rounded hover:bg-yellow-300 cursor-pointer"
+                      >
+                        Refer to the Chancery Office
+                      </button>
+                    </div>
                 <div className="text-center space-y-1 pt-4">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
@@ -4675,6 +4797,15 @@
                   })()}
                 </div>
 
+
+                    <div className="flex justify-end border-t border-[#E5C158]/40 pt-5">
+                      <button
+                        onClick={() => referReportToChancery('Home Office Report')}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-6 py-3 rounded hover:bg-yellow-300 cursor-pointer"
+                      >
+                        Refer to the Chancery Office
+                      </button>
+                    </div>
                 <div className="text-center space-y-1 pt-4">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
@@ -5317,7 +5448,16 @@
                       </button>
                     </div>
 
-                    <div className="text-center space-y-1 pt-4">
+    
+                    <div className="flex justify-end border-t border-[#E5C158]/40 pt-5">
+                      <button
+                        onClick={() => referReportToChancery('Annual Naval Return')}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-6 py-3 rounded hover:bg-yellow-300 cursor-pointer"
+                      >
+                        Refer to the Chancery Office
+                      </button>
+                    </div>
+                <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">
                         DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
@@ -5925,7 +6065,16 @@
                       </button>
                     </div>
 
-                    <div className="text-center space-y-1 pt-4">
+    
+                    <div className="flex justify-end border-t border-[#E5C158]/40 pt-5">
+                      <button
+                        onClick={() => referReportToChancery('Annual Military Return')}
+                        className="bg-[#E5C158] text-[#0F223D] font-bold px-6 py-3 rounded hover:bg-yellow-300 cursor-pointer"
+                      >
+                        Refer to the Chancery Office
+                      </button>
+                    </div>
+                <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">
                         DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN
@@ -5978,16 +6127,15 @@
                         <label className="block text-[#E5C158] font-bold mb-2">Instrument Type</label>
                         <select
                           value={greatSealDraft.instrumentType}
-                          onChange={(e) => handleGreatSealDraftChange('instrumentType', e.target.value)}
+                          onChange={(e) => syncGreatSealInstrumentType(e.target.value)}
                           className="w-full bg-[#0F223D] border border-slate-600 text-white p-3 rounded"
                         >
                           <option>Act of Parliament</option>
-                          <option>Convention or Treaty</option>
-                          <option>Mobilisation Order</option>
-                          <option>Royal Warrant</option>
-                          <option>Order in Council</option>
-                          <option>Letters Patent</option>
-                          <option>Other Instrument of State</option>
+                          <option>Financial Statement</option>
+                          <option>Diplomatic Statement</option>
+                          <option>Home Office Report</option>
+                          <option>Annual Naval Return</option>
+                          <option>Annual Military Return</option>
                         </select>
                       </div>
 
