@@ -2090,6 +2090,7 @@
           trade: { power: '' },
           bribes: { court: '', sum: '' },
           war: { adversary: '' },
+          requestPeace: { nation: '' },
           joinWar: { target: '' },
           embargo: { power: '' },
           breakAlliance: { power: '' },
@@ -4210,6 +4211,19 @@
                                   value={data.adversary || ''}
                                   onChange={(e) => handleActionDataChange('war', 'adversary', e.target.value)}
                                   className="w-full bg-[#0B192C] border border-slate-700 text-rose-400 font-bold font-mono p-1.5 rounded focus:border-[#E5C158]"
+                                />
+                              </div>
+                            )}
+
+                            {actionId === 'requestPeace' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-300 mb-1">Nation with Which Peace Is Requested :</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. French Empire"
+                                  value={data.nation || ''}
+                                  onChange={(e) => handleActionDataChange('requestPeace', 'nation', e.target.value)}
+                                  className="w-full bg-[#0B192C] border border-slate-700 text-emerald-400 font-mono p-1.5 rounded focus:border-[#E5C158]"
                                 />
                               </div>
                             )}
