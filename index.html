@@ -92,6 +92,39 @@
       { id: 'payment', label: 'Payment', coreTitle: 'FINANCIAL INDEMNITIES & TREASURY TRANSFERS' }
     ];
 
+
+    const CABINET_EFFECT_OPTIONS = [
+      '+(X)/-(X) Management for Justice Administration',
+      '+(X)/-(X) Management for Treasury Administration',
+      '+(X)/-(X) Management for Army Administration',
+      '+(X)/-(X) Management for Navy Administration',
+      '+(X)/-(X) Happiness (Lower Classes)',
+      '+(X)/-(X) Happiness (Ruling Classes)',
+      '+(X)/-(X) Diplomatic Relations',
+      '+(X)/-(X) Management',
+      '+(X)/-(X) Prestige per Turn',
+      '+(X)/-(X)% Recruitment Cost for Army Units',
+      '+(X)/-(X)% Recruitment Cost for Naval Units',
+      '+(X)/-(X)% to Upkeep Costs for all Land Units',
+      '+(X)/-(X)% to Upkeep Costs for all Naval Units',
+      '+(X)/-(X) to Zeal',
+      '+(X)/-(X)% to Religious Unrest',
+      '+(X)/-(X)% Chance of Death each Turn',
+      '+(X)/-(X)% to Clamour for Reform',
+      '+(X)/-(X) Maximum Repression from Town Watch',
+      '+(X)/-(X) Bonus Repression from Town Watch',
+      '+(X)/-(X)% Chance of Assassination',
+      '+(X)/-(X)% to Campaign Movement Range',
+      '+(X)/-(X)% to Cost of constructing cultural buildings',
+      '+(X) to Duelling when Duelling with Swords',
+      '+(X) to Duelling when Duelling with Pistols',
+      'Research Points per Turn for Industrial Technologies : (X)',
+      'Research Points per Turn for Military Technologies : (X)',
+      'Research Points per Turn for Civil Technologies : (X)',
+      '+(X) to Research',
+      '+(X)/-(X)% chance to death at the end of the turn'
+    ];
+
     // Historical 19th Century Portraits for Profiles
     const HISTORICAL_PORTRAITS = {
       pm: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg/400px-Robert_Banks_Jenkinson%2C_2nd_Earl_of_Liverpool_by_Sir_Thomas_Lawrence.jpg',
@@ -1930,7 +1963,7 @@
       const addTraitToMinister = (key) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
-          const newTrait = { id: Date.now(), name: 'New Trait', effects: [{ id: Date.now() + 1, text: 'Trait Effect' }] };
+          const newTrait = { id: Date.now(), name: 'New Trait', effects: [{ id: Date.now() + 1, text: CABINET_EFFECT_OPTIONS[0] }] };
           return { ...prev, [key]: { ...m, traits: [...m.traits, newTrait] } };
         });
       };
@@ -1955,7 +1988,7 @@
           const m = prev[key];
           const updated = m.traits.map(t => {
             if (t.id === traitId) {
-              return { ...t, effects: [...t.effects, { id: Date.now(), text: 'New Effect' }] };
+              return { ...t, effects: [...t.effects, { id: Date.now(), text: CABINET_EFFECT_OPTIONS[0] }] };
             }
             return t;
           });
@@ -1994,7 +2027,7 @@
       const addFollowerToMinister = (key) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
-          const newFollower = { id: Date.now(), name: 'New Follower', effects: [{ id: Date.now() + 1, text: 'Follower Effect' }] };
+          const newFollower = { id: Date.now(), name: 'New Follower', effects: [{ id: Date.now() + 1, text: CABINET_EFFECT_OPTIONS[0] }] };
           return { ...prev, [key]: { ...m, followers: [...m.followers, newFollower] } };
         });
       };
@@ -2019,7 +2052,7 @@
           const m = prev[key];
           const updated = m.followers.map(f => {
             if (f.id === followerId) {
-              return { ...f, effects: [...f.effects, { id: Date.now(), text: 'New Effect' }] };
+              return { ...f, effects: [...f.effects, { id: Date.now(), text: CABINET_EFFECT_OPTIONS[0] }] };
             }
             return f;
           });
@@ -2606,7 +2639,7 @@
 
                 <div className="border-b border-slate-700 pb-2">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] font-bold text-[#E5C158]">📜 Character Traits</span>
+                    <span className="text-[11px] font-bold text-[#E5C158]">📜 Character Trait(s)</span>
                     <button
                       onClick={() => addTraitToMinister(ministerKey)}
                       className="text-[9px] bg-[#E5C158] text-[#0F223D] px-1.5 py-0.5 rounded font-bold hover:bg-yellow-400 cursor-pointer"
@@ -2639,7 +2672,7 @@
 
                           <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
-                              <span>Trait Effects:</span>
+                              <span>Trait Effect(s):</span>
                               <button onClick={() => addEffectToTrait(ministerKey, trait.id)} className="text-[#E5C158] hover:underline">
                                 + Effect
                               </button>
@@ -2647,12 +2680,15 @@
                             {trait.effects.map((eff) => (
                               <div key={eff.id} className="flex items-center gap-1">
                                 <span className="text-[#E5C158]">›</span>
-                                <input
-                                  type="text"
-                                  value={eff.text}
+                                <select
+                                  value={CABINET_EFFECT_OPTIONS.includes(eff.text) ? eff.text : CABINET_EFFECT_OPTIONS[0]}
                                   onChange={(e) => updateTraitEffectText(ministerKey, trait.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 text-[9px]"
-                                />
+                                  className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
+                                >
+                                  {CABINET_EFFECT_OPTIONS.map((effectOption) => (
+                                    <option key={effectOption} value={effectOption}>{effectOption}</option>
+                                  ))}
+                                </select>
                                 {trait.effects.length > 1 && (
                                   <button onClick={() => removeEffectFromTrait(ministerKey, trait.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
                                     ✕
@@ -2669,7 +2705,7 @@
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] font-bold text-cyan-300">👥 Followers</span>
+                    <span className="text-[11px] font-bold text-cyan-300">👥 Follower(s)</span>
                     <button
                       onClick={() => addFollowerToMinister(ministerKey)}
                       className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded font-bold hover:bg-cyan-500 cursor-pointer"
@@ -2702,7 +2738,7 @@
 
                           <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
                             <div className="flex justify-between items-center text-[9px] text-slate-400">
-                              <span>Follower Effects:</span>
+                              <span>Follower Effect(s):</span>
                               <button onClick={() => addEffectToFollower(ministerKey, follower.id)} className="text-cyan-300 hover:underline">
                                 + Effect
                               </button>
@@ -2710,12 +2746,15 @@
                             {follower.effects.map((eff) => (
                               <div key={eff.id} className="flex items-center gap-1">
                                 <span className="text-cyan-300">›</span>
-                                <input
-                                  type="text"
-                                  value={eff.text}
+                                <select
+                                  value={CABINET_EFFECT_OPTIONS.includes(eff.text) ? eff.text : CABINET_EFFECT_OPTIONS[0]}
                                   onChange={(e) => updateFollowerEffectText(ministerKey, follower.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 text-[9px]"
-                                />
+                                  className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
+                                >
+                                  {CABINET_EFFECT_OPTIONS.map((effectOption) => (
+                                    <option key={effectOption} value={effectOption}>{effectOption}</option>
+                                  ))}
+                                </select>
                                 {follower.effects.length > 1 && (
                                   <button onClick={() => removeEffectFromFollower(ministerKey, follower.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
                                     ✕
