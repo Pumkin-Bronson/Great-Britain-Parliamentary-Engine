@@ -94,36 +94,61 @@
 
 
     const CABINET_EFFECT_OPTIONS = [
-      '+(X)/-(X) Management for Justice Administration',
-      '+(X)/-(X) Management for Treasury Administration',
-      '+(X)/-(X) Management for Army Administration',
-      '+(X)/-(X) Management for Navy Administration',
-      '+(X)/-(X) Happiness (Lower Classes)',
-      '+(X)/-(X) Happiness (Ruling Classes)',
-      '+(X)/-(X) Diplomatic Relations',
-      '+(X)/-(X) Management',
-      '+(X)/-(X) Prestige per Turn',
-      '+(X)/-(X)% Recruitment Cost for Army Units',
-      '+(X)/-(X)% Recruitment Cost for Naval Units',
-      '+(X)/-(X)% to Upkeep Costs for all Land Units',
-      '+(X)/-(X)% to Upkeep Costs for all Naval Units',
-      '+(X)/-(X) to Zeal',
-      '+(X)/-(X)% to Religious Unrest',
-      '+(X)/-(X)% Chance of Death each Turn',
-      '+(X)/-(X)% to Clamour for Reform',
-      '+(X)/-(X) Maximum Repression from Town Watch',
-      '+(X)/-(X) Bonus Repression from Town Watch',
-      '+(X)/-(X)% Chance of Assassination',
-      '+(X)/-(X)% to Campaign Movement Range',
-      '+(X)/-(X)% to Cost of constructing cultural buildings',
-      '+(X) to Duelling when Duelling with Swords',
-      '+(X) to Duelling when Duelling with Pistols',
-      'Research Points per Turn for Industrial Technologies : (X)',
-      'Research Points per Turn for Military Technologies : (X)',
-      'Research Points per Turn for Civil Technologies : (X)',
-      '+(X) to Research',
-      '+(X)/-(X)% chance to death at the end of the turn'
+      { id: 'justiceManagement', label: 'Management for Justice Administration', suffix: ' Management for Justice Administration' },
+      { id: 'treasuryManagement', label: 'Management for Treasury Administration', suffix: ' Management for Treasury Administration' },
+      { id: 'armyManagement', label: 'Management for Army Administration', suffix: ' Management for Army Administration' },
+      { id: 'navyManagement', label: 'Management for Navy Administration', suffix: ' Management for Navy Administration' },
+      { id: 'lowerClassHappiness', label: 'Happiness (Lower Classes)', suffix: ' Happiness (Lower Classes)' },
+      { id: 'rulingClassHappiness', label: 'Happiness (Ruling Classes)', suffix: ' Happiness (Ruling Classes)' },
+      { id: 'diplomaticRelations', label: 'Diplomatic Relations', suffix: ' Diplomatic Relations' },
+      { id: 'management', label: 'Management', suffix: ' Management' },
+      { id: 'prestigePerTurn', label: 'Prestige per Turn', suffix: ' Prestige per Turn' },
+      { id: 'armyRecruitmentCost', label: 'Recruitment Cost for Army Units', suffix: '% Recruitment Cost for Army Units' },
+      { id: 'navalRecruitmentCost', label: 'Recruitment Cost for Naval Units', suffix: '% Recruitment Cost for Naval Units' },
+      { id: 'landUpkeepCost', label: 'Upkeep Costs for all Land Units', suffix: '% to Upkeep Costs for all Land Units' },
+      { id: 'navalUpkeepCost', label: 'Upkeep Costs for all Naval Units', suffix: '% to Upkeep Costs for all Naval Units' },
+      { id: 'zeal', label: 'Zeal', suffix: ' to Zeal' },
+      { id: 'religiousUnrest', label: 'Religious Unrest', suffix: '% to Religious Unrest' },
+      { id: 'deathChanceEachTurn', label: 'Chance of Death each Turn', suffix: '% Chance of Death each Turn' },
+      { id: 'clamourForReform', label: 'Clamour for Reform', suffix: '% to Clamour for Reform' },
+      { id: 'maximumTownWatchRepression', label: 'Maximum Repression from Town Watch', suffix: ' Maximum Repression from Town Watch' },
+      { id: 'bonusTownWatchRepression', label: 'Bonus Repression from Town Watch', suffix: ' Bonus Repression from Town Watch' },
+      { id: 'assassinationChance', label: 'Chance of Assassination', suffix: '% Chance of Assassination' },
+      { id: 'campaignMovementRange', label: 'Campaign Movement Range', suffix: '% to Campaign Movement Range' },
+      { id: 'culturalBuildingCost', label: 'Cost of constructing cultural buildings', suffix: '% to Cost of constructing cultural buildings' },
+      { id: 'swordDuelling', label: 'Duelling when Duelling with Swords', suffix: ' to Duelling when Duelling with Swords' },
+      { id: 'pistolDuelling', label: 'Duelling when Duelling with Pistols', suffix: ' to Duelling when Duelling with Pistols' },
+      { id: 'industrialResearchPoints', label: 'Research Points per Turn for Industrial Technologies', prefix: 'Research Points per Turn for Industrial Technologies : ' },
+      { id: 'militaryResearchPoints', label: 'Research Points per Turn for Military Technologies', prefix: 'Research Points per Turn for Military Technologies : ' },
+      { id: 'civilResearchPoints', label: 'Research Points per Turn for Civil Technologies', prefix: 'Research Points per Turn for Civil Technologies : ' },
+      { id: 'research', label: 'Research', suffix: ' to Research' },
+      { id: 'endTurnDeathChance', label: 'Chance of death at the end of the turn', suffix: '% chance to death at the end of the turn' }
     ];
+
+    const createCabinetEffect = (id = Date.now()) => ({
+      id,
+      effectType: CABINET_EFFECT_OPTIONS[0].id,
+      sign: '+',
+      value: 1,
+      text: '+1 Management for Justice Administration'
+    });
+
+    const formatCabinetEffect = (effect) => {
+      const option = CABINET_EFFECT_OPTIONS.find(item => item.id === effect.effectType) || CABINET_EFFECT_OPTIONS[0];
+      const sign = effect.sign === '-' ? '-' : '+';
+      const numericValue = effect.value === '' ? '' : Math.max(0, Number(effect.value) || 0);
+      const signedValue = `${sign}${numericValue}`;
+      return option.prefix
+        ? `${option.prefix}${signedValue}`
+        : `${signedValue}${option.suffix || ''}`;
+    };
+
+    const normaliseCabinetEffect = (effect) => {
+      if (effect && effect.effectType) {
+        return { ...effect, text: formatCabinetEffect(effect) };
+      }
+      return createCabinetEffect(effect?.id || Date.now());
+    };
 
     // Historical 19th Century Portraits for Profiles
     const HISTORICAL_PORTRAITS = {
@@ -1963,7 +1988,7 @@
       const addTraitToMinister = (key) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
-          const newTrait = { id: Date.now(), name: 'New Trait', effects: [{ id: Date.now() + 1, text: CABINET_EFFECT_OPTIONS[0] }] };
+          const newTrait = { id: Date.now(), name: 'New Trait', effects: [createCabinetEffect(Date.now() + 1)] };
           return { ...prev, [key]: { ...m, traits: [...m.traits, newTrait] } };
         });
       };
@@ -1988,7 +2013,7 @@
           const m = prev[key];
           const updated = m.traits.map(t => {
             if (t.id === traitId) {
-              return { ...t, effects: [...t.effects, { id: Date.now(), text: CABINET_EFFECT_OPTIONS[0] }] };
+              return { ...t, effects: [...t.effects, createCabinetEffect(Date.now())] };
             }
             return t;
           });
@@ -2009,12 +2034,17 @@
         });
       };
 
-      const updateTraitEffectText = (key, traitId, effectId, text) => {
+      const updateTraitEffectField = (key, traitId, effectId, field, value) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
           const updated = m.traits.map(t => {
             if (t.id === traitId) {
-              const effs = t.effects.map(e => e.id === effectId ? { ...e, text } : e);
+              const effs = t.effects.map(existingEffect => {
+                if (existingEffect.id !== effectId) return existingEffect;
+                const normalisedEffect = normaliseCabinetEffect(existingEffect);
+                const nextEffect = { ...normalisedEffect, [field]: value };
+                return { ...nextEffect, text: formatCabinetEffect(nextEffect) };
+              });
               return { ...t, effects: effs };
             }
             return t;
@@ -2027,7 +2057,7 @@
       const addFollowerToMinister = (key) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
-          const newFollower = { id: Date.now(), name: 'New Follower', effects: [{ id: Date.now() + 1, text: CABINET_EFFECT_OPTIONS[0] }] };
+          const newFollower = { id: Date.now(), name: 'New Follower', effects: [createCabinetEffect(Date.now() + 1)] };
           return { ...prev, [key]: { ...m, followers: [...m.followers, newFollower] } };
         });
       };
@@ -2052,7 +2082,7 @@
           const m = prev[key];
           const updated = m.followers.map(f => {
             if (f.id === followerId) {
-              return { ...f, effects: [...f.effects, { id: Date.now(), text: CABINET_EFFECT_OPTIONS[0] }] };
+              return { ...f, effects: [...f.effects, createCabinetEffect(Date.now())] };
             }
             return f;
           });
@@ -2073,12 +2103,17 @@
         });
       };
 
-      const updateFollowerEffectText = (key, followerId, effectId, text) => {
+      const updateFollowerEffectField = (key, followerId, effectId, field, value) => {
         setCabinetMinisters(prev => {
           const m = prev[key];
           const updated = m.followers.map(f => {
             if (f.id === followerId) {
-              const effs = f.effects.map(e => e.id === effectId ? { ...e, text } : e);
+              const effs = f.effects.map(existingEffect => {
+                if (existingEffect.id !== effectId) return existingEffect;
+                const normalisedEffect = normaliseCabinetEffect(existingEffect);
+                const nextEffect = { ...normalisedEffect, [field]: value };
+                return { ...nextEffect, text: formatCabinetEffect(nextEffect) };
+              });
               return { ...f, effects: effs };
             }
             return f;
@@ -2677,25 +2712,49 @@
                                 + Effect
                               </button>
                             </div>
-                            {trait.effects.map((eff) => (
-                              <div key={eff.id} className="flex items-center gap-1">
-                                <span className="text-[#E5C158]">›</span>
-                                <select
-                                  value={CABINET_EFFECT_OPTIONS.includes(eff.text) ? eff.text : CABINET_EFFECT_OPTIONS[0]}
-                                  onChange={(e) => updateTraitEffectText(ministerKey, trait.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
-                                >
-                                  {CABINET_EFFECT_OPTIONS.map((effectOption) => (
-                                    <option key={effectOption} value={effectOption}>{effectOption}</option>
-                                  ))}
-                                </select>
-                                {trait.effects.length > 1 && (
-                                  <button onClick={() => removeEffectFromTrait(ministerKey, trait.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                            {trait.effects.map((rawEffect) => {
+                              const eff = normaliseCabinetEffect(rawEffect);
+                              return (
+                                <div key={eff.id} className="space-y-1 rounded border border-slate-800 bg-[#0B192C]/60 p-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[#E5C158]">›</span>
+                                    <select
+                                      value={eff.effectType}
+                                      onChange={(e) => updateTraitEffectField(ministerKey, trait.id, eff.id, 'effectType', e.target.value)}
+                                      className="bg-[#0B192C] border border-slate-800 text-emerald-300 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
+                                    >
+                                      {CABINET_EFFECT_OPTIONS.map((effectOption) => (
+                                        <option key={effectOption.id} value={effectOption.id}>{effectOption.label}</option>
+                                      ))}
+                                    </select>
+                                    <select
+                                      value={eff.sign}
+                                      onChange={(e) => updateTraitEffectField(ministerKey, trait.id, eff.id, 'sign', e.target.value)}
+                                      className="w-10 bg-[#0B192C] border border-slate-700 text-[#E5C158] px-1 py-0.5 rounded text-[9px] font-bold"
+                                      title="Positive or negative effect"
+                                    >
+                                      <option value="+">+</option>
+                                      <option value="-">−</option>
+                                    </select>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={eff.value}
+                                      onChange={(e) => updateTraitEffectField(ministerKey, trait.id, eff.id, 'value', e.target.value)}
+                                      className="w-14 bg-[#0B192C] border border-slate-700 text-white px-1 py-0.5 rounded text-[9px]"
+                                      aria-label="Trait effect value"
+                                    />
+                                    {trait.effects.length > 1 && (
+                                      <button onClick={() => removeEffectFromTrait(ministerKey, trait.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="pl-3 text-[9px] text-emerald-300">{formatCabinetEffect(eff)}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
@@ -2743,25 +2802,49 @@
                                 + Effect
                               </button>
                             </div>
-                            {follower.effects.map((eff) => (
-                              <div key={eff.id} className="flex items-center gap-1">
-                                <span className="text-cyan-300">›</span>
-                                <select
-                                  value={CABINET_EFFECT_OPTIONS.includes(eff.text) ? eff.text : CABINET_EFFECT_OPTIONS[0]}
-                                  onChange={(e) => updateFollowerEffectText(ministerKey, follower.id, eff.id, e.target.value)}
-                                  className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
-                                >
-                                  {CABINET_EFFECT_OPTIONS.map((effectOption) => (
-                                    <option key={effectOption} value={effectOption}>{effectOption}</option>
-                                  ))}
-                                </select>
-                                {follower.effects.length > 1 && (
-                                  <button onClick={() => removeEffectFromFollower(ministerKey, follower.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                            {follower.effects.map((rawEffect) => {
+                              const eff = normaliseCabinetEffect(rawEffect);
+                              return (
+                                <div key={eff.id} className="space-y-1 rounded border border-slate-800 bg-[#0B192C]/60 p-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-cyan-300">›</span>
+                                    <select
+                                      value={eff.effectType}
+                                      onChange={(e) => updateFollowerEffectField(ministerKey, follower.id, eff.id, 'effectType', e.target.value)}
+                                      className="bg-[#0B192C] border border-slate-800 text-cyan-200 px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]"
+                                    >
+                                      {CABINET_EFFECT_OPTIONS.map((effectOption) => (
+                                        <option key={effectOption.id} value={effectOption.id}>{effectOption.label}</option>
+                                      ))}
+                                    </select>
+                                    <select
+                                      value={eff.sign}
+                                      onChange={(e) => updateFollowerEffectField(ministerKey, follower.id, eff.id, 'sign', e.target.value)}
+                                      className="w-10 bg-[#0B192C] border border-slate-700 text-cyan-200 px-1 py-0.5 rounded text-[9px] font-bold"
+                                      title="Positive or negative effect"
+                                    >
+                                      <option value="+">+</option>
+                                      <option value="-">−</option>
+                                    </select>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={eff.value}
+                                      onChange={(e) => updateFollowerEffectField(ministerKey, follower.id, eff.id, 'value', e.target.value)}
+                                      className="w-14 bg-[#0B192C] border border-slate-700 text-white px-1 py-0.5 rounded text-[9px]"
+                                      aria-label="Follower effect value"
+                                    />
+                                    {follower.effects.length > 1 && (
+                                      <button onClick={() => removeEffectFromFollower(ministerKey, follower.id, eff.id)} className="text-slate-500 hover:text-rose-400 text-[9px]">
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="pl-3 text-[9px] text-cyan-200">{formatCabinetEffect(eff)}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
