@@ -523,6 +523,8 @@
       portraitData: null
     });
 
+    // General and Admiral portraits deliberately share the Cabinet portrait palette.
+    // Only the prescribed service uniform and bicorne distinguish the two services.
     function ServiceOfficerPortrait({ portraitData, name, officerKey, service }) {
       const data = portraitData || createNineteenthCenturyPortraitData(name || 'Unnamed Officer', officerKey, 'initial');
       const hairColours = {
@@ -556,10 +558,17 @@
       const skinShade = skinShadeColours[data.skinTone] || skinShadeColours.fair;
       const eye = eyeColours[data.eyeColour] || eyeColours.brown;
       const isArmy = service === 'army';
-      const tunic = isArmy ? '#a82428' : '#142a49';
+      const tunic = isArmy ? '#b52b30' : '#172f52';
+      const tunicShade = isArmy ? '#74171d' : '#0d1d35';
       const collar = isArmy ? '#142a49' : '#f4f0e7';
-      const gradientId = `service-portrait-bg-${officerKey}`;
-      const tunicGradientId = `service-portrait-tunic-${officerKey}`;
+
+      // Service officer IDs contain timestamps and decimal random values.
+      // Sanitising the SVG IDs prevents the background and tunic gradients
+      // from failing and falling back to black inside the portrait frame.
+      const safeOfficerKey = String(officerKey || 'service-officer')
+        .replace(/[^a-zA-Z0-9_-]/g, '-');
+      const gradientId = `service-portrait-bg-${safeOfficerKey}`;
+      const tunicGradientId = `service-portrait-tunic-${safeOfficerKey}`;
 
       const renderHair = () => {
         if (data.hairStyle === 'wig') {
@@ -626,16 +635,40 @@
             </radialGradient>
             <linearGradient id={tunicGradientId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor={tunic} />
-              <stop offset="100%" stopColor="#080d15" />
+              <stop offset="58%" stopColor={tunic} />
+              <stop offset="100%" stopColor={tunicShade} />
             </linearGradient>
           </defs>
 
           <rect width="200" height="260" fill={`url(#${gradientId})`} />
           <ellipse cx="100" cy="245" rx="92" ry="66" fill="#050b13" opacity="0.55" />
 
-          <path d="M14 260 C23 190 54 163 100 163 C146 163 177 190 186 260Z" fill={`url(#${tunicGradientId})`} />
-          <path d="M68 169 L100 207 L132 169 L123 223 L100 240 L77 223Z" fill={collar} />
-          <path d="M83 178 L100 204 L117 178 L110 219 L100 231 L90 219Z" fill={collar} />
+          {/* The torso follows the Cabinet portrait proportions while retaining service dress. */}
+          <path
+            d="M10 260 C20 188 52 158 100 158 C148 158 180 188 190 260Z"
+            fill={`url(#${tunicGradientId})`}
+          />
+
+          {isArmy ? (
+            <g>
+              {/* General: clearly visible red tunic with a distinct dark navy-blue collar. */}
+              <path d="M52 166 L100 213 L148 166 L132 260 H68Z" fill="#142a49" />
+              <path d="M69 165 L100 195 L131 165 L119 222 L100 239 L81 222Z" fill="#eee8dc" />
+              <path d="M24 260 C31 204 55 174 74 166 L69 260Z" fill={tunic} opacity="0.98" />
+              <path d="M176 260 C169 204 145 174 126 166 L131 260Z" fill={tunic} opacity="0.98" />
+            </g>
+          ) : (
+            <g>
+              {/* Admiral: broad dark navy-blue tunic with a restrained white collar. */}
+              <path d="M62 165 L100 204 L138 165 L126 260 H74Z" fill="#f4f0e7" />
+              <path d="M78 165 L100 190 L122 165 L113 211 L100 224 L87 211Z" fill="#d9d3c7" />
+              <path d="M18 260 C26 198 54 168 78 162 L72 260Z" fill={tunic} opacity="0.98" />
+              <path d="M182 260 C174 198 146 168 122 162 L128 260Z" fill={tunic} opacity="0.98" />
+              <path d="M70 178 L88 260 H106 L94 189Z" fill="#102540" opacity="0.9" />
+              <path d="M130 178 L112 260 H94 L106 189Z" fill="#102540" opacity="0.9" />
+            </g>
+          )}
+
           <g fill="#d8b84f">
             <circle cx="80" cy="212" r="3" /><circle cx="120" cy="212" r="3" />
             <circle cx="82" cy="229" r="3" /><circle cx="118" cy="229" r="3" />
