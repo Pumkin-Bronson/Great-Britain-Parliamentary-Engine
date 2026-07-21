@@ -512,6 +512,12 @@
       rank,
       service,
       name: '',
+      title: rank,
+      managementSkills: '',
+      age: '',
+      isTraitsOpen: false,
+      traits: [],
+      followers: [],
       portraitGeneratedFromName: '',
       portraitVariationSeed: 'initial',
       portraitData: null
@@ -614,8 +620,8 @@
         >
           <defs>
             <radialGradient id={gradientId} cx="50%" cy="38%" r="72%">
-              <stop offset="0%" stopColor="#53647d" />
-              <stop offset="58%" stopColor="#273d59" />
+              <stop offset="0%" stopColor="#465a79" />
+              <stop offset="58%" stopColor="#243a57" />
               <stop offset="100%" stopColor="#091522" />
             </radialGradient>
             <linearGradient id={tunicGradientId} x1="0" y1="0" x2="1" y2="1">
@@ -629,7 +635,7 @@
 
           <path d="M14 260 C23 190 54 163 100 163 C146 163 177 190 186 260Z" fill={`url(#${tunicGradientId})`} />
           <path d="M68 169 L100 207 L132 169 L123 223 L100 240 L77 223Z" fill={collar} />
-          <path d="M83 178 L100 204 L117 178 L110 219 L100 231 L90 219Z" fill={isArmy ? '#eee8dc' : '#d9d3c7'} />
+          <path d="M83 178 L100 204 L117 178 L110 219 L100 231 L90 219Z" fill={collar} />
           <g fill="#d8b84f">
             <circle cx="80" cy="212" r="3" /><circle cx="120" cy="212" r="3" />
             <circle cx="82" cy="229" r="3" /><circle cx="118" cy="229" r="3" />
@@ -1024,55 +1030,253 @@
 
 
 
+      const getServiceOfficerSetter = (service) => (
+        service === 'army' ? setGeneralList : setAdmiralList
+      );
+
+      const updateServiceOfficer = (service, rank, officerId, updater) => {
+        const setter = getServiceOfficerSetter(service);
+        setter(prev => ({
+          ...prev,
+          [rank]: (prev[rank] || []).map(officer => (
+            officer.id === officerId
+              ? (typeof updater === 'function' ? updater(officer) : { ...officer, ...updater })
+              : officer
+          ))
+        }));
+      };
+
       const addServiceOfficer = (service, rank) => {
-        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        const setter = getServiceOfficerSetter(service);
         setter(prev => ({
           ...prev,
           [rank]: [...(prev[rank] || []), createServiceOfficer(rank, service)]
         }));
       };
 
-      const updateServiceOfficerName = (service, rank, officerId, name) => {
-        const setter = service === 'army' ? setGeneralList : setAdmiralList;
-        setter(prev => ({
-          ...prev,
-          [rank]: (prev[rank] || []).map(officer =>
-            officer.id === officerId ? { ...officer, name } : officer
-          )
-        }));
+      const updateServiceOfficerField = (service, rank, officerId, field, value) => {
+        updateServiceOfficer(service, rank, officerId, { [field]: value });
       };
 
       const commitServiceOfficerPortrait = (service, rank, officerId) => {
-        const setter = service === 'army' ? setGeneralList : setAdmiralList;
-        setter(prev => ({
-          ...prev,
-          [rank]: (prev[rank] || []).map(officer => {
-            if (officer.id !== officerId) return officer;
-            const completedName = String(officer.name || '').trim();
-            const confirmedName = String(officer.portraitGeneratedFromName || '').trim();
-            if (!completedName || completedName === confirmedName) return officer;
-            const portraitVariationSeed = `${Date.now()}-${Math.random()}`;
-            return {
-              ...officer,
-              name: completedName,
-              portraitData: createNineteenthCenturyPortraitData(
-                completedName,
-                `${service}-${rank}-${officerId}`,
-                portraitVariationSeed
-              ),
-              portraitGeneratedFromName: completedName,
+        updateServiceOfficer(service, rank, officerId, officer => {
+          const completedName = String(officer.name || '').trim();
+          const confirmedName = String(officer.portraitGeneratedFromName || '').trim();
+          if (!completedName || completedName === confirmedName) return officer;
+          const portraitVariationSeed = `${Date.now()}-${Math.random()}`;
+          return {
+            ...officer,
+            name: completedName,
+            portraitData: createNineteenthCenturyPortraitData(
+              completedName,
+              `${service}-${rank}-${officerId}`,
               portraitVariationSeed
-            };
-          })
-        }));
+            ),
+            portraitGeneratedFromName: completedName,
+            portraitVariationSeed
+          };
+        });
       };
 
       const removeServiceOfficer = (service, rank, officerId) => {
-        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        const setter = getServiceOfficerSetter(service);
         setter(prev => ({
           ...prev,
           [rank]: (prev[rank] || []).filter(officer => officer.id !== officerId)
         }));
+      };
+
+      const toggleServiceOfficerTraitsOpen = (service, rank, officerId) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          isTraitsOpen: !officer.isTraitsOpen
+        }));
+      };
+
+      const addTraitToServiceOfficer = (service, rank, officerId) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          traits: [
+            ...(officer.traits || []),
+            { id: `${Date.now()}-${Math.random()}`, name: 'New Trait', effects: [createCabinetEffect(`${Date.now()}-${Math.random()}`)] }
+          ]
+        }));
+      };
+
+      const updateServiceOfficerTrait = (service, rank, officerId, traitId, updater) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          traits: (officer.traits || []).map(trait => (
+            trait.id === traitId
+              ? (typeof updater === 'function' ? updater(trait) : { ...trait, ...updater })
+              : trait
+          ))
+        }));
+      };
+
+      const removeTraitFromServiceOfficer = (service, rank, officerId, traitId) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          traits: (officer.traits || []).filter(trait => trait.id !== traitId)
+        }));
+      };
+
+      const addEffectToServiceOfficerTrait = (service, rank, officerId, traitId) => {
+        updateServiceOfficerTrait(service, rank, officerId, traitId, trait => ({
+          ...trait,
+          effects: [...(trait.effects || []), createCabinetEffect(`${Date.now()}-${Math.random()}`)]
+        }));
+      };
+
+      const updateServiceOfficerTraitEffect = (service, rank, officerId, traitId, effectId, field, value) => {
+        updateServiceOfficerTrait(service, rank, officerId, traitId, trait => ({
+          ...trait,
+          effects: (trait.effects || []).map(rawEffect => {
+            const effect = normaliseCabinetEffect(rawEffect);
+            if (effect.id !== effectId) return effect;
+            const updatedEffect = { ...effect, [field]: value };
+            if (field === 'effectType') {
+              const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === value);
+              if (selectedOption?.positiveOnly) updatedEffect.sign = '+';
+              if (selectedOption?.noValue) updatedEffect.value = '';
+            }
+            return { ...updatedEffect, text: formatCabinetEffect(updatedEffect) };
+          })
+        }));
+      };
+
+      const removeEffectFromServiceOfficerTrait = (service, rank, officerId, traitId, effectId) => {
+        updateServiceOfficerTrait(service, rank, officerId, traitId, trait => ({
+          ...trait,
+          effects: (trait.effects || []).filter(effect => effect.id !== effectId)
+        }));
+      };
+
+      const addFollowerToServiceOfficer = (service, rank, officerId) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          followers: [
+            ...(officer.followers || []),
+            { id: `${Date.now()}-${Math.random()}`, name: 'New Follower', effects: [createCabinetEffect(`${Date.now()}-${Math.random()}`)] }
+          ]
+        }));
+      };
+
+      const updateServiceOfficerFollower = (service, rank, officerId, followerId, updater) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          followers: (officer.followers || []).map(follower => (
+            follower.id === followerId
+              ? (typeof updater === 'function' ? updater(follower) : { ...follower, ...updater })
+              : follower
+          ))
+        }));
+      };
+
+      const removeFollowerFromServiceOfficer = (service, rank, officerId, followerId) => {
+        updateServiceOfficer(service, rank, officerId, officer => ({
+          ...officer,
+          followers: (officer.followers || []).filter(follower => follower.id !== followerId)
+        }));
+      };
+
+      const addEffectToServiceOfficerFollower = (service, rank, officerId, followerId) => {
+        updateServiceOfficerFollower(service, rank, officerId, followerId, follower => ({
+          ...follower,
+          effects: [...(follower.effects || []), createCabinetEffect(`${Date.now()}-${Math.random()}`)]
+        }));
+      };
+
+      const updateServiceOfficerFollowerEffect = (service, rank, officerId, followerId, effectId, field, value) => {
+        updateServiceOfficerFollower(service, rank, officerId, followerId, follower => ({
+          ...follower,
+          effects: (follower.effects || []).map(rawEffect => {
+            const effect = normaliseCabinetEffect(rawEffect);
+            if (effect.id !== effectId) return effect;
+            const updatedEffect = { ...effect, [field]: value };
+            if (field === 'effectType') {
+              const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === value);
+              if (selectedOption?.positiveOnly) updatedEffect.sign = '+';
+              if (selectedOption?.noValue) updatedEffect.value = '';
+            }
+            return { ...updatedEffect, text: formatCabinetEffect(updatedEffect) };
+          })
+        }));
+      };
+
+      const removeEffectFromServiceOfficerFollower = (service, rank, officerId, followerId, effectId) => {
+        updateServiceOfficerFollower(service, rank, officerId, followerId, follower => ({
+          ...follower,
+          effects: (follower.effects || []).filter(effect => effect.id !== effectId)
+        }));
+      };
+
+      const renderServiceOfficerEffectEditor = ({
+        service,
+        rank,
+        officerId,
+        ownerType,
+        ownerId,
+        rawEffect,
+        effectCount
+      }) => {
+        const effect = normaliseCabinetEffect(rawEffect);
+        const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === effect.effectType) || CABINET_EFFECT_OPTIONS[0];
+        const updateEffect = ownerType === 'trait'
+          ? updateServiceOfficerTraitEffect
+          : updateServiceOfficerFollowerEffect;
+        const removeEffect = ownerType === 'trait'
+          ? removeEffectFromServiceOfficerTrait
+          : removeEffectFromServiceOfficerFollower;
+        const accentClass = ownerType === 'trait' ? 'text-emerald-300' : 'text-cyan-200';
+
+        return (
+          <div key={effect.id} className="space-y-1 rounded border border-slate-800 bg-[#0B192C]/60 p-1">
+            <div className="flex items-center gap-1">
+              <span className={accentClass}>›</span>
+              <select
+                value={effect.effectType}
+                onChange={(e) => updateEffect(service, rank, officerId, ownerId, effect.id, 'effectType', e.target.value)}
+                className={`bg-[#0B192C] border border-slate-800 ${accentClass} px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]`}
+              >
+                {CABINET_EFFECT_GROUPS.map(group => (
+                  <optgroup key={group.id} label={group.label}>
+                    {group.options.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <select
+                value={selectedOption.positiveOnly ? '+' : effect.sign}
+                disabled={selectedOption.noValue || selectedOption.unsigned || selectedOption.positiveOnly}
+                onChange={(e) => updateEffect(service, rank, officerId, ownerId, effect.id, 'sign', e.target.value)}
+                className="w-10 bg-[#0B192C] border border-slate-700 text-[#E5C158] px-1 py-0.5 rounded text-[9px] font-bold"
+              >
+                <option value="+">+</option>
+                <option value="-">−</option>
+              </select>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={selectedOption.noValue ? '' : effect.value}
+                disabled={selectedOption.noValue}
+                onChange={(e) => updateEffect(service, rank, officerId, ownerId, effect.id, 'value', e.target.value)}
+                className="w-14 bg-[#0B192C] border border-slate-700 text-white px-1 py-0.5 rounded text-[9px]"
+              />
+              {effectCount > 1 && (
+                <button
+                  onClick={() => removeEffect(service, rank, officerId, ownerId, effect.id)}
+                  className="text-slate-500 hover:text-rose-400 text-[9px]"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className={`pl-3 text-[9px] ${accentClass}`}>{formatCabinetEffect(effect)}</div>
+          </div>
+        );
       };
 
       const renderServiceOfficerList = (service, ranks, officerRegister) => (
@@ -1095,10 +1299,10 @@
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-start">
                 {(officerRegister[rank] || []).map(officer => (
-                  <div key={officer.id} className="bg-[#0B192C] border border-slate-700 rounded p-4 space-y-3">
-                    <div className="w-32 h-40 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
+                  <div key={officer.id} className="flex flex-col items-center text-center w-full max-w-[18rem] mx-auto font-sans">
+                    <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
                       <ServiceOfficerPortrait
                         portraitData={officer.portraitData}
                         name={officer.portraitGeneratedFromName || officer.portraitData?.safeName || officer.name}
@@ -1107,31 +1311,197 @@
                       />
                     </div>
 
+                    <div className="bg-white text-slate-800 font-bold px-3 py-1 rounded-full text-[11px] shadow border border-slate-300 w-40 mb-1 truncate">
+                      {rank}
+                    </div>
+
                     <input
                       type="text"
-                      value={officer.name}
-                      onChange={(e) => updateServiceOfficerName(service, rank, officer.id, e.target.value)}
+                      value={officer.name || ''}
+                      onChange={(e) => updateServiceOfficerField(service, rank, officer.id, 'name', e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           commitServiceOfficerPortrait(service, rank, officer.id);
+                          e.currentTarget.blur();
                         }
                       }}
-                      className="w-full bg-[#0F223D] border border-slate-600 text-white p-2 rounded text-center font-bold"
-                      placeholder={`Enter ${rank} name and press Enter`}
+                      className="bg-white text-slate-700 font-semibold px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-40 mb-1 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+                      placeholder="Name (Editable)"
                     />
 
-                    <div className="text-center text-[#E5C158] font-semibold text-xs">{rank}</div>
-                    <div className="text-center text-slate-500 text-[10px]">
-                      Press Enter after completing the name to generate a new portrait.
+                    <input
+                      type="text"
+                      value={officer.title ?? rank}
+                      onChange={(e) => updateServiceOfficerField(service, rank, officer.id, 'title', e.target.value)}
+                      className="bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-40 mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+                      placeholder="Title"
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleServiceOfficerTraitsOpen(service, rank, officer.id)}
+                        className="bg-white text-slate-800 hover:bg-amber-100 border border-slate-300 px-3 py-0.5 rounded-full text-[10px] font-bold shadow flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <span>{officer.isTraitsOpen ? '🔼' : '🔽'} Traits</span>
+                      </button>
+                      <button
+                        onClick={() => removeServiceOfficer(service, rank, officer.id)}
+                        className="bg-white text-rose-600 hover:bg-rose-50 border border-slate-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow cursor-pointer"
+                        title="Remove officer"
+                      >
+                        ✕
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => removeServiceOfficer(service, rank, officer.id)}
-                      className="w-full border border-rose-500/70 text-rose-300 px-3 py-1.5 rounded hover:bg-rose-900/30 cursor-pointer"
-                    >
-                      Remove
-                    </button>
+                    {officer.isTraitsOpen && (
+                      <div className="mt-3 w-64 bg-[#0B192C] border-2 border-[#E5C158] p-3 rounded-lg shadow-2xl text-left space-y-3 z-30 font-sans">
+                        <div className="border-b border-slate-700 pb-2">
+                          <div className="text-[11px] font-bold text-[#E5C158] mb-1.5 flex items-center gap-1">📌 Details</div>
+                          <div className="space-y-2 text-[10px]">
+                            <div>
+                              <label className="block text-slate-300 font-semibold mb-0.5">Management Skills :</label>
+                              <input
+                                type="text"
+                                value={officer.managementSkills || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (/^\**$/.test(value)) {
+                                    updateServiceOfficerField(service, rank, officer.id, 'managementSkills', value);
+                                  }
+                                }}
+                                className="bg-[#0F223D] border border-slate-700 text-[#E5C158] font-bold px-2 py-1 rounded w-full text-[10px] focus:outline-none focus:border-[#E5C158]"
+                                placeholder='Input with "*"'
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-slate-300 font-semibold mb-0.5">Age :</label>
+                              <input
+                                type="text"
+                                value={officer.age || ''}
+                                onChange={(e) => updateServiceOfficerField(service, rank, officer.id, 'age', e.target.value)}
+                                className="bg-[#0F223D] border border-slate-700 text-white font-bold px-2 py-1 rounded w-full text-[10px] focus:outline-none focus:border-[#E5C158]"
+                                placeholder="Age"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-b border-slate-700 pb-2">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[11px] font-bold text-[#E5C158]">📜 Character Trait(s)</span>
+                            <button
+                              onClick={() => addTraitToServiceOfficer(service, rank, officer.id)}
+                              className="text-[9px] bg-[#E5C158] text-[#0F223D] px-1.5 py-0.5 rounded font-bold hover:bg-yellow-400 cursor-pointer"
+                            >
+                              + Trait
+                            </button>
+                          </div>
+
+                          {(officer.traits || []).length === 0 ? (
+                            <div className="text-[10px] text-slate-500 italic">No character traits added.</div>
+                          ) : (
+                            <div className="space-y-2">
+                              {(officer.traits || []).map(trait => (
+                                <div key={trait.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <input
+                                      type="text"
+                                      value={trait.name || ''}
+                                      onChange={(e) => updateServiceOfficerTrait(service, rank, officer.id, trait.id, { name: e.target.value })}
+                                      className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
+                                    />
+                                    <button
+                                      onClick={() => removeTraitFromServiceOfficer(service, rank, officer.id, trait.id)}
+                                      className="text-rose-400 hover:text-rose-200 font-bold px-1"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                  <div className="pl-2 border-l border-[#E5C158]/40 space-y-1 mt-1">
+                                    <div className="flex justify-between items-center text-[9px] text-slate-400">
+                                      <span>Trait Effect(s):</span>
+                                      <button
+                                        onClick={() => addEffectToServiceOfficerTrait(service, rank, officer.id, trait.id)}
+                                        className="text-[#E5C158] hover:underline"
+                                      >
+                                        + Effect
+                                      </button>
+                                    </div>
+                                    {(trait.effects || []).map(rawEffect => renderServiceOfficerEffectEditor({
+                                      service,
+                                      rank,
+                                      officerId: officer.id,
+                                      ownerType: 'trait',
+                                      ownerId: trait.id,
+                                      rawEffect,
+                                      effectCount: (trait.effects || []).length
+                                    }))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[11px] font-bold text-cyan-300">👥 Follower(s)</span>
+                            <button
+                              onClick={() => addFollowerToServiceOfficer(service, rank, officer.id)}
+                              className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded font-bold hover:bg-cyan-500 cursor-pointer"
+                            >
+                              + Follower
+                            </button>
+                          </div>
+
+                          {(officer.followers || []).length === 0 ? (
+                            <div className="text-[10px] text-slate-500 italic">No followers assigned.</div>
+                          ) : (
+                            <div className="space-y-2">
+                              {(officer.followers || []).map(follower => (
+                                <div key={follower.id} className="bg-[#0F223D] p-2 rounded border border-slate-700 text-[10px]">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <input
+                                      type="text"
+                                      value={follower.name || ''}
+                                      onChange={(e) => updateServiceOfficerFollower(service, rank, officer.id, follower.id, { name: e.target.value })}
+                                      className="bg-[#0B192C] border border-slate-600 text-white font-bold px-1.5 py-0.5 rounded w-36 text-[10px]"
+                                    />
+                                    <button
+                                      onClick={() => removeFollowerFromServiceOfficer(service, rank, officer.id, follower.id)}
+                                      className="text-rose-400 hover:text-rose-200 font-bold px-1"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                  <div className="pl-2 border-l border-cyan-500/40 space-y-1 mt-1">
+                                    <div className="flex justify-between items-center text-[9px] text-slate-400">
+                                      <span>Follower Effect(s):</span>
+                                      <button
+                                        onClick={() => addEffectToServiceOfficerFollower(service, rank, officer.id, follower.id)}
+                                        className="text-cyan-300 hover:underline"
+                                      >
+                                        + Effect
+                                      </button>
+                                    </div>
+                                    {(follower.effects || []).map(rawEffect => renderServiceOfficerEffectEditor({
+                                      service,
+                                      rank,
+                                      officerId: officer.id,
+                                      ownerType: 'follower',
+                                      ownerId: follower.id,
+                                      rawEffect,
+                                      effectCount: (follower.effects || []).length
+                                    }))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -5517,10 +5887,6 @@
 
                     {renderDepartmentMinisterPortrait('admiralty')}
 
-                    <div className="text-slate-400 text-center italic">
-                      Admiralty officers wear the prescribed dark navy-blue tunic, white collar and black bicorne hat.
-                    </div>
-
                     {renderServiceOfficerList('navy', ADMIRAL_LIST_RANKS, admiralList)}
 
                     <div className="text-center space-y-1 pt-4">
@@ -6200,10 +6566,6 @@
                     </div>
 
                     {renderDepartmentMinisterPortrait('war')}
-
-                    <div className="text-slate-400 text-center italic">
-                      Army officers wear the prescribed red tunic, dark navy-blue collar and black bicorne hat.
-                    </div>
 
                     {renderServiceOfficerList('army', GENERAL_LIST_RANKS, generalList)}
 
