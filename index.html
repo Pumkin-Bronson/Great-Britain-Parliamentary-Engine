@@ -651,21 +651,21 @@
 
           {isArmy ? (
             <g>
-              {/* General: clearly visible red tunic with a distinct dark navy-blue collar. */}
-              <path d="M52 166 L100 213 L148 166 L132 260 H68Z" fill="#142a49" />
-              <path d="M69 165 L100 195 L131 165 L119 222 L100 239 L81 222Z" fill="#eee8dc" />
+              {/* General: red outer tunic with an entirely dark navy-blue centre. */}
+              {/* No white shirt, cravat, waistcoat, or central white insert is drawn. */}
+              <path d="M50 164 L100 207 L150 164 L134 260 H66Z" fill="#142a49" />
+              <path d="M68 163 L100 190 L132 163 L121 226 L100 244 L79 226Z" fill="#142a49" />
               <path d="M24 260 C31 204 55 174 74 166 L69 260Z" fill={tunic} opacity="0.98" />
               <path d="M176 260 C169 204 145 174 126 166 L131 260Z" fill={tunic} opacity="0.98" />
             </g>
           ) : (
             <g>
-              {/* Admiral: broad dark navy-blue tunic with a restrained white collar. */}
-              <path d="M62 165 L100 204 L138 165 L126 260 H74Z" fill="#f4f0e7" />
-              <path d="M78 165 L100 190 L122 165 L113 211 L100 224 L87 211Z" fill="#d9d3c7" />
+              {/* Admiral: dark navy-blue outer tunic with an entirely white centre. */}
+              {/* No navy lapels or blue central panels are drawn over the white section. */}
+              <path d="M59 162 L100 202 L141 162 L129 260 H71Z" fill="#f4f0e7" />
+              <path d="M75 162 L100 187 L125 162 L116 224 L100 242 L84 224Z" fill="#f4f0e7" />
               <path d="M18 260 C26 198 54 168 78 162 L72 260Z" fill={tunic} opacity="0.98" />
               <path d="M182 260 C174 198 146 168 122 162 L128 260Z" fill={tunic} opacity="0.98" />
-              <path d="M70 178 L88 260 H106 L94 189Z" fill="#102540" opacity="0.9" />
-              <path d="M130 178 L112 260 H94 L106 189Z" fill="#102540" opacity="0.9" />
             </g>
           )}
 
@@ -1091,6 +1091,8 @@
         updateServiceOfficer(service, rank, officerId, { [field]: value });
       };
 
+      // Service portraits remain unchanged during ordinary typing.
+      // Only pressing Enter calls this commit function and creates a new portrait seed.
       const commitServiceOfficerPortrait = (service, rank, officerId) => {
         updateServiceOfficer(service, rank, officerId, officer => {
           const completedName = String(officer.name || '').trim();
@@ -1338,7 +1340,7 @@
                     <div className="w-24 h-32 rounded-[50%] border-4 border-[#E5C158] bg-[#0F223D] flex items-center justify-center overflow-hidden shadow-xl mb-2 relative">
                       <ServiceOfficerPortrait
                         portraitData={officer.portraitData}
-                        name={officer.portraitGeneratedFromName || officer.portraitData?.safeName || officer.name}
+                        name={officer.portraitGeneratedFromName || officer.portraitData?.safeName || 'Unnamed Officer'}
                         officerKey={`${service}-${rank}-${officer.id}`}
                         service={service}
                       />
