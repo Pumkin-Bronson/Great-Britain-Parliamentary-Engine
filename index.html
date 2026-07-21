@@ -489,6 +489,179 @@
     }
 
 
+    const GENERAL_LIST_RANKS = [
+      'Field Marshal',
+      'Lieutenant General',
+      'Major General',
+      'Brigadier General',
+      'Colonel',
+      'Lieutenant Colonel',
+      'Major'
+    ];
+
+    const ADMIRAL_LIST_RANKS = [
+      'Admiral of the Fleet',
+      'Admiral',
+      'Vice Admiral',
+      'Rear Admiral',
+      'Captain'
+    ];
+
+    const createServiceOfficer = (rank, service, id = `${service}-${Date.now()}-${Math.random()}`) => ({
+      id,
+      rank,
+      service,
+      name: '',
+      portraitGeneratedFromName: '',
+      portraitVariationSeed: 'initial',
+      portraitData: null
+    });
+
+    function ServiceOfficerPortrait({ portraitData, name, officerKey, service }) {
+      const data = portraitData || createNineteenthCenturyPortraitData(name || 'Unnamed Officer', officerKey, 'initial');
+      const hairColours = {
+        brown: '#4a3023',
+        black: '#171514',
+        white: '#eee9dc',
+        grey: '#817f78',
+        ginger: '#a84f22',
+        blonde: '#c6a56a'
+      };
+      const skinColours = {
+        porcelain: '#ead0b3',
+        fair: '#dfbd99',
+        light: '#d4ad86',
+        warmFair: '#cfa17b'
+      };
+      const skinShadeColours = {
+        porcelain: '#bd8f6d',
+        fair: '#b6805d',
+        light: '#a86f50',
+        warmFair: '#9c6549'
+      };
+      const eyeColours = {
+        blueGrey: '#40566a',
+        brown: '#4b3b31',
+        greenGrey: '#304c45'
+      };
+
+      const hair = hairColours[data.hairColourName] || hairColours.brown;
+      const skin = skinColours[data.skinTone] || skinColours.fair;
+      const skinShade = skinShadeColours[data.skinTone] || skinShadeColours.fair;
+      const eye = eyeColours[data.eyeColour] || eyeColours.brown;
+      const isArmy = service === 'army';
+      const tunic = isArmy ? '#a82428' : '#142a49';
+      const collar = isArmy ? '#142a49' : '#f4f0e7';
+      const gradientId = `service-portrait-bg-${officerKey}`;
+      const tunicGradientId = `service-portrait-tunic-${officerKey}`;
+
+      const renderHair = () => {
+        if (data.hairStyle === 'wig') {
+          return (
+            <g fill="#eee9dc" stroke="#d7d0c1" strokeWidth="1">
+              <path d="M55 75 C52 45 70 20 100 20 C130 20 148 45 145 75 C137 62 128 53 117 48 C103 56 84 59 63 52 C60 59 57 67 55 75Z" />
+              <circle cx="60" cy="70" r="9" /><circle cx="58" cy="86" r="8" /><circle cx="60" cy="101" r="8" />
+              <circle cx="140" cy="70" r="9" /><circle cx="142" cy="86" r="8" /><circle cx="140" cy="101" r="8" />
+            </g>
+          );
+        }
+        if (data.hairStyle === 'long') {
+          return (
+            <g fill={hair}>
+              <path d="M58 75 C56 43 72 20 100 19 C129 20 145 44 142 77 C133 62 124 53 115 49 C101 57 83 59 64 52 C62 60 60 68 58 75Z" />
+              <path d="M59 67 C50 94 53 136 68 155 C73 143 75 118 73 79Z" />
+              <path d="M141 67 C150 94 147 136 132 155 C127 143 125 118 127 79Z" />
+            </g>
+          );
+        }
+        if (data.hairStyle === 'bald') {
+          return (
+            <g fill={hair}>
+              <path d="M63 72 C59 89 62 109 70 128 L75 104 L73 70Z" />
+              <path d="M137 72 C141 89 138 109 130 128 L125 104 L127 70Z" />
+            </g>
+          );
+        }
+        return (
+          <g fill={hair}>
+            <path d="M61 73 C60 44 74 22 99 20 C125 21 141 43 138 76 C132 64 126 54 118 49 C105 58 87 60 67 53 C65 60 63 67 61 73Z" />
+            <path d="M61 70 C57 84 59 105 68 132 L73 105 L72 70Z" />
+            <path d="M139 70 C143 84 141 105 132 132 L127 105 L128 70Z" />
+          </g>
+        );
+      };
+
+      const renderFacialHair = () => {
+        if (data.facialHair === 'moustache') {
+          return <path d="M78 104 C88 97 97 100 100 105 C103 100 112 97 122 104 C114 112 106 113 100 108 C94 113 86 112 78 104Z" fill={hair} />;
+        }
+        if (data.facialHair === 'sideburns') {
+          return <g fill={hair}><path d="M67 85 C62 103 64 122 72 140 L78 122 L75 84Z" /><path d="M133 85 C138 103 136 122 128 140 L122 122 L125 84Z" /></g>;
+        }
+        if (data.facialHair === 'muttonChops') {
+          return <g fill={hair}><path d="M66 82 C59 105 63 134 80 149 L86 133 L76 86Z" /><path d="M134 82 C141 105 137 134 120 149 L114 133 L124 86Z" /></g>;
+        }
+        return null;
+      };
+
+      return (
+        <svg
+          viewBox="0 0 200 260"
+          className="absolute inset-0 w-full h-full"
+          preserveAspectRatio="xMidYMid slice"
+          aria-label={`${name || 'Service officer'} portrait`}
+          role="img"
+        >
+          <defs>
+            <radialGradient id={gradientId} cx="50%" cy="38%" r="72%">
+              <stop offset="0%" stopColor="#53647d" />
+              <stop offset="58%" stopColor="#273d59" />
+              <stop offset="100%" stopColor="#091522" />
+            </radialGradient>
+            <linearGradient id={tunicGradientId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={tunic} />
+              <stop offset="100%" stopColor="#080d15" />
+            </linearGradient>
+          </defs>
+
+          <rect width="200" height="260" fill={`url(#${gradientId})`} />
+          <ellipse cx="100" cy="245" rx="92" ry="66" fill="#050b13" opacity="0.55" />
+
+          <path d="M14 260 C23 190 54 163 100 163 C146 163 177 190 186 260Z" fill={`url(#${tunicGradientId})`} />
+          <path d="M68 169 L100 207 L132 169 L123 223 L100 240 L77 223Z" fill={collar} />
+          <path d="M83 178 L100 204 L117 178 L110 219 L100 231 L90 219Z" fill={isArmy ? '#eee8dc' : '#d9d3c7'} />
+          <g fill="#d8b84f">
+            <circle cx="80" cy="212" r="3" /><circle cx="120" cy="212" r="3" />
+            <circle cx="82" cy="229" r="3" /><circle cx="118" cy="229" r="3" />
+            <circle cx="84" cy="246" r="3" /><circle cx="116" cy="246" r="3" />
+          </g>
+
+          <path d="M65 74 C67 39 82 25 100 25 C118 25 133 39 135 74 L129 123 C124 150 114 166 100 166 C86 166 76 150 71 123Z" fill={skin} />
+          <ellipse cx="66" cy="95" rx="8" ry="15" fill={skin} />
+          <ellipse cx="134" cy="95" rx="8" ry="15" fill={skin} />
+          {renderHair()}
+
+          <g fill="#111318" stroke="#050608" strokeWidth="2">
+            <path d="M36 49 C54 21 77 8 100 8 C123 8 146 21 164 49 C142 42 121 39 100 39 C79 39 58 42 36 49Z" />
+            <path d="M47 47 C68 34 83 29 100 29 C117 29 132 34 153 47 C133 51 117 53 100 53 C83 53 67 51 47 47Z" />
+            <path d="M95 7 L100 0 L105 7 L100 14Z" fill="#d8b84f" stroke="#8f7629" />
+          </g>
+
+          <path d="M71 74 Q82 67 93 74" fill="none" stroke={hair} strokeWidth="4" strokeLinecap="round" />
+          <path d="M107 74 Q118 67 129 74" fill="none" stroke={hair} strokeWidth="4" strokeLinecap="round" />
+          <ellipse cx="82" cy="81" rx="5" ry="3.5" fill="#f5f0e8" />
+          <ellipse cx="118" cy="81" rx="5" ry="3.5" fill="#f5f0e8" />
+          <circle cx="82" cy="81" r="2.2" fill={eye} />
+          <circle cx="118" cy="81" r="2.2" fill={eye} />
+          <path d="M100 79 C97 92 96 105 99 113 C102 116 106 115 108 112" fill="none" stroke={skinShade} strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M84 122 Q100 131 116 122 Q100 142 84 122Z" fill="#8b5048" opacity="0.75" />
+          <path d="M77 138 Q100 154 123 138" fill="none" stroke={skinShade} strokeWidth="2" opacity="0.6" />
+          {renderFacialHair()}
+        </svg>
+      );
+    }
+
+
     const WAR_OFFICE_TERRITORIES = {
       England: ['London','Chatham Docks','Bristol','Portsmouth','Oxford','Birmingham','Newmarket Pastures','Yorkshire Farmlands','York','Manchester','Liverpool','Coalbrookdale Mines'],
       Wales: ['Cardiff','Swansea','Caernarfon Mines'],
@@ -570,6 +743,15 @@
       const [admiraltySubTab, setAdmiraltySubTab] = React.useState('NAVY_LIST');
 
       const [warOfficeSubTab, setWarOfficeSubTab] = React.useState('ARMY_LIST');
+
+
+      const [generalList, setGeneralList] = React.useState(() =>
+        GENERAL_LIST_RANKS.reduce((list, rank) => ({ ...list, [rank]: [] }), {})
+      );
+
+      const [admiralList, setAdmiralList] = React.useState(() =>
+        ADMIRAL_LIST_RANKS.reduce((list, rank) => ({ ...list, [rank]: [] }), {})
+      );
 
       const [armyListCategories, setArmyListCategories] = React.useState(
         WAR_OFFICE_UNIT_CATALOGUE.map(category => ({
@@ -840,6 +1022,123 @@
         });
       };
 
+
+
+      const addServiceOfficer = (service, rank) => {
+        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        setter(prev => ({
+          ...prev,
+          [rank]: [...(prev[rank] || []), createServiceOfficer(rank, service)]
+        }));
+      };
+
+      const updateServiceOfficerName = (service, rank, officerId, name) => {
+        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        setter(prev => ({
+          ...prev,
+          [rank]: (prev[rank] || []).map(officer =>
+            officer.id === officerId ? { ...officer, name } : officer
+          )
+        }));
+      };
+
+      const commitServiceOfficerPortrait = (service, rank, officerId) => {
+        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        setter(prev => ({
+          ...prev,
+          [rank]: (prev[rank] || []).map(officer => {
+            if (officer.id !== officerId) return officer;
+            const completedName = String(officer.name || '').trim();
+            const confirmedName = String(officer.portraitGeneratedFromName || '').trim();
+            if (!completedName || completedName === confirmedName) return officer;
+            const portraitVariationSeed = `${Date.now()}-${Math.random()}`;
+            return {
+              ...officer,
+              name: completedName,
+              portraitData: createNineteenthCenturyPortraitData(
+                completedName,
+                `${service}-${rank}-${officerId}`,
+                portraitVariationSeed
+              ),
+              portraitGeneratedFromName: completedName,
+              portraitVariationSeed
+            };
+          })
+        }));
+      };
+
+      const removeServiceOfficer = (service, rank, officerId) => {
+        const setter = service === 'army' ? setGeneralList : setAdmiralList;
+        setter(prev => ({
+          ...prev,
+          [rank]: (prev[rank] || []).filter(officer => officer.id !== officerId)
+        }));
+      };
+
+      const renderServiceOfficerList = (service, ranks, officerRegister) => (
+        <div className="space-y-8">
+          {ranks.map(rank => (
+            <section key={rank} className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5C158]/40 pb-3">
+                <h3 className="text-[#E5C158] font-bold text-lg tracking-wide">{rank}</h3>
+                <button
+                  onClick={() => addServiceOfficer(service, rank)}
+                  className="bg-[#E5C158] text-[#0F223D] font-bold px-4 py-2 rounded hover:bg-yellow-400 cursor-pointer"
+                >
+                  ＋ Add {service === 'army' ? 'General Portrait' : 'Admiral Portrait'}
+                </button>
+              </div>
+
+              {(officerRegister[rank] || []).length === 0 && (
+                <div className="text-slate-500 italic border border-slate-800 rounded p-4">
+                  No {rank} recorded. Use the add button to create a portrait entry.
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {(officerRegister[rank] || []).map(officer => (
+                  <div key={officer.id} className="bg-[#0B192C] border border-slate-700 rounded p-4 space-y-3">
+                    <div className="w-32 h-40 mx-auto rounded-[48%] border-2 border-[#E5C158] bg-[#0F223D] overflow-hidden relative">
+                      <ServiceOfficerPortrait
+                        portraitData={officer.portraitData}
+                        name={officer.portraitGeneratedFromName || officer.portraitData?.safeName || officer.name}
+                        officerKey={`${service}-${rank}-${officer.id}`}
+                        service={service}
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={officer.name}
+                      onChange={(e) => updateServiceOfficerName(service, rank, officer.id, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          commitServiceOfficerPortrait(service, rank, officer.id);
+                        }
+                      }}
+                      className="w-full bg-[#0F223D] border border-slate-600 text-white p-2 rounded text-center font-bold"
+                      placeholder={`Enter ${rank} name and press Enter`}
+                    />
+
+                    <div className="text-center text-[#E5C158] font-semibold text-xs">{rank}</div>
+                    <div className="text-center text-slate-500 text-[10px]">
+                      Press Enter after completing the name to generate a new portrait.
+                    </div>
+
+                    <button
+                      onClick={() => removeServiceOfficer(service, rank, officer.id)}
+                      className="w-full border border-rose-500/70 text-rose-300 px-3 py-1.5 rounded hover:bg-rose-900/30 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      );
 
 
       const patronageTitleDefinitions = [
@@ -2427,8 +2726,8 @@
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           governmentPopularity, navalEngagementReport, armyEngagementReport,
           navalAnnualCycle, armyAnnualCycle, crownPossessions, mobilisationsAuthorised,
-          admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure,
-          warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure,
+          admiraltySubTab, navyRates, fleetDisposition, maritimeExpenditure, admiralList,
+          warOfficeSubTab, armyListCategories, territorialOrganisation, armyExpenditure, generalList,
           greatSealDraft, nationalArchive, patronageRecords, governorOffices
         };
         localStorage.setItem('parliament_savegame', JSON.stringify(stateToSave));
@@ -2481,6 +2780,7 @@
             if (parsed.navyRates) setNavyRates(parsed.navyRates);
             if (parsed.fleetDisposition) setFleetDisposition(parsed.fleetDisposition);
             if (parsed.maritimeExpenditure) setMaritimeExpenditure(parsed.maritimeExpenditure);
+            if (parsed.admiralList) setAdmiralList(parsed.admiralList);
             if (parsed.warOfficeSubTab) {
               setWarOfficeSubTab(
                 parsed.warOfficeSubTab === 'ARMY_EXPENDITURE'
@@ -2491,6 +2791,7 @@
             if (parsed.armyListCategories) setArmyListCategories(parsed.armyListCategories);
             if (parsed.territorialOrganisation) setTerritorialOrganisation(parsed.territorialOrganisation);
             if (parsed.armyExpenditure) setArmyExpenditure(parsed.armyExpenditure);
+            if (parsed.generalList) setGeneralList(parsed.generalList);
             if (parsed.greatSealDraft) setGreatSealDraft(parsed.greatSealDraft);
             if (parsed.nationalArchive) setNationalArchive(parsed.nationalArchive);
             setGameState('DASHBOARD');
@@ -5037,6 +5338,7 @@
                 <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
                   {[
                     { key: 'NAVY_LIST', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Navy List' },
+                    { key: 'ADMIRAL_LIST', label: '⚓ Royal Navy - Admiral List' },
                     { key: 'FLEET_DISPOSITION', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Royal Navy - Fleet Disposition List' },
                     { key: 'NAVAL_ENGAGEMENT_REPORT', label: '⚓️ Naval Engagement Report' },
                     { key: 'ANNUAL_NAVAL_RETURN', label: '⚓️ Annual Naval Return' }
@@ -5199,6 +5501,31 @@
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
+
+                {admiraltySubTab === 'ADMIRAL_LIST' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">⚓ Royal Navy - Admiral List</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    {renderDepartmentMinisterPortrait('admiralty')}
+
+                    <div className="text-slate-400 text-center italic">
+                      Admiralty officers wear the prescribed dark navy-blue tunic, white collar and black bicorne hat.
+                    </div>
+
+                    {renderServiceOfficerList('navy', ADMIRAL_LIST_RANKS, admiralList)}
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">ROYAL NAVY OFFICER REGISTER</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
@@ -5701,6 +6028,16 @@
                     🇬🇧 War Office : Army List
                   </button>
                   <button
+                    onClick={() => setWarOfficeSubTab('GENERAL_LIST')}
+                    className={`px-4 py-2 rounded font-bold transition-colors ${
+                      warOfficeSubTab === 'GENERAL_LIST'
+                        ? 'bg-[#E5C158] text-[#0F223D]'
+                        : 'text-slate-200 hover:text-[#E5C158]'
+                    }`}
+                  >
+                    🇬🇧 War Office : General List
+                  </button>
+                  <button
                     onClick={() => setWarOfficeSubTab('TERRITORIAL_ORGANISATION')}
                     className={`px-4 py-2 rounded font-bold transition-colors ${
                       warOfficeSubTab === 'TERRITORIAL_ORGANISATION'
@@ -5848,6 +6185,31 @@
                     <div className="text-center space-y-1 pt-4">
                       <div className="text-slate-400">========================================================================================</div>
                       <div className="text-slate-200 text-base tracking-wide">DOCUMENT CERTIFIED &amp; SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+                  </div>
+                )}
+
+
+                {warOfficeSubTab === 'GENERAL_LIST' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-[#E5C158] font-bold tracking-wider text-xl">🇬🇧 War Office : General List</div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    {renderDepartmentMinisterPortrait('war')}
+
+                    <div className="text-slate-400 text-center italic">
+                      Army officers wear the prescribed red tunic, dark navy-blue collar and black bicorne hat.
+                    </div>
+
+                    {renderServiceOfficerList('army', GENERAL_LIST_RANKS, generalList)}
+
+                    <div className="text-center space-y-1 pt-4">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-slate-200 text-base tracking-wide">GENERAL OFFICERS OF HIS MAJESTY'S FORCES</div>
                       <div className="text-slate-400">========================================================================================</div>
                     </div>
                   </div>
