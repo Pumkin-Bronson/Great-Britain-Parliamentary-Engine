@@ -272,7 +272,8 @@
         facialHair: pick(facialHairOptions),
         clothingType,
         clothingColourName,
-        skinTone: pick(['porcelain', 'fair', 'light', 'warmFair']),
+        // All Cabinet, General List and Admiral List portraits use the prescribed pale skin tone.
+        skinTone: 'porcelain',
         faceShape: pick(['narrow', 'average', 'broad']),
         eyeColour: pick(['blueGrey', 'brown', 'greenGrey']),
         gender: ministerKey === 'monarch' && isFemaleMonarchName(safeName) ? 'female' : 'male',
@@ -305,15 +306,15 @@
       };
       const skinColours = {
         porcelain: '#ead0b3',
-        fair: '#dfbd99',
-        light: '#d4ad86',
-        warmFair: '#cfa17b'
+        fair: '#ead0b3',
+        light: '#ead0b3',
+        warmFair: '#ead0b3'
       };
       const skinShadeColours = {
         porcelain: '#bd8f6d',
-        fair: '#b6805d',
-        light: '#a86f50',
-        warmFair: '#9c6549'
+        fair: '#bd8f6d',
+        light: '#bd8f6d',
+        warmFair: '#bd8f6d'
       };
       const eyeColours = {
         blueGrey: '#40566a',
@@ -537,15 +538,15 @@
       };
       const skinColours = {
         porcelain: '#ead0b3',
-        fair: '#dfbd99',
-        light: '#d4ad86',
-        warmFair: '#cfa17b'
+        fair: '#ead0b3',
+        light: '#ead0b3',
+        warmFair: '#ead0b3'
       };
       const skinShadeColours = {
         porcelain: '#bd8f6d',
-        fair: '#b6805d',
-        light: '#a86f50',
-        warmFair: '#9c6549'
+        fair: '#bd8f6d',
+        light: '#bd8f6d',
+        warmFair: '#bd8f6d'
       };
       const eyeColours = {
         blueGrey: '#40566a',
@@ -2472,6 +2473,27 @@
             : value
         }));
       };
+
+      // Fleet and squadron commanders can only be selected from officers recorded in Admiral List.
+      // A custom title replaces the personal name in the displayed appointment, as requested.
+      const admiralListAppointmentOptions = ADMIRAL_LIST_RANKS.flatMap(rank =>
+        (admiralList[rank] || [])
+          .map(officer => {
+            const officerName = String(officer.name || '').trim();
+            const officerTitle = String(officer.title || '').trim();
+            const hasCustomTitle = officerTitle && officerTitle.toLowerCase() !== String(rank).trim().toLowerCase();
+            const appointmentName = hasCustomTitle ? officerTitle : officerName;
+
+            if (!appointmentName) return null;
+
+            return {
+              id: String(officer.id),
+              rank,
+              display: `${rank} ${appointmentName}`.trim()
+            };
+          })
+          .filter(Boolean)
+      );
 
       const admiralOptions = Array.from(new Set(
         fleetDisposition.flatMap(fleet => [
@@ -5980,13 +6002,18 @@
 
                           <div className="pl-6 md:pl-12 flex flex-wrap items-center gap-2">
                             <span className="text-white">• Admiral of the Fleet :</span>
-                            <input
-                              type="text"
+                            <select
                               value={fleet.admiralOfFleet}
                               onChange={(e) => updateFleet(fleet.id, 'admiralOfFleet', e.target.value)}
                               className="min-w-[260px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
-                              placeholder="User Input"
-                            />
+                            >
+                              <option value="">-- Select Admiral from Admiral List --</option>
+                              {admiralListAppointmentOptions.map(option => (
+                                <option key={`fleet-${fleet.id}-${option.id}`} value={option.display}>
+                                  {option.display}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div className="pl-6 md:pl-12 space-y-4">
@@ -6013,13 +6040,18 @@
 
                                 <div className="pl-6 md:pl-12 flex flex-wrap items-center gap-2">
                                   <span className="text-white">• Admiral of the Squadron :</span>
-                                  <input
-                                    type="text"
+                                  <select
                                     value={squadron.admiralOfSquadron}
                                     onChange={(e) => updateSquadron(fleet.id, squadron.id, 'admiralOfSquadron', e.target.value)}
                                     className="min-w-[240px] flex-1 bg-[#0B192C] border border-slate-600 text-white p-2 rounded"
-                                    placeholder="User Input"
-                                  />
+                                  >
+                                    <option value="">-- Select Admiral from Admiral List --</option>
+                                    {admiralListAppointmentOptions.map(option => (
+                                      <option key={`squadron-${fleet.id}-${squadron.id}-${option.id}`} value={option.display}>
+                                        {option.display}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
 
                                 <div className="pl-6 md:pl-12 space-y-2">
