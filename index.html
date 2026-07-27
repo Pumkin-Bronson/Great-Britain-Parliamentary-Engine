@@ -702,6 +702,141 @@
     }
 
 
+
+    const DIPLOMATIC_RELATION_STATUSES = [
+      'Very Friendly',
+      'Friendly',
+      'Indifferent',
+      'Unfriendly',
+      'Hostile'
+    ];
+
+    const CIVIL_INFRASTRUCTURE_DEVELOPMENT_BRANCHES = {
+      'City': {
+        'City': []
+      },
+      'Industrial Centre': {
+        'Manufacture': ['Manufacture', 'Factory', 'Steam-Powered Factory'],
+        'Gunsmith': ['Gunsmith', 'Musket Manufactory', 'Small Arms Factory']
+      },
+      'Commercial Centre': {
+        'Market': ['Market', 'Merchant House', 'Banking House'],
+        'Supply Building': ['Supply Post', 'Supply Post', 'Supply Warehouse']
+      },
+      'Intellectual Centre': {
+        'Entertainment Building': ["Member's Club", 'Secret Society', 'Masonic Lodge'],
+        'University': ['College', 'Classical University', 'Modern University']
+      },
+      'Harbour': {
+        'Trading Ports': ['Trading Port', 'Commercial Port', 'Trading Company'],
+        'Dockyard': ['Dockyard', 'Drydock', 'Steam Drydock']
+      },
+      'Farm': {
+        'Farm': ['Farms', 'Clearances', 'Great Estates']
+      },
+      'Pasture': {
+        'Pasture': ['Stables', 'Stud Farm', 'Equestrian Estate']
+      },
+      'Iron Mine': {
+        'Iron Mine': ['Iron Mine', 'Steam-Pumped Iron Mine', 'Industrial Iron Mining Complex']
+      }
+    };
+
+    const CIVIL_INFRASTRUCTURE_REGISTRY = [
+      {
+        nation: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England',
+        groups: [
+          {
+            subtitle: '🏛️ Greater London & Home Counties',
+            regions: [
+              { name: 'London', type: 'City' }
+            ]
+          },
+          {
+            subtitle: '🏛️ South East & South West',
+            regions: [
+              { name: 'Chatham Docks', type: 'Harbour' },
+              { name: 'Portsmouth', type: 'Harbour' },
+              { name: 'Bristol', type: 'Harbour' }
+            ]
+          },
+          {
+            subtitle: '🏛️ The Midlands',
+            regions: [
+              { name: 'Oxford', type: 'Intellectual Centre' },
+              { name: 'Birmingham', type: 'Industrial Centre' },
+              { name: 'Newmarket Pastures', type: 'Pasture' },
+              { name: 'Yorkshire Farmlands', type: 'Farm' }
+            ]
+          },
+          {
+            subtitle: '🏛️ The North',
+            regions: [
+              { name: 'Manchester', type: 'Industrial Centre' },
+              { name: 'Liverpool', type: 'Harbour' },
+              { name: 'Coalbrookdale Mines', type: 'Iron Mine' },
+              { name: 'York', type: 'Commercial Centre' }
+            ]
+          }
+        ]
+      },
+      {
+        nation: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales',
+        groups: [
+          {
+            subtitle: '',
+            regions: [
+              { name: 'Cardiff', type: 'City' },
+              { name: 'Swansea', type: 'Industrial Centre' },
+              { name: 'Caernarfon Mines', type: 'Iron Mine' }
+            ]
+          }
+        ]
+      },
+      {
+        nation: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland',
+        groups: [
+          {
+            subtitle: '',
+            regions: [
+              { name: 'Edinburgh', type: 'City' },
+              { name: 'Dumfries', type: 'Iron Mine' },
+              { name: 'Glasgow', type: 'Harbour' }
+            ]
+          }
+        ]
+      },
+      {
+        nation: '🇮🇪 Ireland',
+        groups: [
+          {
+            subtitle: '',
+            regions: [
+              { name: 'Dublin', type: 'City' },
+              { name: 'Waterford', type: 'Harbour' },
+              { name: 'Connemara Farmland', type: 'Farm' },
+              { name: 'Cork', type: 'Commercial Centre' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    const createInitialCivilInfrastructureState = () => {
+      const state = {};
+      CIVIL_INFRASTRUCTURE_REGISTRY.forEach(country => {
+        country.groups.forEach(group => {
+          group.regions.forEach(region => {
+            state[region.name] = {
+              branch: '',
+              development: ''
+            };
+          });
+        });
+      });
+      return state;
+    };
+
     const WAR_OFFICE_TERRITORIES = {
       England: ['London','Chatham Docks','Bristol','Portsmouth','Oxford','Birmingham','Newmarket Pastures','Yorkshire Farmlands','York','Manchester','Liverpool','Coalbrookdale Mines'],
       Wales: ['Cardiff','Swansea','Caernarfon Mines'],
@@ -770,6 +905,8 @@
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
       const [cabinetSubTab, setCabinetSubTab] = React.useState('NO_10_DOWNING_STREET');
       const [chancerySubTab, setChancerySubTab] = React.useState('GREAT_SEAL_REGISTER');
+      const [foreignOfficeSubTab, setForeignOfficeSubTab] = React.useState('DIPLOMATIC_SERVICE');
+      const [homeOfficeSubTab, setHomeOfficeSubTab] = React.useState('PUBLIC_PEACE_REPORT');
       const [greatSealDraft, setGreatSealDraft] = React.useState({
         title: '',
         instrumentType: 'Act of Parliament',
@@ -2935,7 +3072,8 @@
         religiousUnrest: { london: 1, wales: 2, scotland: 2, ireland: 5 },
         foreignAgents: [
           { nation: 'Kingdom of France', name: 'Jean-Luc Moreau', status: 'Under Surveillance', location: 'London (Soho)' }
-        ]
+        ],
+        civilInfrastructure: createInitialCivilInfrastructureState()
       });
 
       // Foreign Office State
@@ -2957,7 +3095,9 @@
           regions: { power: '', nature: 'Cession to foreign sovereign', territory: '' },
           technology: { power: '', direction: 'Imported', principles: '' },
           payment: { power: '', direction: 'Remittance to Foreign Treasury', quantum: '' }
-        }
+        },
+        majorNations: [],
+        minorNations: []
       });
 
       const handleCfChange = (field, val) => {
@@ -3004,7 +3144,69 @@
         }));
       };
 
+      const handleCivilInfrastructureChange = (regionName, field, value) => {
+        setHomeOfficeForm(prev => {
+          const existingInfrastructure = prev.civilInfrastructure || createInitialCivilInfrastructureState();
+          const currentRegion = existingInfrastructure[regionName] || { branch: '', development: '' };
+          const nextRegion = {
+            ...currentRegion,
+            [field]: value
+          };
+
+          if (field === 'branch') {
+            nextRegion.development = '';
+          }
+
+          if (field === 'branch' && value === 'None') {
+            nextRegion.development = '';
+          }
+
+          return {
+            ...prev,
+            civilInfrastructure: {
+              ...existingInfrastructure,
+              [regionName]: nextRegion
+            }
+          };
+        });
+      };
+
       // Foreign Office Handlers
+      const addDiplomaticNation = (category) => {
+        const field = category === 'major' ? 'majorNations' : 'minorNations';
+        setForeignOfficeForm(prev => ({
+          ...prev,
+          [field]: [
+            ...(prev[field] || []),
+            {
+              id: `${category}-nation-${Date.now()}-${Math.random()}`,
+              name: '',
+              status: ''
+            }
+          ]
+        }));
+      };
+
+      const updateDiplomaticNation = (category, nationId, fieldName, value) => {
+        const field = category === 'major' ? 'majorNations' : 'minorNations';
+        setForeignOfficeForm(prev => ({
+          ...prev,
+          [field]: (prev[field] || []).map(nation =>
+            nation.id === nationId
+              ? { ...nation, [fieldName]: value }
+              : nation
+          )
+        }));
+      };
+
+      const removeDiplomaticNation = (category, nationId) => {
+        const field = category === 'major' ? 'majorNations' : 'minorNations';
+        setForeignOfficeForm(prev => ({
+          ...prev,
+          [field]: (prev[field] || []).filter(nation => nation.id !== nationId)
+        }));
+      };
+
       const toggleDiplomaticAction = (actionId) => {
         setForeignOfficeForm((prev) => {
           const exists = prev.selectedActions.includes(actionId);
@@ -3149,6 +3351,7 @@
       const handleSaveGame = () => {
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab, chancerySubTab,
+          foreignOfficeSubTab, homeOfficeSubTab,
           peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           governmentPopularity, navalEngagementReport, armyEngagementReport,
@@ -3173,6 +3376,8 @@
             setExchequerSubTab(parsed.exchequerSubTab || 'CONSOLIDATED_FUNDS');
             setCabinetSubTab(parsed.cabinetSubTab || 'NO_10_DOWNING_STREET');
             setChancerySubTab(parsed.chancerySubTab || 'GREAT_SEAL_REGISTER');
+            setForeignOfficeSubTab(parsed.foreignOfficeSubTab || 'DIPLOMATIC_SERVICE');
+            setHomeOfficeSubTab(parsed.homeOfficeSubTab || 'PUBLIC_PEACE_REPORT');
             setPeaceTurns(parsed.peaceTurns || []);
             setOppositionTurns(parsed.oppositionTurns || []);
             setWarOfficeTurn(parsed.warOfficeTurn || null);
@@ -3184,8 +3389,24 @@
             if (parsed.gdiTurn7Inflow !== undefined) setGdiTurn7Inflow(parsed.gdiTurn7Inflow);
             if (parsed.financialStatement) setFinancialStatement(parsed.financialStatement);
             if (parsed.cfForm) setCfForm(parsed.cfForm);
-            if (parsed.homeOfficeForm) setHomeOfficeForm(parsed.homeOfficeForm);
-            if (parsed.foreignOfficeForm) setForeignOfficeForm(parsed.foreignOfficeForm);
+            if (parsed.homeOfficeForm) {
+              setHomeOfficeForm(prev => ({
+                ...prev,
+                ...parsed.homeOfficeForm,
+                civilInfrastructure: {
+                  ...createInitialCivilInfrastructureState(),
+                  ...(parsed.homeOfficeForm.civilInfrastructure || {})
+                }
+              }));
+            }
+            if (parsed.foreignOfficeForm) {
+              setForeignOfficeForm(prev => ({
+                ...prev,
+                ...parsed.foreignOfficeForm,
+                majorNations: parsed.foreignOfficeForm.majorNations || [],
+                minorNations: parsed.foreignOfficeForm.minorNations || []
+              }));
+            }
             if (parsed.cabinetForm) setCabinetForm(parsed.cabinetForm);
             if (parsed.cabinetMinisters) setCabinetMinisters(parsed.cabinetMinisters);
             if (parsed.patronageRecords) setPatronageRecords(parsed.patronageRecords);
@@ -4976,7 +5197,28 @@
 
             {/* FOREIGN OFFICE TAB */}
             {activeTab === 'Foreign Office' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+              <div className="space-y-4">
+                <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'DIPLOMATIC_SERVICE', label: '🌍 Diplomatic Service' },
+                    { key: 'DIPLOMATIC_RELATIONS', label: '🤝 Diplomatic Relations' }
+                  ].map(subTab => (
+                    <button
+                      key={subTab.key}
+                      onClick={() => setForeignOfficeSubTab(subTab.key)}
+                      className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
+                        foreignOfficeSubTab === subTab.key
+                          ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {foreignOfficeSubTab === 'DIPLOMATIC_SERVICE' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                 <div className="text-center space-y-1">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-white font-bold tracking-wider text-sm">FOREIGN SECRETARY // CHIEF CLERK'S AUDIT OF DIPLOMATIC SERVICE</div>
@@ -5355,12 +5597,115 @@
                   <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE GREAT SEAL OF GREAT BRITAIN</div>
                   <div className="text-slate-400">========================================================================================</div>
                 </div>
+                  </div>
+                )}
+
+                {foreignOfficeSubTab === 'DIPLOMATIC_RELATIONS' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-sm">FOREIGN OFFICE // DIPLOMATIC RELATIONS REGISTER</div>
+                      <div className="text-[#E5C158] font-bold tracking-wide">
+                        STATE OF RELATIONS — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    {[
+                      { key: 'major', title: 'Major Nation(s)', records: foreignOfficeForm.majorNations || [] },
+                      { key: 'minor', title: 'Minor Nation(s)', records: foreignOfficeForm.minorNations || [] }
+                    ].map(section => (
+                      <div key={section.key} className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-4 font-sans">
+                        <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+                          <h3 className="text-[#E5C158] font-bold text-base">{section.title}</h3>
+                          <button
+                            onClick={() => addDiplomaticNation(section.key)}
+                            className="w-10 h-10 rounded-full bg-[#E5C158] text-[#0F223D] font-bold text-xl hover:bg-yellow-300"
+                            title={`Add ${section.key === 'major' ? 'Major' : 'Minor'} Nation`}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {section.records.length === 0 ? (
+                          <div className="text-slate-500 italic text-sm">
+                            No nations recorded.
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {section.records.map(nation => (
+                              <div
+                                key={nation.id}
+                                className="bg-[#0B192C] border border-slate-700 rounded p-4 grid grid-cols-1 lg:grid-cols-[1fr_260px_auto] gap-3 items-center"
+                              >
+                                <input
+                                  type="text"
+                                  value={nation.name}
+                                  onChange={(event) => updateDiplomaticNation(section.key, nation.id, 'name', event.target.value)}
+                                  placeholder={section.key === 'major' ? 'Major Nation Name' : 'Minor Nation Name'}
+                                  className="bg-[#0F223D] border border-slate-600 rounded p-2 text-white font-mono"
+                                />
+
+                                <div className="space-y-1">
+                                  <select
+                                    value={nation.status}
+                                    onChange={(event) => updateDiplomaticNation(section.key, nation.id, 'status', event.target.value)}
+                                    className="w-full bg-[#0F223D] border border-slate-600 rounded p-2 text-[#E5C158] font-mono"
+                                  >
+                                    <option value="">Select relation status</option>
+                                    {DIPLOMATIC_RELATION_STATUSES.map(status => (
+                                      <option key={status} value={status}>{status}</option>
+                                    ))}
+                                  </select>
+                                  {nation.status && (
+                                    <div className="text-emerald-300 font-bold font-mono">
+                                      - {nation.status}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() => removeDiplomaticNation(section.key, nation.id)}
+                                  className="text-rose-400 hover:text-rose-200 font-bold px-3 py-2"
+                                  title="Remove Nation"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* HOME OFFICE TAB */}
             {activeTab === 'Home Office' && (
-              <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+              <div className="space-y-4">
+                <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'PUBLIC_PEACE_REPORT', label: '📌 Public Peace Report' },
+                    { key: 'CIVIL_INFRASTRUCTURE', label: '🏗️ Register of Civil Infrastructure' }
+                  ].map(subTab => (
+                    <button
+                      key={subTab.key}
+                      onClick={() => setHomeOfficeSubTab(subTab.key)}
+                      className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
+                        homeOfficeSubTab === subTab.key
+                          ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {homeOfficeSubTab === 'PUBLIC_PEACE_REPORT' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
                 <div className="text-center space-y-1">
                   <div className="text-slate-400">========================================================================================</div>
                   <div className="text-[#E5C158] font-bold tracking-wider text-sm">📌 Report on the State of the Public Peace & Domestic Tranquility</div>
@@ -5756,6 +6101,114 @@
                   <div className="text-[#E5C158] font-bold text-xs tracking-wider">DOCUMENT CERTIFIED & SEALED BY THE HOME DEPARTMENT</div>
                   <div className="text-slate-400">========================================================================================</div>
                 </div>
+                  </div>
+                )}
+
+                {homeOfficeSubTab === 'CIVIL_INFRASTRUCTURE' && (
+                  <div className="bg-[#0B192C] border border-[#E5C158]/60 p-6 rounded space-y-6 font-mono text-xs">
+                    <div className="text-center space-y-1">
+                      <div className="text-slate-400">========================================================================================</div>
+                      <div className="text-white font-bold tracking-wider text-sm">HOME OFFICE // REGISTER OF CIVIL INFRASTRUCTURE</div>
+                      <div className="text-[#E5C158] font-bold tracking-wide">
+                        NATIONAL INFRASTRUCTURE RETURN — {MONTH_NAMES[currentTurn - 1]} {selectedYear}
+                      </div>
+                      <div className="text-slate-400">========================================================================================</div>
+                    </div>
+
+                    <div className="space-y-6 font-sans">
+                      {CIVIL_INFRASTRUCTURE_REGISTRY.map(country => (
+                        <section key={country.nation} className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-5">
+                          <h3 className="text-[#E5C158] font-bold text-lg border-b border-slate-700 pb-3">
+                            {country.nation}
+                          </h3>
+
+                          {country.groups.map((group, groupIndex) => (
+                            <div key={`${country.nation}-${groupIndex}`} className="space-y-3">
+                              {group.subtitle && (
+                                <div className="text-cyan-300 font-bold text-sm bg-[#0B192C] border-l-4 border-cyan-500 px-3 py-2">
+                                  {group.subtitle}
+                                </div>
+                              )}
+
+                              <div className="space-y-3">
+                                {group.regions.map(region => {
+                                  const infrastructureState =
+                                    (homeOfficeForm.civilInfrastructure || createInitialCivilInfrastructureState())[region.name] ||
+                                    { branch: '', development: '' };
+                                  const branchDefinitions = CIVIL_INFRASTRUCTURE_DEVELOPMENT_BRANCHES[region.type] || {};
+                                  const selectedDevelopmentOptions =
+                                    infrastructureState.branch && branchDefinitions[infrastructureState.branch]
+                                      ? branchDefinitions[infrastructureState.branch]
+                                      : [];
+
+                                  return (
+                                    <div
+                                      key={region.name}
+                                      className="bg-[#0B192C] border border-slate-700 rounded p-4 grid grid-cols-1 xl:grid-cols-[320px_1fr_1fr] gap-4 items-center"
+                                    >
+                                      <div>
+                                        <div className="text-white font-bold text-sm">
+                                          {region.name} - <span className="text-[#E5C158]">{region.type}</span>
+                                        </div>
+                                      </div>
+
+                                      <>
+                                        <div>
+                                          <label className="block text-slate-400 mb-1 text-xs">Development Branch</label>
+                                          <select
+                                            value={infrastructureState.branch}
+                                            onChange={(event) =>
+                                              handleCivilInfrastructureChange(region.name, 'branch', event.target.value)
+                                            }
+                                            className="w-full bg-[#0F223D] border border-slate-600 rounded p-2 text-white font-mono"
+                                          >
+                                            <option value="">Select branch</option>
+                                            <option value="None">None</option>
+                                            {Object.keys(branchDefinitions).map(branchName => (
+                                              <option key={branchName} value={branchName}>{branchName}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+
+                                        <div>
+                                          <label className="block text-slate-400 mb-1 text-xs">Current Development</label>
+                                          {region.type === 'City' || infrastructureState.branch === 'None' ? (
+                                            <div className="w-full bg-[#0F223D] border border-slate-600 rounded p-2 text-slate-500 italic font-mono">
+                                              No evolving development.
+                                            </div>
+                                          ) : (
+                                            <select
+                                              value={infrastructureState.development}
+                                              onChange={(event) =>
+                                                handleCivilInfrastructureChange(region.name, 'development', event.target.value)
+                                              }
+                                              disabled={!infrastructureState.branch}
+                                              className="w-full bg-[#0F223D] border border-slate-600 rounded p-2 text-emerald-300 font-mono disabled:opacity-50"
+                                            >
+                                              <option value="">Select development</option>
+                                              {selectedDevelopmentOptions.map((development, developmentIndex) => (
+                                                <option
+                                                  key={`${development}-${developmentIndex}`}
+                                                  value={development}
+                                                >
+                                                  {infrastructureState.branch} - {development}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          )}
+                                        </div>
+                                      </>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </section>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
