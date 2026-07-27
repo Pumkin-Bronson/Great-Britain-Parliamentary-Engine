@@ -904,6 +904,7 @@
       const [activeTab, setActiveTab] = React.useState('Parliamentary Timetable');
       const [exchequerSubTab, setExchequerSubTab] = React.useState('CONSOLIDATED_FUNDS');
       const [cabinetSubTab, setCabinetSubTab] = React.useState('NO_10_DOWNING_STREET');
+      const [patronageViewMode, setPatronageViewMode] = React.useState('TITLE_MERIT');
       const [chancerySubTab, setChancerySubTab] = React.useState('GREAT_SEAL_REGISTER');
       const [foreignOfficeSubTab, setForeignOfficeSubTab] = React.useState('DIPLOMATIC_SERVICE');
       const [homeOfficeSubTab, setHomeOfficeSubTab] = React.useState('PUBLIC_PEACE_REPORT');
@@ -1685,17 +1686,17 @@
 
 
       const patronageTitleDefinitions = [
-        { key: 'duke', section: 'hereditary', label: '📌 Duke', prefix: 'Duke of', requiresTerritory: true },
-        { key: 'marquess', section: 'hereditary', label: '📌 Marquess', prefix: 'Marquess of', requiresTerritory: true },
-        { key: 'earl', section: 'hereditary', label: '📌 Earl', prefix: 'Earl of', requiresTerritory: true },
-        { key: 'viscount', section: 'hereditary', label: '📌 Viscount', prefix: 'Viscount of', requiresTerritory: true },
-        { key: 'baron', section: 'hereditary', label: '📌 Baron', prefix: 'Baron', requiresTerritory: true },
-        { key: 'baronet', section: 'hereditary', label: '📌 Baronet', prefix: 'Sir', requiresTerritory: false },
-        { key: 'gcb', section: 'merit', label: '1st Class : Knight Grand Cross (GCB)', prefix: 'Sir', requiresTerritory: false },
-        { key: 'kcb', section: 'merit', label: '2nd Class : Knight Commander (KCB)', prefix: 'Sir', requiresTerritory: false },
-        { key: 'cb', section: 'merit', label: '1st Class : Companion of the Order of the Bath (CB)', prefix: '', requiresTerritory: false },
-        { key: 'kb', section: 'merit', label: 'Single Class : Knight Bachelor (KB)', prefix: 'Sir', requiresTerritory: false },
-        { key: 'kg', section: 'merit', label: 'Single Class : Knight Companion (KG)', prefix: 'Sir', requiresTerritory: false }
+        { key: 'duke', section: 'hereditary', label: '📌 Duke', prefix: 'Duke of', shortForm: 'Duke', individualRewardName: 'Duke', requiresTerritory: true },
+        { key: 'marquess', section: 'hereditary', label: '📌 Marquess', prefix: 'Marquess of', shortForm: 'Marquess', individualRewardName: 'Marquess', requiresTerritory: true },
+        { key: 'earl', section: 'hereditary', label: '📌 Earl', prefix: 'Earl of', shortForm: 'Earl', individualRewardName: 'Earl', requiresTerritory: true },
+        { key: 'viscount', section: 'hereditary', label: '📌 Viscount', prefix: 'Viscount of', shortForm: 'Viscount', individualRewardName: 'Viscount', requiresTerritory: true },
+        { key: 'baron', section: 'hereditary', label: '📌 Baron', prefix: 'Baron', shortForm: 'Baron', individualRewardName: 'Baron', requiresTerritory: true },
+        { key: 'baronet', section: 'hereditary', label: '📌 Baronet', prefix: 'Sir', shortForm: 'Bt.', individualRewardName: 'Baronet', requiresTerritory: false },
+        { key: 'gcb', section: 'merit', label: '1st Class : Knight Grand Cross (GCB)', prefix: 'Sir', shortForm: 'GCB', individualRewardName: 'Knight Grand Cross of the Order of the Bath', requiresTerritory: false },
+        { key: 'kcb', section: 'merit', label: '2nd Class : Knight Commander (KCB)', prefix: 'Sir', shortForm: 'KCB', individualRewardName: 'Knight Commander of the Order of the Bath', requiresTerritory: false },
+        { key: 'cb', section: 'merit', label: '1st Class : Companion of the Order of the Bath (CB)', prefix: '', shortForm: 'CB', individualRewardName: 'Companion of the Order of the Bath', requiresTerritory: false },
+        { key: 'kb', section: 'merit', label: 'Single Class : Knight Bachelor (KB)', prefix: 'Sir', shortForm: 'KB', individualRewardName: 'Knight Bachelor', requiresTerritory: false },
+        { key: 'kg', section: 'merit', label: 'Single Class : Knight Companion (KG)', prefix: 'Sir', shortForm: 'KG', individualRewardName: 'Knight Companion of the Order of the Garter', requiresTerritory: false }
       ];
 
       const addPatronageRecord = (titleKey) => {
@@ -1761,6 +1762,62 @@
           }))
           .filter(choice => choice.fullName)
       );
+
+      const patronageIndividualRegister = Object.values(
+        patronageTitleDefinitions.reduce((individuals, definition) => {
+          (patronageRecords[definition.key] || []).forEach(record => {
+            const firstName = String(record.firstName || '').trim();
+            const middleName = String(record.middleName || '').trim();
+            const lastName = String(record.lastName || '').trim();
+            const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+
+            if (!fullName) {
+              return;
+            }
+
+            const identityKey = fullName.toLocaleLowerCase('en-GB');
+            const territory = String(record.territory || '').trim();
+            const rewardName = definition.requiresTerritory && territory
+              ? `${definition.individualRewardName} of ${territory}`
+              : definition.individualRewardName;
+
+            if (!individuals[identityKey]) {
+              individuals[identityKey] = {
+                fullName,
+                surname: lastName || fullName,
+                rewards: []
+              };
+            }
+
+            individuals[identityKey].rewards.push({
+              id: record.id,
+              titleKey: definition.key,
+              section: definition.section,
+              rewardName,
+              shortForm: definition.shortForm
+            });
+          });
+
+          return individuals;
+        }, {})
+      )
+        .map(individual => ({
+          ...individual,
+          rewards: [...individual.rewards].sort((left, right) =>
+            left.rewardName.localeCompare(right.rewardName, 'en-GB', { sensitivity: 'base' })
+          )
+        }))
+        .sort((left, right) => {
+          const surnameComparison = left.surname.localeCompare(
+            right.surname,
+            'en-GB',
+            { sensitivity: 'base' }
+          );
+
+          return surnameComparison !== 0
+            ? surnameComparison
+            : left.fullName.localeCompare(right.fullName, 'en-GB', { sensitivity: 'base' });
+        });
 
       const addGovernorOffice = () => {
         const region = String(newGovernorRegion || '').trim();
@@ -3351,7 +3408,7 @@
       const handleSaveGame = () => {
         const stateToSave = {
           selectedYear, currentTurn, activeTab, exchequerSubTab, cabinetSubTab, chancerySubTab,
-          foreignOfficeSubTab, homeOfficeSubTab,
+          foreignOfficeSubTab, homeOfficeSubTab, patronageViewMode,
           peaceTurns, oppositionTurns, warOfficeTurn, admiraltyTurn,
           turn3Rev, turn8Rev, growthRate, gdiTurn1Inflow, gdiTurn7Inflow, financialStatement, cfForm, homeOfficeForm, foreignOfficeForm, cabinetForm, cabinetMinisters,
           governmentPopularity, navalEngagementReport, armyEngagementReport,
@@ -3378,6 +3435,7 @@
             setChancerySubTab(parsed.chancerySubTab || 'GREAT_SEAL_REGISTER');
             setForeignOfficeSubTab(parsed.foreignOfficeSubTab || 'DIPLOMATIC_SERVICE');
             setHomeOfficeSubTab(parsed.homeOfficeSubTab || 'PUBLIC_PEACE_REPORT');
+            setPatronageViewMode(parsed.patronageViewMode || 'TITLE_MERIT');
             setPeaceTurns(parsed.peaceTurns || []);
             setOppositionTurns(parsed.oppositionTurns || []);
             setWarOfficeTurn(parsed.warOfficeTurn || null);
@@ -5017,11 +5075,27 @@
 
                 {cabinetSubTab === 'PATRONAGE' && (
                   <div className="bg-[#0B192C] border-2 border-[#E5C158]/70 p-6 rounded-lg shadow-2xl space-y-6 font-sans">
-                    <div className="border-b border-[#E5C158]/40 pb-4">
-                      <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🎩 Patronage</h2>
-                      <p className="text-xs text-slate-400 italic">Hereditary dignities, orders of merit and Crown governorships</p>
+                    <div className="border-b border-[#E5C158]/40 pb-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-[#E5C158] tracking-wider uppercase">🎩 Patronage</h2>
+                        <p className="text-xs text-slate-400 italic">Hereditary dignities, orders of merit and Crown governorships</p>
+                      </div>
+
+                      <button
+                        onClick={() => setPatronageViewMode(currentMode =>
+                          currentMode === 'TITLE_MERIT' ? 'INDIVIDUAL' : 'TITLE_MERIT'
+                        )}
+                        className="self-start bg-[#E5C158] text-[#0F223D] border border-yellow-300 font-bold px-4 py-2 rounded shadow hover:bg-yellow-300 transition-colors text-xs whitespace-nowrap"
+                        title="Switch Patronage register view"
+                      >
+                        {patronageViewMode === 'TITLE_MERIT'
+                          ? 'Show by Individual (Alphabetical Order)'
+                          : 'Show by Title & Merit'}
+                      </button>
                     </div>
 
+                    {patronageViewMode === 'TITLE_MERIT' ? (
+                      <>
                     <div className="space-y-5">
                       <h3 className="text-xl font-bold text-[#E5C158]">🎩 Hereditary Titles</h3>
                       {patronageTitleDefinitions.filter(item => item.section === 'hereditary').map(definition => (
@@ -5190,6 +5264,55 @@
                         </button>
                       </div>
                     </div>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="bg-[#0F223D] border border-slate-700 rounded p-4">
+                          <h3 className="text-xl font-bold text-[#E5C158]">
+                            👤 Individuals — Alphabetical Order
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1">
+                            Every hereditary title and merit reward is grouped beneath its recipient.
+                          </p>
+                        </div>
+
+                        {patronageIndividualRegister.length === 0 ? (
+                          <div className="bg-[#0F223D] border border-dashed border-slate-600 rounded p-8 text-center text-slate-500 italic">
+                            No named Patronage recipients have been recorded.
+                          </div>
+                        ) : (
+                          patronageIndividualRegister.map(individual => (
+                            <div
+                              key={individual.fullName.toLocaleLowerCase('en-GB')}
+                              className="bg-[#0F223D] border border-slate-700 rounded p-5 space-y-3"
+                            >
+                              <div className="flex items-center justify-between gap-3 border-b border-slate-700 pb-3">
+                                <h4 className="text-white font-bold text-base">{individual.fullName}</h4>
+                                <span className="text-[10px] uppercase tracking-wider bg-[#E5C158]/15 text-[#E5C158] border border-[#E5C158]/40 px-2 py-1 rounded font-bold">
+                                  {individual.rewards.length} Award{individual.rewards.length === 1 ? '' : 's'}
+                                </span>
+                              </div>
+
+                              <div className="space-y-2">
+                                {individual.rewards.map(reward => (
+                                  <div
+                                    key={`${reward.titleKey}-${reward.id}`}
+                                    className="bg-[#0B192C] border border-slate-800 rounded px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                                  >
+                                    <div className="text-slate-200 font-bold">
+                                      {reward.rewardName}
+                                    </div>
+                                    <div className="text-[#E5C158] font-mono font-bold">
+                                      ({reward.shortForm})
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
