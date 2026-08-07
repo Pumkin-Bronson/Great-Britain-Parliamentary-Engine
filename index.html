@@ -1506,10 +1506,14 @@
 
                     <input
                       type="text"
-                      value={officer.title ?? rank}
+                      value={getPatronageSyncedTitle(officer.name, officer.title ?? rank)}
                       onChange={(e) => updateServiceOfficerField(service, rank, officer.id, 'title', e.target.value)}
-                      className="bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-40 mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+                      readOnly={hasPatronageSyncedTitle(officer.name)}
+                      className={`bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-40 mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158] ${
+                        hasPatronageSyncedTitle(officer.name) ? 'cursor-default' : ''
+                      }`}
                       placeholder="Title"
+                      title={hasPatronageSyncedTitle(officer.name) ? 'Title synchronised from Patronage' : 'Title'}
                     />
 
                     <div className="flex items-center gap-2">
@@ -1762,6 +1766,79 @@
           }))
           .filter(choice => choice.fullName)
       );
+
+      const normalisePatronagePersonName = (value) =>
+        String(value || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLocaleLowerCase('en-GB');
+
+      const getPatronageAwardsForName = (personName) => {
+        const normalisedName = normalisePatronagePersonName(personName);
+        if (!normalisedName) return [];
+
+        return patronageTitleDefinitions.flatMap(definition =>
+          (patronageRecords[definition.key] || [])
+            .map(record => {
+              const fullName = [record.firstName, record.middleName, record.lastName]
+                .map(value => String(value || '').trim())
+                .filter(Boolean)
+                .join(' ');
+
+              if (normalisePatronagePersonName(fullName) !== normalisedName) {
+                return null;
+              }
+
+              return {
+                definition,
+                record,
+                fullName
+              };
+            })
+            .filter(Boolean)
+        );
+      };
+
+      const getPatronageSyncedTitle = (personName, fallbackTitle = '') => {
+        const awards = getPatronageAwardsForName(personName);
+        if (awards.length === 0) return fallbackTitle;
+
+        // Hereditary titles follow the existing Patronage order:
+        // Duke, Marquess, Earl, Viscount, Baron, then Baronet.
+        const hereditaryAward = awards.find(award => award.definition.section === 'hereditary');
+        const meritAwards = awards.filter(award => award.definition.section === 'merit');
+        const meritShortForms = [...new Set(
+          meritAwards
+            .map(award => String(award.definition.shortForm || '').trim())
+            .filter(Boolean)
+        )];
+
+        let primaryTitle = '';
+
+        if (hereditaryAward) {
+          const { definition, record, fullName } = hereditaryAward;
+          const territory = String(record.territory || '').trim();
+
+          if (definition.key === 'baronet') {
+            primaryTitle = `Sir ${fullName}`;
+          } else {
+            primaryTitle = [definition.prefix, territory].filter(Boolean).join(' ');
+          }
+        } else if (meritAwards.length > 0) {
+          const fullName = meritAwards[0].fullName || String(personName || '').trim();
+          const carriesSir = meritAwards.some(award => award.definition.prefix === 'Sir');
+          primaryTitle = carriesSir ? `Sir ${fullName}` : fullName;
+        }
+
+        if (meritShortForms.length > 0) {
+          return [primaryTitle, ...meritShortForms].filter(Boolean).join(', ');
+        }
+
+        return primaryTitle || fallbackTitle;
+      };
+
+      const hasPatronageSyncedTitle = (personName) =>
+        getPatronageAwardsForName(personName).length > 0;
 
       const patronageIndividualRegister = Object.values(
         patronageTitleDefinitions.reduce((individuals, definition) => {
@@ -3696,10 +3773,14 @@
 
             <input
               type="text"
-              value={minister.title}
+              value={getPatronageSyncedTitle(minister.name, minister.title)}
               onChange={(e) => handleMinisterFieldChange(ministerKey, 'title', e.target.value)}
-              className="bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158]"
+              readOnly={hasPatronageSyncedTitle(minister.name)}
+              className={`bg-white text-slate-600 px-2 py-0.5 rounded-full text-[10px] shadow border border-slate-300 w-full mb-2 text-center focus:outline-none focus:ring-1 focus:ring-[#E5C158] ${
+                hasPatronageSyncedTitle(minister.name) ? 'cursor-default' : ''
+              }`}
               placeholder="Title"
+              title={hasPatronageSyncedTitle(minister.name) ? 'Title synchronised from Patronage' : 'Title'}
             />
 
             <button
@@ -7025,58 +7106,26 @@
             {/* WAR OFFICE TAB */}
             {activeTab === 'War Office' && (
               <div className="space-y-4">
-                <div className="flex flex-wrap gap-2 bg-[#0B192C] border-b border-[#E5C158]/50 p-2">
-                  <button
-                    onClick={() => setWarOfficeSubTab('ARMY_LIST')}
-                    className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'ARMY_LIST'
-                        ? 'bg-[#E5C158] text-[#0F223D]'
-                        : 'text-slate-200 hover:text-[#E5C158]'
-                    }`}
-                  >
-                    🇬🇧 War Office : Army List
-                  </button>
-                  <button
-                    onClick={() => setWarOfficeSubTab('GENERAL_LIST')}
-                    className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'GENERAL_LIST'
-                        ? 'bg-[#E5C158] text-[#0F223D]'
-                        : 'text-slate-200 hover:text-[#E5C158]'
-                    }`}
-                  >
-                    🇬🇧 War Office : General List
-                  </button>
-                  <button
-                    onClick={() => setWarOfficeSubTab('TERRITORIAL_ORGANISATION')}
-                    className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'TERRITORIAL_ORGANISATION'
-                        ? 'bg-[#E5C158] text-[#0F223D]'
-                        : 'text-slate-200 hover:text-[#E5C158]'
-                    }`}
-                  >
-                    🇬🇧 War Office : Territorial Organisation
-                  </button>
-                  <button
-                    onClick={() => setWarOfficeSubTab('ARMY_ENGAGEMENT_REPORT')}
-                    className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'ARMY_ENGAGEMENT_REPORT'
-                        ? 'bg-[#E5C158] text-[#0F223D] shadow'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    ⚔️ Army Engagement Report
-                  </button>
-
-                  <button
-                    onClick={() => setWarOfficeSubTab('ANNUAL_MILITARY_RETURN')}
-                    className={`px-4 py-2 rounded font-bold transition-colors ${
-                      warOfficeSubTab === 'ANNUAL_MILITARY_RETURN'
-                        ? 'bg-[#E5C158] text-[#0F223D]'
-                        : 'text-slate-200 hover:text-[#E5C158]'
-                    }`}
-                  >
-                    ⚔️ Annual Military Return
-                  </button>
+                <div className="flex flex-wrap border-b border-slate-700 bg-[#0B192C] p-1.5 rounded-t gap-2 text-xs">
+                  {[
+                    { key: 'ARMY_LIST', label: '🇬🇧 War Office : Army List' },
+                    { key: 'GENERAL_LIST', label: '🇬🇧 War Office : General List' },
+                    { key: 'TERRITORIAL_ORGANISATION', label: '🇬🇧 War Office : Territorial Organisation' },
+                    { key: 'ARMY_ENGAGEMENT_REPORT', label: '⚔️ Army Engagement Report' },
+                    { key: 'ANNUAL_MILITARY_RETURN', label: '⚔️ Annual Military Return' }
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.key}
+                      onClick={() => setWarOfficeSubTab(subTab.key)}
+                      className={`px-4 py-2 rounded font-bold transition-colors cursor-pointer ${
+                        warOfficeSubTab === subTab.key
+                          ? 'bg-[#E5C158] text-[#0F223D] shadow'
+                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
                 </div>
 
                 {warOfficeSubTab === 'ARMY_LIST' && (
