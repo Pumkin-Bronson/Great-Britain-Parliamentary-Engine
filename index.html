@@ -8143,11 +8143,11 @@
                   const capacity = 325;
                   const allocated = parties.reduce((sum, party) => sum + (Number(lordsPartySeats[party.key]) || 0), 0);
                   const positions = parties.flatMap(party => Array.from({ length: Number(lordsPartySeats[party.key]) || 0 }, () => party));
-                  // Two facing banks, seven rows, with a broad aisle and the throne at the head.
+                  // Two facing banks, four seats wide on each side, with a broad aisle and the throne at the head.
                   const leftCapacity = 163;
                   const rightCapacity = capacity - leftCapacity;
                   const renderBank = (count, offset, side) => (
-                    <div className="grid gap-x-1.5 gap-y-2 content-start" style={{gridTemplateRows: 'repeat(7, 8px)', gridAutoFlow: 'column', gridAutoColumns: '8px'}}>
+                    <div className="grid gap-x-1.5 gap-y-2 content-start" style={{gridTemplateColumns: 'repeat(4, 8px)', gridAutoFlow: 'row', gridAutoRows: '8px'}}>
                       {Array.from({length: count}, (_, index) => {
                         const party = positions[offset + index] || null;
                         return <span key={`${side}-${index}`} title={party ? `${party.label} — Lord ${offset + index + 1}` : 'Unallocated Lords seat'}
@@ -8181,7 +8181,7 @@
                           <div className="rounded border border-[#E5C158] bg-[#E5C158]/10 text-[#E5C158] px-10 py-2 font-bold tracking-widest">♛ THRONE</div>
                           <div className="flex items-start justify-center gap-10">
                             {renderBank(leftCapacity, 0, 'Left')}
-                            <div className="w-20 min-h-[112px] rounded border border-dashed border-slate-600 flex items-center justify-center text-slate-500"><span className="[writing-mode:vertical-rl] tracking-widest">CENTRAL AISLE</span></div>
+                            <div className="w-20 min-h-[648px] rounded border border-dashed border-slate-600 flex items-center justify-center text-slate-500"><span className="[writing-mode:vertical-rl] tracking-widest">CENTRAL AISLE</span></div>
                             {renderBank(rightCapacity, leftCapacity, 'Right')}
                           </div>
                         </div>
