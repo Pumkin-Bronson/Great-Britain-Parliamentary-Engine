@@ -508,6 +508,126 @@
       'Captain'
     ];
 
+    // Service-officer Character Trait and Follower effects are deliberately separate
+    // from Cabinet effects. Generals and Admirals expose only the NTW-style effect
+    // categories requested for their respective profiles.
+    const GENERAL_SERVICE_EFFECT_GROUPS = [
+      {
+        id: 'military',
+        label: 'Military',
+        options: [
+          { id: 'landBattleCommand', label: 'Command in land battles', suffix: ' to Command in land battles' },
+          { id: 'landAttackCommand', label: 'Command when attacking on land', suffix: ' to Command when attacking on land' },
+          { id: 'landDefenceCommand', label: 'Command when defending on land', suffix: ' to Command when defending on land' },
+          { id: 'battleMorale', label: 'Morale in battles', suffix: ' to morale in battles' },
+          { id: 'besiegingCommand', label: 'Command when besieging', suffix: ' to Command when besieging' },
+          { id: 'besiegedCommand', label: 'Command when besieged', suffix: ' to Command when besieged' },
+          { id: 'ambushCommand', label: 'Command during ambushes', suffix: ' to Command during ambushes' },
+          { id: 'lineOfSightRange', label: 'Line of sight range', suffix: '% to line of sight range' },
+          { id: 'regionalReplenishmentRate', label: 'Replenishment rate in this region', suffix: '% to the replenishment rate in this region' },
+          { id: 'attritionLosses', label: 'Losses in an area of attrition', suffix: '% to losses in an area of attrition' },
+          { id: 'armyCampaignMovementRange', label: 'Army campaign movement range', suffix: '% to army campaign movement range' },
+          { id: 'commandAgainstFrench', label: 'Command when in battle against the French', suffix: ' to Command when in battle against the French' },
+          { id: 'commandAgainstOttomans', label: 'Command when in battle against the Ottomans', suffix: ' to Command when in battle against the Ottomans' },
+          { id: 'unitMarksmanshipSkill', label: 'Unit marksmanship skill', suffix: ' to unit marksmanship skill' },
+          { id: 'prestige', label: 'Prestige', suffix: ' to Prestige' },
+          { id: 'assassinationChance', label: 'Chance of assassination', suffix: '% of chance of assassination' }
+        ]
+      },
+      {
+        id: 'infantry',
+        label: 'Infantry',
+        options: [
+          { id: 'infantryCommand', label: 'Command when leading infantry units', suffix: ' to Command when leading infantry units' },
+          { id: 'infantryCampaignMovementRange', label: 'Infantry units’ campaign movement range', suffix: '% to infantry units’ campaign movement range' }
+        ]
+      },
+      {
+        id: 'cavalry',
+        label: 'Cavalry',
+        options: [
+          { id: 'cavalryCommand', label: 'Command when leading cavalry units', suffix: ' to Command when leading cavalry units' }
+        ]
+      },
+      {
+        id: 'artillery',
+        label: 'Artillery',
+        options: [
+          { id: 'artilleryCommand', label: 'Command when leading artillery units', suffix: ' to Command when leading artillery units' },
+          { id: 'artilleryCampaignMovementRange', label: "Artillery units' campaign movement range", suffix: "% to artillery units' campaign movement range" }
+        ]
+      }
+    ];
+
+    const ADMIRAL_SERVICE_EFFECT_GROUPS = [
+      {
+        id: 'military',
+        label: 'Military',
+        options: [
+          { id: 'battleMorale', label: 'Morale in battles', suffix: ' to morale in battles' },
+          { id: 'ambushCommand', label: 'Command during ambushes', suffix: ' to Command during ambushes' },
+          { id: 'lineOfSightRange', label: 'Line of sight range', suffix: '% to line of sight range' },
+          { id: 'regionalReplenishmentRate', label: 'Replenishment rate in this region', suffix: '% to the replenishment rate in this region' },
+          { id: 'attritionLosses', label: 'Losses in an area of attrition', suffix: '% to losses in an area of attrition' },
+          { id: 'armyCampaignMovementRange', label: 'Army campaign movement range', suffix: '% to army campaign movement range' },
+          { id: 'commandAgainstFrench', label: 'Command when in battle against the French', suffix: ' to Command when in battle against the French' },
+          { id: 'commandAgainstOttomans', label: 'Command when in battle against the Ottomans', suffix: ' to Command when in battle against the Ottomans' },
+          { id: 'unitMarksmanshipSkill', label: 'Unit marksmanship skill', suffix: ' to unit marksmanship skill' },
+          { id: 'prestige', label: 'Prestige', suffix: ' to Prestige' }
+        ]
+      },
+      {
+        id: 'navy',
+        label: 'Navy',
+        options: [
+          { id: 'navalBattleCommand', label: 'Command in naval battles', suffix: ' to Command in naval battles' },
+          { id: 'navalDefenceCommand', label: 'Command at sea when defending', suffix: ' to Command at sea when defending' },
+          { id: 'navalAttackCommand', label: 'Command at sea when attacking', suffix: ' to Command at sea when attacking' },
+          { id: 'shipCampaignMovementRange', label: 'Movement range for ships on the campaign map', suffix: '% to movement range for ships on the campaign map' },
+          { id: 'shipsOfTheLineCommand', label: 'Command when commanding Ships of the Line', suffix: ' to Command when commanding Ships of the Line' },
+          { id: 'frigateCommand', label: 'Command when commanding frigates', suffix: ' to Command when commanding frigates' },
+          { id: 'navalBattleShipRepairRate', label: 'Ship repair rate during naval battles', suffix: '% to ship repair rate during naval battles' }
+        ]
+      }
+    ];
+
+    const getServiceEffectGroups = (service) => (
+      service === 'army' ? GENERAL_SERVICE_EFFECT_GROUPS : ADMIRAL_SERVICE_EFFECT_GROUPS
+    );
+
+    const getServiceEffectOptions = (service) => getServiceEffectGroups(service).flatMap(group =>
+      group.options.map(option => ({ ...option, categoryId: group.id, categoryLabel: group.label }))
+    );
+
+    const createServiceOfficerEffect = (service, id = Date.now()) => {
+      const firstOption = getServiceEffectOptions(service)[0];
+      return {
+        id,
+        effectType: firstOption.id,
+        sign: '+',
+        value: 1,
+        text: `+1${firstOption.suffix}`
+      };
+    };
+
+    const formatServiceOfficerEffect = (service, effect) => {
+      const options = getServiceEffectOptions(service);
+      const option = options.find(item => item.id === effect.effectType) || options[0];
+      const sign = effect.sign === '-' ? '-' : '+';
+      const numericValue = effect.value === '' ? '' : Math.max(0, Number(effect.value) || 0);
+      return `${sign}${numericValue}${option.suffix}`;
+    };
+
+    const normaliseServiceOfficerEffect = (service, effect) => {
+      const options = getServiceEffectOptions(service);
+      const requestedType = effect?.effectType;
+      const validOption = options.find(option => option.id === requestedType);
+      const normalised = validOption
+        ? { ...effect }
+        : createServiceOfficerEffect(service, effect?.id || Date.now());
+      return { ...normalised, text: formatServiceOfficerEffect(service, normalised) };
+    };
+
     const createServiceOfficer = (rank, service, id = `${service}-${Date.now()}-${Math.random()}`) => ({
       id,
       rank,
@@ -1272,7 +1392,7 @@
           ...officer,
           traits: [
             ...(officer.traits || []),
-            { id: `${Date.now()}-${Math.random()}`, name: 'New Trait', effects: [createCabinetEffect(`${Date.now()}-${Math.random()}`)] }
+            { id: `${Date.now()}-${Math.random()}`, name: 'New Trait', effects: [createServiceOfficerEffect(service, `${Date.now()}-${Math.random()}`)] }
           ]
         }));
       };
@@ -1298,7 +1418,7 @@
       const addEffectToServiceOfficerTrait = (service, rank, officerId, traitId) => {
         updateServiceOfficerTrait(service, rank, officerId, traitId, trait => ({
           ...trait,
-          effects: [...(trait.effects || []), createCabinetEffect(`${Date.now()}-${Math.random()}`)]
+          effects: [...(trait.effects || []), createServiceOfficerEffect(service, `${Date.now()}-${Math.random()}`)]
         }));
       };
 
@@ -1306,15 +1426,15 @@
         updateServiceOfficerTrait(service, rank, officerId, traitId, trait => ({
           ...trait,
           effects: (trait.effects || []).map(rawEffect => {
-            const effect = normaliseCabinetEffect(rawEffect);
+            const effect = normaliseServiceOfficerEffect(service, rawEffect);
             if (effect.id !== effectId) return effect;
             const updatedEffect = { ...effect, [field]: value };
             if (field === 'effectType') {
-              const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === value);
+              const selectedOption = getServiceEffectOptions(service).find(option => option.id === value);
               if (selectedOption?.positiveOnly) updatedEffect.sign = '+';
               if (selectedOption?.noValue) updatedEffect.value = '';
             }
-            return { ...updatedEffect, text: formatCabinetEffect(updatedEffect) };
+            return { ...updatedEffect, text: formatServiceOfficerEffect(service, updatedEffect) };
           })
         }));
       };
@@ -1331,7 +1451,7 @@
           ...officer,
           followers: [
             ...(officer.followers || []),
-            { id: `${Date.now()}-${Math.random()}`, name: 'New Follower', effects: [createCabinetEffect(`${Date.now()}-${Math.random()}`)] }
+            { id: `${Date.now()}-${Math.random()}`, name: 'New Follower', effects: [createServiceOfficerEffect(service, `${Date.now()}-${Math.random()}`)] }
           ]
         }));
       };
@@ -1357,7 +1477,7 @@
       const addEffectToServiceOfficerFollower = (service, rank, officerId, followerId) => {
         updateServiceOfficerFollower(service, rank, officerId, followerId, follower => ({
           ...follower,
-          effects: [...(follower.effects || []), createCabinetEffect(`${Date.now()}-${Math.random()}`)]
+          effects: [...(follower.effects || []), createServiceOfficerEffect(service, `${Date.now()}-${Math.random()}`)]
         }));
       };
 
@@ -1365,15 +1485,15 @@
         updateServiceOfficerFollower(service, rank, officerId, followerId, follower => ({
           ...follower,
           effects: (follower.effects || []).map(rawEffect => {
-            const effect = normaliseCabinetEffect(rawEffect);
+            const effect = normaliseServiceOfficerEffect(service, rawEffect);
             if (effect.id !== effectId) return effect;
             const updatedEffect = { ...effect, [field]: value };
             if (field === 'effectType') {
-              const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === value);
+              const selectedOption = getServiceEffectOptions(service).find(option => option.id === value);
               if (selectedOption?.positiveOnly) updatedEffect.sign = '+';
               if (selectedOption?.noValue) updatedEffect.value = '';
             }
-            return { ...updatedEffect, text: formatCabinetEffect(updatedEffect) };
+            return { ...updatedEffect, text: formatServiceOfficerEffect(service, updatedEffect) };
           })
         }));
       };
@@ -1394,8 +1514,9 @@
         rawEffect,
         effectCount
       }) => {
-        const effect = normaliseCabinetEffect(rawEffect);
-        const selectedOption = CABINET_EFFECT_OPTIONS.find(option => option.id === effect.effectType) || CABINET_EFFECT_OPTIONS[0];
+        const effect = normaliseServiceOfficerEffect(service, rawEffect);
+        const serviceEffectOptions = getServiceEffectOptions(service);
+        const selectedOption = serviceEffectOptions.find(option => option.id === effect.effectType) || serviceEffectOptions[0];
         const updateEffect = ownerType === 'trait'
           ? updateServiceOfficerTraitEffect
           : updateServiceOfficerFollowerEffect;
@@ -1413,7 +1534,7 @@
                 onChange={(e) => updateEffect(service, rank, officerId, ownerId, effect.id, 'effectType', e.target.value)}
                 className={`bg-[#0B192C] border border-slate-800 ${accentClass} px-1 py-0.5 rounded flex-1 min-w-0 text-[9px]`}
               >
-                {CABINET_EFFECT_GROUPS.map(group => (
+                {getServiceEffectGroups(service).map(group => (
                   <optgroup key={group.id} label={group.label}>
                     {group.options.map(option => (
                       <option key={option.id} value={option.id}>{option.label}</option>
@@ -1448,7 +1569,7 @@
                 </button>
               )}
             </div>
-            <div className={`pl-3 text-[9px] ${accentClass}`}>{formatCabinetEffect(effect)}</div>
+            <div className={`pl-3 text-[9px] ${accentClass}`}>{formatServiceOfficerEffect(service, effect)}</div>
           </div>
         );
       };
